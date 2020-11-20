@@ -77,36 +77,39 @@ body {
       border-radius: 8px;
       padding: 4px;
       flex-grow: 4; }
-      .main .main-result .search-result .price {
-        width: calc(30% - 4em); }
-      .main .main-result .search-result .name {
-        width: 50%; }
-      .main .main-result .search-result .quantity {
-        flex-grow: 1; }
-      .main .main-result .search-result .row, .main .main-result .search-result .heading {
-        display: flex; }
-      .main .main-result .search-result .heading {
-        background-color: #222;
+      .main .main-result .search-result .search-result-border {
+        border: 1px solid #333;
+        border-top: 0;
+        border-radius: 4px;
+        height: 100%;
+        overflow-y: auto; }
+      .main .main-result .search-result table {
         border-radius: 8px 8px 0 0;
-        font-size: 85%; }
-        .main .main-result .search-result .heading div {
-          border: 1px solid #444;
-          border-bottom: 0;
-          border-radius: 4px 4px 0 0;
-          padding: 0.25em 0 0.25em 0.25em; }
-        .main .main-result .search-result .heading .price {
-          width: calc(30% - 0.25em - 1em); }
-        .main .main-result .search-result .heading .name {
-          width: calc(50% - 0.25em); }
-      .main .main-result .search-result .row .price {
-        display: flex;
-        justify-content: flex-end;
-        margin: 0 2em; }
-        .main .main-result .search-result .row .price .silver {
-          margin-left: 1em;
-          padding-right: 1em;
-          text-align: right;
-          width: 1.5em; }
+        border-spacing: 0;
+        width: 100%; }
+        .main .main-result .search-result table thead {
+          background-color: #222;
+          border-radius: 8px 8px 0 0;
+          font-size: 85%; }
+          .main .main-result .search-result table thead td {
+            border: 1px solid #444;
+            border-bottom-color: #333;
+            border-radius: 4px 4px 0 0;
+            padding: 0.25em 0 0.25em 0.25em; }
+            .main .main-result .search-result table thead td:first-child {
+              border-left: 0; }
+            .main .main-result .search-result table thead td:last-child {
+              border-right: 0; }
+        .main .main-result .search-result table tbody td {
+          padding: 2px 8px; }
+          .main .main-result .search-result table tbody td.price {
+            text-align: right;
+            width: 10em; }
+            .main .main-result .search-result table tbody td.price .gold, .main .main-result .search-result table tbody td.price .silver {
+              padding-right: 1em; }
+            .main .main-result .search-result table tbody td.price .silver {
+              display: inline-block;
+              width: 1.75em; }
     .main .main-result .item {
       display: none; }
   .main .bottom-bar {
