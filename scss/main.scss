@@ -1,0 +1,119 @@
+$background00:#000;
+$background10:#111;
+$background15:#1A1A1A;
+$background20:#222;
+$background30:#333;
+$background40:#444;
+
+$borderRadius:0.5em;
+
+$text10:#DDD;
+
+$fontSizeMain:13pt;
+
+$marginStep:0.5em;
+$thin:0.1em;
+
+body {
+  align-items:center;
+  background-color:$background00;
+  color:$text10;
+  display:flex;
+  font-size:$fontSizeMain;
+  font-family:sans-serif;
+  height:100vh;
+  margin:0;
+}
+
+.main {
+  background-color:$background30;
+  border-radius:$borderRadius;
+  box-sizing:border-box;
+  display:flex;
+  height:100%;
+  margin:0 auto;
+  max-height:50em;
+  max-width:60em;
+  padding:$marginStep;
+  width:100%;
+
+  .categories {
+    background-color:$background10;
+    background:linear-gradient(180deg, $background10 0%, $background15 100%);
+    border-radius:$borderRadius;
+    flex-grow:1;
+    font-size:80%;
+    margin-right:$marginStep;
+    max-width:14em;
+    overflow-y:auto;
+    padding:$marginStep;
+
+    .category {
+      background-color:$background20;
+      border:$thin solid $background30;
+      border-radius:$borderRadius;
+      color:#CA4;
+      cursor:pointer;
+      margin:$marginStep / 2 0;
+      overflow:hidden;
+      padding:$marginStep / 2;
+      text-overflow:ellipsis;
+      text-shadow:$thin $thin $thin #000;
+      white-space:nowrap;
+
+      &:first-child {margin-top:0}
+    }
+
+    .subcategory {
+      margin-left:1em;
+      color:#DDD;
+    }
+  }
+
+  .search-result {
+    background-color:$background10;
+    background:linear-gradient(180deg, rgba(17,17,17,1) 0%, rgba(26,26,26,1) 100%);
+    border-radius:$borderRadius;
+    padding:$marginStep / 2;
+    flex-grow:4;
+
+    .price {width:calc(30% - 4em)}
+    .name {width:50%}
+    .quantity {flex-grow:1}
+
+    .row, .heading {display:flex}
+
+    .heading {
+      background-color:$background20;
+      border-radius:$borderRadius;
+      font-size:85%;
+
+      div {
+        border:$thin solid $background40;
+        border-bottom:0;
+        border-radius:$borderRadius / 2;
+        padding:$marginStep / 2 0 $marginStep / 2 $marginStep / 2;
+      }
+
+      .price {width:calc(30% - 0.25em - 1em)}
+      .name {width:calc(50% - 0.25em)}
+    }
+
+    .row {
+      .price {
+        display:flex;
+        justify-content:flex-end;
+        margin:0 2em;
+
+        .silver {
+          margin-left:1em;
+          padding-right:1em;
+          text-align:right;
+          width:1.5em;
+        }
+      }
+    }
+  }
+
+  .item {display:none}
+}
