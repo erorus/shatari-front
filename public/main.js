@@ -3,126 +3,281 @@
     const qs = document.body.querySelector.bind(document.body);
     const qsa = document.body.querySelectorAll.bind(document.body);
 
-    const my = {
-        categories: undefined,
+    const Categories = new function () {
+        // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
 
-        classId: undefined,
-        subClassId: undefined,
-    };
+        const my = {
+            categories: undefined,
 
-    /**
-     * Fetches the category list data and creates its elements in the category div.
-     */
-    async function addCategories() {
-        const data = await getCategories();
-        console.log(data);
+            classId: undefined,
+            subClassId: undefined,
+        };
 
-        const categoriesParent = qs('.main .categories');
-        data.forEach(function (cat) {
-            const catDiv = ce(
-                'div',
-                {
-                    className: 'category',
-                    dataset: {
-                        classId: cat['class'],
-                    },
-                },
-                ct(cat.name)
-            );
-            categoriesParent.appendChild(catDiv);
-            catDiv.addEventListener('click', clickCategory.bind(null, catDiv));
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
 
-            (cat.subcategories || []).forEach(function (subcat) {
-                const subcatDiv = ce(
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Returns the class ID to use in search filtering, or undefined for none.
+         *
+         * @return {number|undefined}
+         */
+        this.getClassId = function () {
+            return my.classId;
+        }
+
+        /**
+         * Returns the subclass ID to use in search filtering, or undefined for none.
+         *
+         * @return {number|undefined}
+         */
+        this.getSubClassId = function () {
+            return my.subClassId;
+        }
+
+        /**
+         * Fetches the category list data and creates its elements in the category div.
+         */
+        this.init = async function () {
+            const data = await getCategories();
+
+            const categoriesParent = qs('.main .categories');
+            while (categoriesParent.hasChildNodes()) {
+                categoriesParent.removeChild(categoriesParent.firstChild);
+            }
+
+            data.forEach(function (cat) {
+                const catDiv = ce(
                     'div',
                     {
-                        className: 'subcategory',
+                        className: 'category',
                         dataset: {
-                            parentClass: cat['class'],
-                            classId: subcat['class'],
-                            subClassId: subcat.subClass,
+                            classId: cat['class'],
                         },
                     },
-                    ct(subcat.name)
+                    ct(cat.name)
                 );
-                categoriesParent.appendChild(subcatDiv);
-                subcatDiv.addEventListener('click', clickSubCategory.bind(null, subcatDiv));
+                categoriesParent.appendChild(catDiv);
+                catDiv.addEventListener('click', clickCategory.bind(null, catDiv));
 
-            });
-        });
-    }
-
-    /**
-     * Event handler for clicking a primary category.
-     *
-     * @param {HTMLElement} catDiv
-     */
-    function clickCategory(catDiv) {
-        const classId = parseInt(catDiv.dataset.classId);
-        let wasSelected = !!catDiv.dataset.selected;
-
-        // De-select everything.
-        qsa('.main .categories > div').forEach(function (node) {
-            delete node.dataset.selected;
-            delete node.dataset.visible;
-        });
-        my.classId = undefined;
-        my.subClassId = undefined;
-
-        if (!wasSelected) {
-            // Select this category.
-            catDiv.dataset.selected = 1;
-            my.classId = classId;
-
-            // Show any subcategories under this category.
-            qsa('.main .categories .subcategory[data-parent-class="' + classId + '"]').forEach(function (node) {
-                node.dataset.visible = 1;
+                (cat.subcategories || []).forEach(function (subcat) {
+                    const subcatDiv = ce(
+                        'div',
+                        {
+                            className: 'subcategory',
+                            dataset: {
+                                parentClass: cat['class'],
+                                classId: subcat['class'],
+                                subClassId: subcat.subClass,
+                            },
+                        },
+                        ct(subcat.name)
+                    );
+                    categoriesParent.appendChild(subcatDiv);
+                    subcatDiv.addEventListener('click', clickSubCategory.bind(null, subcatDiv));
+                });
             });
         }
-    }
 
-    /**
-     * Event handler for clicking a subcategory.
-     *
-     * @param {HTMLElement} subCatDiv
-     */
-    function clickSubCategory(subCatDiv) {
-        let wasSelected = !!subCatDiv.dataset.selected;
+        // ------- //
+        // PRIVATE //
+        // ------- //
 
-        // De-select every subcategory.
-        qsa('.main .categories .subcategory[data-selected]').forEach(function (node) {
-            delete node.dataset.selected;
-        });
+        /**
+         * Event handler for clicking a primary category.
+         *
+         * @param {HTMLElement} catDiv
+         */
+        function clickCategory(catDiv) {
+            const classId = parseInt(catDiv.dataset.classId);
+            const wasSelected = !!catDiv.dataset.selected;
 
-        if (!wasSelected) {
-            // Select this subcategory.
-            subCatDiv.dataset.selected = 1;
-
-            my.classId = parseInt(subCatDiv.dataset.classId);
-            my.subClassId = parseInt(subCatDiv.dataset.subClassId);
-        } else {
-            // De-select this subcategory, reverting back to the parent category criteria.
-            my.classId = parseInt(subCatDiv.dataset.parentClass);
+            // De-select everything.
+            qsa('.main .categories > div').forEach(function (node) {
+                delete node.dataset.selected;
+                delete node.dataset.visible;
+            });
+            my.classId = undefined;
             my.subClassId = undefined;
+
+            if (!wasSelected) {
+                // Select this category.
+                catDiv.dataset.selected = 1;
+                my.classId = classId;
+
+                // Show any subcategories under this category.
+                qsa('.main .categories .subcategory[data-parent-class="' + classId + '"]').forEach(function (node) {
+                    node.dataset.visible = 1;
+                });
+            }
+        }
+
+        /**
+         * Event handler for clicking a subcategory.
+         *
+         * @param {HTMLElement} subCatDiv
+         */
+        function clickSubCategory(subCatDiv) {
+            const wasSelected = !!subCatDiv.dataset.selected;
+
+            // De-select every subcategory.
+            qsa('.main .categories .subcategory[data-selected]').forEach(function (node) {
+                delete node.dataset.selected;
+            });
+
+            if (!wasSelected) {
+                // Select this subcategory.
+                subCatDiv.dataset.selected = 1;
+
+                my.classId = parseInt(subCatDiv.dataset.classId);
+                my.subClassId = parseInt(subCatDiv.dataset.subClassId);
+            } else {
+                // De-select this subcategory, reverting back to the parent category criteria.
+                my.classId = parseInt(subCatDiv.dataset.parentClass);
+                my.subClassId = undefined;
+            }
+        }
+
+        /**
+         * Fetches (if necessary) and returns the categories list.
+         *
+         * @returns {{object}[]}
+         */
+        async function getCategories() {
+            if (my.categories) {
+                return my.categories;
+            }
+
+            const response = await fetch('json/categories.enus.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of categories!';
+            }
+
+            return my.categories = await response.json();
         }
     }
 
-    /**
-     * Fetches (if necessary) and returns the categories list.
-     *
-     * @returns {{object}[]}
-     */
-    async function getCategories() {
-        if (my.categories) {
-            return my.categories;
+    const Items = new function () {
+        // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = {
+            items: undefined,
+            names: undefined,
+        };
+
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Fetches the item list data.
+         */
+        this.init = async function () {
+            const idTask = fetchItemIds();
+            const nameTask = fetchItemNames();
+
+            await Promise.all([idTask, nameTask]);
+        };
+
+        /**
+         * Performs a search depending on the UI state, and returns item objects that match.
+         *
+         * @return {{object}[]}
+         */
+        this.search = function () {
+            const result = [];
+
+            const classId = Categories.getClassId();
+            const subClassId = Categories.getSubClassId();
+
+            const wordExpressions = [];
+            const searchBox = qs('.main .search-box input[type="text"]');
+            searchBox.value.replace(/^\s+|\s+$/, '').split(/\s+/).forEach(function (word) {
+                wordExpressions.push(new RegExp('\\b' + escapeRegExp(word), 'i'));
+            });
+
+            for (let id in my.items) {
+                if (!my.items.hasOwnProperty(id)) {
+                    continue;
+                }
+
+                let item = my.items[id];
+                if (classId !== undefined && item['class'] !== classId) {
+                    continue;
+                }
+                if (subClassId !== undefined && item['subclass'] !== subClassId) {
+                    continue;
+                }
+
+                let name = my.names[id];
+
+                let foundAllWords = true;
+                for (let regex, x = 0; foundAllWords && (regex = wordExpressions[x]); x++) {
+                    foundAllWords = regex.test(name);
+                }
+                if (!foundAllWords) {
+                    continue;
+                }
+
+                let newItem = {};
+                co(newItem, item);
+                newItem.id = parseInt(id);
+                newItem.name = name;
+                result.push(newItem);
+            }
+
+            return result;
         }
 
-        const response = await fetch('json/categories.enus.json', {mode:'same-origin'});
-        if (!response.ok) {
-            throw 'Cannot get list of categories!';
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Escapes a string for use in a regex.
+         *
+         * @param {string} string
+         * @return {string}
+         */
+        function escapeRegExp(string) {
+            return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
         }
 
-        return my.categories = await response.json();
+        /**
+         * Fetches the list of item IDs and stores it locally.
+         */
+        async function fetchItemIds() {
+            const response = await fetch('json/items.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of item IDs!';
+            }
+
+            my.items = await response.json();
+        }
+
+        /**
+         * Fetches the list of item names and stores it locally.
+         */
+        async function fetchItemNames() {
+            const response = await fetch('json/names.enus.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of item names!';
+            }
+
+            my.names = await response.json();
+        }
     }
 
     //                           //
@@ -180,7 +335,16 @@
     //      //
 
     async function init() {
-        await addCategories();
+        await Categories.init();
+        await Items.init();
+
+        initSearchBox();
+    }
+
+    function initSearchBox() {
+        qs('.main .search-box button').addEventListener('click', function () {
+            console.log(Items.search());
+        });
     }
 
     init().catch(alert);
