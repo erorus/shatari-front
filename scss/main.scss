@@ -1,16 +1,18 @@
 $background00:#000;
 $background10:#111;
-$background15:#1A1A1A;
+$background15:#1a1a1a;
 $background20:#222;
 $background30:#333;
 $background40:#444;
 
-$borderRadius:0.5em;
-
 $text10:#DDD;
+
+$qColor:#CA4;
+$highlightBorderColor:#ffff98;
 
 $fontSizeMain:13pt;
 
+$borderRadius:0.5em;
 $marginStep:0.5em;
 $thin:0.1em;
 
@@ -35,6 +37,7 @@ body {
   max-height:50em;
   max-width:60em;
   padding:$marginStep;
+  user-select:none;
   width:100%;
 
   .categories {
@@ -48,31 +51,37 @@ body {
     overflow-y:auto;
     padding:$marginStep;
 
-    .category {
+    & > div {
       background-color:$background20;
       border:$thin solid $background30;
       border-radius:$borderRadius;
-      color:#CA4;
+      color:$qColor;
       cursor:pointer;
       margin:$marginStep / 2 0;
       overflow:hidden;
-      padding:$marginStep / 2;
+      padding:0.3333em 0.5em;
       text-overflow:ellipsis;
       text-shadow:$thin $thin $thin #000;
       white-space:nowrap;
 
       &:first-child {margin-top:0}
+
+      &[data-selected] {
+        box-shadow: inset 0 0 $thin * 3 $thin * 2 $highlightBorderColor;
+      }
     }
 
     .subcategory {
-      margin-left:1em;
       color:#DDD;
+      margin-left:1em;
+
+      &:not([data-visible]) {display:none}
     }
   }
 
   .search-result {
     background-color:$background10;
-    background:linear-gradient(180deg, rgba(17,17,17,1) 0%, rgba(26,26,26,1) 100%);
+    background:linear-gradient(180deg, $background10 0%, $background15 100%);
     border-radius:$borderRadius;
     padding:$marginStep / 2;
     flex-grow:4;
@@ -92,7 +101,7 @@ body {
         border:$thin solid $background40;
         border-bottom:0;
         border-radius:$borderRadius / 2;
-        padding:$marginStep / 2 0 $marginStep / 2 $marginStep / 2;
+        padding:0.25em 0 0.25em 0.25em;
       }
 
       .price {width:calc(30% - 0.25em - 1em)}

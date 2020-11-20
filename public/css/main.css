@@ -18,10 +18,11 @@ body {
   max-height: 50em;
   max-width: 60em;
   padding: 0.5em;
+  user-select: none;
   width: 100%; }
   .main .categories {
     background-color: #111;
-    background: linear-gradient(180deg, #111 0%, #1A1A1A 100%);
+    background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
     border-radius: 0.5em;
     flex-grow: 1;
     font-size: 80%;
@@ -29,7 +30,7 @@ body {
     max-width: 14em;
     overflow-y: auto;
     padding: 0.5em; }
-    .main .categories .category {
+    .main .categories > div {
       background-color: #222;
       border: 0.1em solid #333;
       border-radius: 0.5em;
@@ -37,18 +38,22 @@ body {
       cursor: pointer;
       margin: 0.25em 0;
       overflow: hidden;
-      padding: 0.25em;
+      padding: 0.3333em 0.5em;
       text-overflow: ellipsis;
       text-shadow: 0.1em 0.1em 0.1em #000;
       white-space: nowrap; }
-      .main .categories .category:first-child {
+      .main .categories > div:first-child {
         margin-top: 0; }
+      .main .categories > div[data-selected] {
+        box-shadow: inset 0 0 0.3em 0.2em #ffff98; }
     .main .categories .subcategory {
-      margin-left: 1em;
-      color: #DDD; }
+      color: #DDD;
+      margin-left: 1em; }
+      .main .categories .subcategory:not([data-visible]) {
+        display: none; }
   .main .search-result {
     background-color: #111;
-    background: linear-gradient(180deg, #111111 0%, #1a1a1a 100%);
+    background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
     border-radius: 0.5em;
     padding: 0.25em;
     flex-grow: 4; }
