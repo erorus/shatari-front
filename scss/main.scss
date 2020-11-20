@@ -1,128 +1,193 @@
-$background00:#000;
-$background10:#111;
-$background15:#1a1a1a;
-$background20:#222;
-$background30:#333;
-$background40:#444;
+$background00: #000;
+$background10: #111;
+$background15: #1a1a1a;
+$background20: #222;
+$background30: #333;
+$background40: #444;
 
-$text10:#DDD;
+$text10: #DDD;
 
-$qColor:#CA4;
-$highlightBorderColor:#ffff98;
+$qColor: #CA4;
+$highlightBorderColor: #ffff98;
 
-$fontSizeMain:13pt;
+$fontSizeMain: 17.5px;
 
-$borderRadius:0.5em;
-$marginStep:0.5em;
-$thin:0.1em;
+$borderRadius: 8px;
+$marginStep: 8px;
+$thin: 1px;
 
 body {
-  align-items:center;
-  background-color:$background00;
-  color:$text10;
-  display:flex;
-  font-size:$fontSizeMain;
-  font-family:sans-serif;
-  height:100vh;
-  margin:0;
+  align-items: center;
+  background-color: $background00;
+  color: $text10;
+  display: flex;
+  font-size: $fontSizeMain;
+  font-family: sans-serif;
+  min-height: 25em;
+  height: 100vh;
+  margin: 0;
+
+  a {
+    color: $text10;
+  }
 }
 
 .main {
-  background-color:$background30;
-  border-radius:$borderRadius;
-  box-sizing:border-box;
-  display:flex;
-  height:100%;
-  margin:0 auto;
-  max-height:50em;
-  max-width:60em;
-  padding:$marginStep;
-  user-select:none;
-  width:100%;
+  background-color: $background30;
+  border-radius: $borderRadius;
+  box-sizing: border-box;
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  margin: 0 auto;
+  min-height: 25em;
+  max-height: 50em;
+  max-width: 60em;
+  user-select: none;
+  width: 100%;
 
-  .categories {
-    background-color:$background10;
-    background:linear-gradient(180deg, $background10 0%, $background15 100%);
-    border-radius:$borderRadius;
-    flex-grow:1;
-    font-size:80%;
-    margin-right:$marginStep;
-    max-width:14em;
-    overflow-y:auto;
-    padding:$marginStep;
+  .search-bar {
+    display: flex;
+    margin: $marginStep $marginStep 0;
 
-    & > div {
-      background-color:$background20;
-      border:$thin solid $background30;
-      border-radius:$borderRadius;
-      color:$qColor;
-      cursor:pointer;
-      margin:$marginStep / 2 0;
-      overflow:hidden;
-      padding:0.3333em 0.5em;
-      text-overflow:ellipsis;
-      text-shadow:$thin $thin $thin #000;
-      white-space:nowrap;
-
-      &:first-child {margin-top:0}
-
-      &[data-selected] {
-        box-shadow: inset 0 0 $thin * 3 $thin * 2 $highlightBorderColor;
-      }
+    .title {
+      flex-grow: 1;
+      margin: $marginStep;
+      margin-right: 0;
+      max-width: 12em;
     }
 
-    .subcategory {
-      color:#DDD;
-      margin-left:1em;
-
-      &:not([data-visible]) {display:none}
+    .search-box {
+      flex-grow: 4;
+      margin: $marginStep;
     }
   }
 
-  .search-result {
-    background-color:$background10;
-    background:linear-gradient(180deg, $background10 0%, $background15 100%);
-    border-radius:$borderRadius;
-    padding:$marginStep / 2;
-    flex-grow:4;
+  .main-result {
+    display: flex;
+    flex-grow: 1;
 
-    .price {width:calc(30% - 4em)}
-    .name {width:50%}
-    .quantity {flex-grow:1}
-
-    .row, .heading {display:flex}
-
-    .heading {
-      background-color:$background20;
-      border-radius:$borderRadius;
-      font-size:85%;
-
-      div {
-        border:$thin solid $background40;
-        border-bottom:0;
-        border-radius:$borderRadius / 2;
-        padding:0.25em 0 0.25em 0.25em;
-      }
-
-      .price {width:calc(30% - 0.25em - 1em)}
-      .name {width:calc(50% - 0.25em)}
+    & > div {
+      margin: $marginStep
     }
 
-    .row {
-      .price {
-        display:flex;
-        justify-content:flex-end;
-        margin:0 2em;
+    .categories {
+      background-color: $background10;
+      background: linear-gradient(180deg, $background10 0%, $background15 100%);
+      border-radius: $borderRadius;
+      flex-grow: 1;
+      margin: $marginStep 0 $marginStep $marginStep;
+      max-width: 12em;
+      overflow-y: auto;
+      padding: $marginStep / 2;
 
-        .silver {
-          margin-left:1em;
-          padding-right:1em;
-          text-align:right;
-          width:1.5em;
+      & > div {
+        background-color: $background20;
+        border: $thin solid $background30;
+        border-radius: $borderRadius;
+        color: $qColor;
+        cursor: pointer;
+        font-size: 80%;
+        margin: $marginStep / 2 0;
+        overflow: hidden;
+        padding: 0.3333em 0.5em;
+        text-overflow: ellipsis;
+        text-shadow: $thin $thin $thin #000;
+        white-space: nowrap;
+
+        &:first-child {
+          margin-top: 0
+        }
+
+        &[data-selected] {
+          box-shadow: inset 0 0 $thin * 3 $thin * 2 $highlightBorderColor;
+        }
+      }
+
+      .subcategory {
+        color: #DDD;
+        margin-left: 1em;
+
+        &:not([data-visible]) {
+          display: none
         }
       }
     }
+
+    .search-result {
+      background-color: $background10;
+      background: linear-gradient(180deg, $background10 0%, $background15 100%);
+      border-radius: $borderRadius;
+      padding: $marginStep / 2;
+      flex-grow: 4;
+
+      .price {
+        width: calc(30% - 4em)
+      }
+
+      .name {
+        width: 50%
+      }
+
+      .quantity {
+        flex-grow: 1
+      }
+
+      .row, .heading {
+        display: flex
+      }
+
+      .heading {
+        background-color: $background20;
+        border-radius: $borderRadius;
+        font-size: 85%;
+
+        div {
+          border: $thin solid $background40;
+          border-bottom: 0;
+          border-radius: $borderRadius / 2;
+          padding: 0.25em 0 0.25em 0.25em;
+        }
+
+        .price {
+          width: calc(30% - 0.25em - 1em)
+        }
+
+        .name {
+          width: calc(50% - 0.25em)
+        }
+      }
+
+      .row {
+        .price {
+          display: flex;
+          justify-content: flex-end;
+          margin: 0 2em;
+
+          .silver {
+            margin-left: 1em;
+            padding-right: 1em;
+            text-align: right;
+            width: 1.5em;
+          }
+        }
+      }
+    }
+
+    .item {
+      display: none
+    }
   }
 
-  .item {display:none}
+  .bottom-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin: $marginStep;
+    margin-top: 0;
+
+    .links {
+      font-size: 75%;
+      margin: 0 $marginStep;
+    }
+  }
 }
