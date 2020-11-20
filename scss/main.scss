@@ -139,13 +139,13 @@ body {
 
       .heading {
         background-color: $background20;
-        border-radius: $borderRadius;
+        border-radius: $borderRadius $borderRadius 0 0;
         font-size: 85%;
 
         div {
           border: $thin solid $background40;
           border-bottom: 0;
-          border-radius: $borderRadius / 2;
+          border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
           padding: 0.25em 0 0.25em 0.25em;
         }
 
