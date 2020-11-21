@@ -377,6 +377,17 @@
     // Init //
     //      //
 
+    /**
+     * Empty the item list. This is done separately from showing the list so we can ensure old results are wiped out
+     * while we build a new long list.
+     */
+    function emptyItemList() {
+        const parent = qs('.main .search-result-target');
+        while (parent.hasChildNodes()) {
+            parent.removeChild(parent.firstChild);
+        }
+    }
+
     async function init() {
         await Categories.init();
         await Items.init();
@@ -384,7 +395,10 @@
         qs('.main .search-box button').addEventListener('click', function () {
             const itemsList = Items.search();
             Auctions.hydrateList(itemsList);
-            showItemList(itemsList);
+            emptyItemList();
+            requestAnimationFrame(function () {
+                requestAnimationFrame(showItemList.bind(null, itemsList));
+            });
         });
     }
 
