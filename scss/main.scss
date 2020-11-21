@@ -5,25 +5,43 @@ $background20: #222;
 $background30: #333;
 $background40: #444;
 
-$text10: #DDD;
+$text10: #EEE;
 
 $qColor: #CA4;
 $highlightBorderColor: #ffff98;
 
-$fontSizeMain: 17.5px;
+$fontArial: "Arial Narrow", sans-serif;
+$fontSizeArial: 19px;
+$fontFriz: "Friz Quadrata TT", sans-serif;
+$fontSizeFriz: 16px;
 
 $borderRadius: 8px;
 $marginStep: 8px;
 $thin: 1px;
+
+$pageMinHeight: 400px;
+$pageMaxHeight: 800px;
+$pageMaxWidth: 1050px;
+
+$categoryMaxWidth: 200px;
+$priceWidth: 175px;
+$silverWidth: 35px;
+
+@font-face {
+  font-family: "Arial Narrow";
+  src: url("../fonts/arialn.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Friz Quadrata TT";
+  src: url("../fonts/frizqt__.ttf") format("truetype");
+}
 
 body {
   align-items: center;
   background-color: $background00;
   color: $text10;
   display: flex;
-  font-size: $fontSizeMain;
-  font-family: sans-serif;
-  min-height: 25em;
+  min-height: $pageMinHeight;
   height: 100vh;
   margin: 0;
 
@@ -40,9 +58,9 @@ body {
   height: 100vh;
   flex-direction: column;
   margin: 0 auto;
-  min-height: 25em;
-  max-height: 50em;
-  max-width: 60em;
+  min-height: $pageMinHeight;
+  max-height: $pageMaxHeight;
+  max-width: $pageMaxWidth;
   user-select: none;
   width: 100%;
 
@@ -54,7 +72,6 @@ body {
       flex-grow: 1;
       margin: $marginStep;
       margin-right: 0;
-      max-width: 12em;
     }
 
     .search-box {
@@ -86,7 +103,7 @@ body {
         flex-grow: 1;
         position: relative;
         margin: $marginStep 0 $marginStep $marginStep;
-        max-width: 12em;
+        max-width: $categoryMaxWidth;
       }
 
       & > div {
@@ -95,10 +112,10 @@ body {
         border-radius: $borderRadius;
         color: $qColor;
         cursor: pointer;
-        font-size: 80%;
+        font: $fontSizeFriz * 0.85 $fontFriz;
         margin: $marginStep / 2 0;
         overflow: hidden;
-        padding: 0.3333em 0.5em;
+        padding: $marginStep * 0.5 $marginStep * 0.75;
         text-overflow: ellipsis;
         text-shadow: $thin $thin $thin #000;
         white-space: nowrap;
@@ -114,7 +131,7 @@ body {
 
       .subcategory {
         color: #DDD;
-        margin-left: 1em;
+        margin-left: $marginStep * 2;
 
         &:not([data-visible]) {
           display: none
@@ -126,8 +143,9 @@ body {
       background-color: $background10;
       background: linear-gradient(180deg, $background10 0%, $background15 100%);
       border-radius: $borderRadius;
-      position: relative;
       flex-grow: 4;
+      font: $fontSizeArial $fontArial;
+      position: relative;
 
       .search-result-border {
         border: $thin solid $background30;
@@ -151,13 +169,13 @@ body {
         thead {
           background-color: $background20;
           border-radius: $borderRadius $borderRadius 0 0;
-          font-size: 85%;
+          font: $fontSizeFriz * 0.8 $fontFriz;
 
           td {
             border: $thin solid $background40;
             border-bottom-color: $background30;
             border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
-            padding: 0.25em 0 0.25em 0.25em;
+            padding: $marginStep / 2 0 $marginStep / 2 $marginStep / 2;
             &:first-child {border-left: 0}
             &:last-child {border-right: 0}
           }
@@ -168,8 +186,8 @@ body {
             padding: $marginStep / 4 $marginStep;
             &.price {
               text-align: right;
-              width: 10em;
-              .silver {display: inline-block; width: 2em}
+              width: $priceWidth;
+              .silver {display: inline-block; width: $silverWidth}
             }
 
             a {text-decoration:none}
@@ -179,7 +197,8 @@ body {
     }
 
     .item {
-      display: none
+      display: none;
+      font: $fontSizeArial $fontArial;
     }
   }
 
