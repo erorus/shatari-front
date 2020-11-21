@@ -118,15 +118,21 @@ body {
       background-color: $background10;
       background: linear-gradient(180deg, $background10 0%, $background15 100%);
       border-radius: $borderRadius;
-      padding: $marginStep / 2;
+      position: relative;
       flex-grow: 4;
 
       .search-result-border {
         border: $thin solid $background30;
-        border-top:0;
+        border-top: 0;
         border-radius: $borderRadius / 2;
-        height:100%;
-        overflow-y:auto;
+        bottom: $marginStep / 2;
+        left: $marginStep / 2;
+        overflow-y: auto;
+        position: absolute;
+        right: $marginStep / 2;
+        top: $marginStep / 2;
+
+        &:empty {display: none}
       }
 
       table {
@@ -144,8 +150,8 @@ body {
             border-bottom-color: $background30;
             border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
             padding: 0.25em 0 0.25em 0.25em;
-            &:first-child {border-left:0}
-            &:last-child {border-right:0}
+            &:first-child {border-left: 0}
+            &:last-child {border-right: 0}
           }
         }
 
@@ -153,10 +159,10 @@ body {
           td {
             padding: $marginStep / 4 $marginStep;
             &.price {
-              text-align:right;
+              text-align: right;
               width: 10em;
-              .gold, .silver {padding-right:1em} // gold/silver icons
-              .silver {display:inline-block; width:1.75em}
+              .gold, .silver {padding-right: 1em} // gold/silver icons
+              .silver {display: inline-block; width: 1.75em}
             }
           }
         }

@@ -3,6 +3,29 @@
     const qs = document.body.querySelector.bind(document.body);
     const qsa = document.body.querySelectorAll.bind(document.body);
 
+    const Auctions = new function () {
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Hydrates a list of items with prices and quantities for the currently-selected realm.
+         *
+         * @param {{object}[]} items
+         */
+        this.hydrateList = function (items) {
+            items.forEach(function (item) {
+                // TODO
+                item.price = Math.ceil(Math.random() * 10000 * (Math.pow(10, Math.random() * 4))) + 100;
+                item.quantity = Math.ceil(Math.random() * 200);
+            });
+        }
+    };
+
     const Categories = new function () {
         // ********************* //
         // ***** VARIABLES ***** //
@@ -161,7 +184,7 @@
 
             return my.categories = await response.json();
         }
-    }
+    };
 
     const Items = new function () {
         // ********************* //
@@ -278,7 +301,7 @@
 
             my.names = await response.json();
         }
-    }
+    };
 
     //                           //
     // Generic Utility Functions //
@@ -338,12 +361,81 @@
         await Categories.init();
         await Items.init();
 
-        initSearchBox();
+        qs('.main .search-box button').addEventListener('click', function () {
+            const itemsList = Items.search();
+            Auctions.hydrateList(itemsList);
+            showItemList(itemsList);
+        });
     }
 
-    function initSearchBox() {
-        qs('.main .search-box button').addEventListener('click', function () {
-            console.log(Items.search());
+    /**
+     * Returns a document fragment for the given price.
+     *
+     * @param {number} coppers
+     * @return {DocumentFragment}
+     */
+    function priceHtml(coppers) {
+        const df = document.createDocumentFragment();
+        coppers = Math.abs(coppers);
+        const silver = Math.floor(coppers / 100) % 100;
+        const gold = Math.floor(coppers / 10000);
+
+        if (gold > 0) {
+            df.appendChild(ce('span', {className: 'gold'}, ct(gold.toLocaleString())));
+        }
+        df.appendChild(ce('span', {className: 'silver'}, ct(silver)));
+
+        return df;
+    }
+
+    /**
+     * Given an pricing-hydrated list of items, show it in the UI.
+     *
+     * @param {{object}[]} itemsList
+     */
+    function showItemList(itemsList) {
+        const parent = qs('.main .search-result-target');
+        while (parent.hasChildNodes()) {
+            parent.removeChild(parent.firstChild);
+        }
+
+        let tr, td;
+
+        const table = ce('table');
+        parent.appendChild(table);
+        const thead = ce('thead');
+        table.appendChild(thead);
+
+        thead.appendChild(tr = ce('tr'));
+        tr.appendChild(ce('td', {}, ct('Price')));
+        tr.appendChild(ce('td', {}, ct('Name')));
+        tr.appendChild(ce('td', {}, ct('Available')));
+
+        const tbody = ce('tbody');
+        table.appendChild(tbody);
+        itemsList.forEach(function (item) {
+            tbody.appendChild(tr = ce('tr'));
+            tr.appendChild(ce('td', {
+                className: 'price',
+                dataset: {
+                    sortValue: item.price || 0,
+                },
+            }, priceHtml(item.price || 0)));
+
+            tr.appendChild(td = ce('td', {
+                className: 'name',
+                dataset: {
+                    sortValue: item.name,
+                },
+            }));
+            td.appendChild(ct(item.name));
+
+            tr.appendChild(ce('td', {
+                className: 'quantity',
+                dataset: {
+                    sortValue: item.quantity || 0,
+                },
+            }, ct((item.quantity || 0).toLocaleString())));
         });
     }
 

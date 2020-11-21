@@ -75,14 +75,20 @@ body {
       background-color: #111;
       background: linear-gradient(180deg, #111 0%, #1a1a1a 100%);
       border-radius: 8px;
-      padding: 4px;
+      position: relative;
       flex-grow: 4; }
       .main .main-result .search-result .search-result-border {
         border: 1px solid #333;
         border-top: 0;
         border-radius: 4px;
-        height: 100%;
-        overflow-y: auto; }
+        bottom: 4px;
+        left: 4px;
+        overflow-y: auto;
+        position: absolute;
+        right: 4px;
+        top: 4px; }
+        .main .main-result .search-result .search-result-border:empty {
+          display: none; }
       .main .main-result .search-result table {
         border-radius: 8px 8px 0 0;
         border-spacing: 0;
