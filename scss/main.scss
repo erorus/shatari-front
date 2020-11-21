@@ -169,8 +169,7 @@ body {
             &.price {
               text-align: right;
               width: 10em;
-              .gold, .silver {padding-right: 1em} // gold/silver icons
-              .silver {display: inline-block; width: 1.75em}
+              .silver {display: inline-block; width: 2em}
             }
 
             a {text-decoration:none}

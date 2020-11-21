@@ -117,11 +117,9 @@ body {
           .main .main-result .search-result table tbody td.price {
             text-align: right;
             width: 10em; }
-            .main .main-result .search-result table tbody td.price .gold, .main .main-result .search-result table tbody td.price .silver {
-              padding-right: 1em; }
             .main .main-result .search-result table tbody td.price .silver {
               display: inline-block;
-              width: 1.75em; }
+              width: 2em; }
           .main .main-result .search-result table tbody td a {
             text-decoration: none; }
     .main .main-result .item {
