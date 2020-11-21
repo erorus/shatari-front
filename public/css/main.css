@@ -9,6 +9,7 @@ body {
   background-color: #000;
   color: #EEE;
   display: flex;
+  font: 16px sans-serif;
   min-height: 400px;
   height: 100vh;
   margin: 0; }
@@ -124,8 +125,18 @@ body {
             .main .main-result .search-result table tbody td.price .silver {
               display: inline-block;
               width: 35px; }
-          .main .main-result .search-result table tbody td a {
+          .main .main-result .search-result table tbody td.name a {
             text-decoration: none; }
+          .main .main-result .search-result table tbody td.name img {
+            border: 1px solid #808080;
+            border-right-color: #555;
+            border-bottom-color: #555;
+            border-radius: 4px;
+            height: 17px;
+            margin-right: 6px;
+            position: relative;
+            top: 2px;
+            width: 17px; }
     .main .main-result .item {
       display: none;
       font: 19px "Arial Narrow", sans-serif; }

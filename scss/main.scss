@@ -41,6 +41,7 @@ body {
   background-color: $background00;
   color: $text10;
   display: flex;
+  font: 16px sans-serif;
   min-height: $pageMinHeight;
   height: 100vh;
   margin: 0;
@@ -190,7 +191,20 @@ body {
               .silver {display: inline-block; width: $silverWidth}
             }
 
-            a {text-decoration:none}
+            &.name {
+              a {text-decoration: none}
+              img {
+                border: 1px solid #808080;
+                border-right-color: #555;
+                border-bottom-color: #555;
+                border-radius: 4px;
+                height: $fontSizeArial - 2px;
+                margin-right: 6px;
+                position: relative;
+                top: 2px;
+                width: $fontSizeArial - 2px;
+              }
+            }
           }
         }
       }
@@ -215,4 +229,4 @@ body {
   }
 }
 
-.wowhead-tooltip-powered {display:none !important}
+.wowhead-tooltip-powered {display: none !important}

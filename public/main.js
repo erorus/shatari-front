@@ -430,10 +430,8 @@
     function showItemList(itemsList) {
         const detailColumn = Categories.getDetailColumn();
 
+        emptyItemList();
         const parent = qs('.main .search-result-target');
-        while (parent.hasChildNodes()) {
-            parent.removeChild(parent.firstChild);
-        }
 
         let tr, td;
 
@@ -471,6 +469,10 @@
                 href: '#',
                 dataset: {wowhead: 'item=' + item.id},
             });
+            a.appendChild(ce('img', {
+                //src: 'icons/tiny/' + item.icon + '.png',
+                src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
+            }));
             a.appendChild(ct(item.name));
             td.appendChild(a);
 
@@ -497,6 +499,8 @@
                 },
             }, ct((item.quantity || 0).toLocaleString())));
         });
+
+        parent.scrollTop = 0;
     }
 
     init().catch(alert);
