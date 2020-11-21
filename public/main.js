@@ -1,4 +1,4 @@
-(function () {
+new function () {
     const ct = document.createTextNode.bind(document);
     const qs = document.body.querySelector.bind(document.body);
     const qsa = document.body.querySelectorAll.bind(document.body);
@@ -333,6 +333,118 @@
     };
 
     /**
+     * Methods to handle realms and connected realms.
+     */
+    const Realms = new function () {
+        // ********************* //
+        // ***** CONSTANTS ***** //
+        // ********************* //
+
+        this.REGION_US = 'us';
+        this.REGION_EU = 'eu';
+
+        const REGIONS = [this.REGION_US, this.REGION_EU];
+
+        // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = {
+            realms: undefined,
+        };
+
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Get a copy of the realm object for the given realm ID, or undefined if not found.
+         * @param {number} realmId
+         * @return {object|undefined}
+         */
+        this.getRealm = function (realmId) {
+            if (!my.realms[realmId]) {
+                return;
+            }
+
+            let result = {};
+            co(result, my.realms[realmId]);
+
+            return result;
+        }
+
+        /**
+         * Fetches the realm list data and creates the realm list dropdown.
+         */
+        this.init = async function () {
+            await getRealms();
+
+            const select = qs('.main .realms-box select');
+            const removePlaceholder = function () {
+                if (!select.options[0].value) {
+                    if (select.selectedIndex !== 0) {
+                        select.removeChild(select.querySelector('option[value=""]'));
+                        select.removeEventListener('change', removePlaceholder);
+                    }
+                } else {
+                    select.removeEventListener('change', removePlaceholder);
+                }
+            }
+            select.addEventListener('change', removePlaceholder);
+
+            const byRegion = {};
+            for (let k in my.realms) {
+                if (!my.realms.hasOwnProperty(k)) {
+                    continue;
+                }
+
+                let realm = my.realms[k];
+                byRegion[realm.region] = byRegion[realm.region] || [];
+                byRegion[realm.region].push(realm);
+            }
+
+            REGIONS.forEach(region => {
+                if (!byRegion.hasOwnProperty(region)) {
+                    return;
+                }
+
+                byRegion[region].sort(function (a, b) {
+                    return a.name.localeCompare(b.name);
+                });
+
+                byRegion[region].forEach(realm => {
+                    let o = ce('option');
+                    o.value = realm.id;
+                    o.label = region.toUpperCase() + ' ' + realm.name;
+                    o.appendChild(ct(o.label));
+
+                    select.appendChild(o);
+                });
+            });
+        }
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Fetches the realm list and stores it locally.
+         */
+        async function getRealms() {
+            const response = await fetch('json/realm-list.enus.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of realms!';
+            }
+
+            my.realms = await response.json();
+        }
+    }
+
+    /**
      * Manages the search result list.
      */
     const Search = new function () {
@@ -581,8 +693,11 @@
     //      //
 
     async function init() {
-        await Categories.init();
-        await Items.init();
+        await Promise.all([
+            Categories.init(),
+            Items.init(),
+            Realms.init()
+        ]);
 
         qs('.main .search-box button').addEventListener('click', function () {
             const itemsList = Items.search();
@@ -592,4 +707,4 @@
     }
 
     init().catch(alert);
-})();
+};

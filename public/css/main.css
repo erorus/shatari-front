@@ -32,12 +32,7 @@ body {
   .main .search-bar {
     display: flex;
     margin: 8px 8px 0; }
-    .main .search-bar .title {
-      flex-grow: 1;
-      margin: 8px;
-      margin-right: 0; }
-    .main .search-bar .search-box {
-      flex-grow: 4;
+    .main .search-bar > div {
       margin: 8px; }
   .main .main-result {
     display: flex;

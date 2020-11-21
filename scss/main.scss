@@ -69,14 +69,7 @@ body {
     display: flex;
     margin: $marginStep $marginStep 0;
 
-    .title {
-      flex-grow: 1;
-      margin: $marginStep;
-      margin-right: 0;
-    }
-
-    .search-box {
-      flex-grow: 4;
+    & > div {
       margin: $marginStep;
     }
   }
