@@ -172,6 +172,8 @@ body {
               .gold, .silver {padding-right: 1em} // gold/silver icons
               .silver {display: inline-block; width: 1.75em}
             }
+
+            a {text-decoration:none}
           }
         }
       }
@@ -194,3 +196,5 @@ body {
     }
   }
 }
+
+.wowhead-tooltip-powered {display:none !important}

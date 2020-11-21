@@ -122,6 +122,8 @@ body {
             .main .main-result .search-result table tbody td.price .silver {
               display: inline-block;
               width: 1.75em; }
+          .main .main-result .search-result table tbody td a {
+            text-decoration: none; }
     .main .main-result .item {
       display: none; }
   .main .bottom-bar {
@@ -132,5 +134,8 @@ body {
     .main .bottom-bar .links {
       font-size: 75%;
       margin: 0 8px; }
+
+.wowhead-tooltip-powered {
+  display: none !important; }
 
 /*# sourceMappingURL=main.css.map */

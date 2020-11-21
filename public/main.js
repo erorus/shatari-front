@@ -467,7 +467,12 @@
                     sortValue: item.name,
                 },
             }));
-            td.appendChild(ct(item.name));
+            let a = ce('a', {
+                href: '#',
+                dataset: {wowhead: 'item=' + item.id},
+            });
+            a.appendChild(ct(item.name));
+            td.appendChild(a);
 
             if (detailColumn) {
                 let value = item[detailColumn.prop];
