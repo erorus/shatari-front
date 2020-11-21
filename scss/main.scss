@@ -72,14 +72,22 @@ body {
     }
 
     .categories {
-      background-color: $background10;
-      background: linear-gradient(180deg, $background10 0%, $background15 100%);
-      border-radius: $borderRadius;
-      flex-grow: 1;
-      margin: $marginStep 0 $marginStep $marginStep;
-      max-width: 12em;
+      bottom: $marginStep / 2;
+      left: $marginStep / 2;
       overflow-y: auto;
-      padding: $marginStep / 2;
+      position: absolute;
+      right: $marginStep / 2;
+      top: $marginStep / 2;
+
+      &-parent {
+        background-color: $background10;
+        background: linear-gradient(180deg, $background10 0%, $background15 100%);
+        border-radius: $borderRadius;
+        flex-grow: 1;
+        position: relative;
+        margin: $marginStep 0 $marginStep $marginStep;
+        max-width: 12em;
+      }
 
       & > div {
         background-color: $background20;
