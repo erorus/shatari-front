@@ -35,6 +35,7 @@
             categories: undefined,
 
             classId: undefined,
+            detailColumn: undefined,
             subClassId: undefined,
         };
 
@@ -53,6 +54,22 @@
          */
         this.getClassId = function () {
             return my.classId;
+        }
+
+        /**
+         * Returns the detail column to show in the item list, based on the selected category.
+         *
+         * @return {object|undefined}
+         */
+        this.getDetailColumn = function () {
+            if (!my.detailColumn) {
+                return;
+            }
+
+            let result = {};
+            co(result, my.detailColumn);
+
+            return result;
         }
 
         /**
@@ -87,7 +104,7 @@
                     ct(cat.name)
                 );
                 categoriesParent.appendChild(catDiv);
-                catDiv.addEventListener('click', clickCategory.bind(null, catDiv));
+                catDiv.addEventListener('click', clickCategory.bind(null, catDiv, cat));
 
                 (cat.subcategories || []).forEach(function (subcat) {
                     const subcatDiv = ce(
@@ -116,8 +133,9 @@
          * Event handler for clicking a primary category.
          *
          * @param {HTMLElement} catDiv
+         * @param {object} cat
          */
-        function clickCategory(catDiv) {
+        function clickCategory(catDiv, cat) {
             const classId = parseInt(catDiv.dataset.classId);
             const wasSelected = !!catDiv.dataset.selected;
 
@@ -128,11 +146,13 @@
             });
             my.classId = undefined;
             my.subClassId = undefined;
+            my.detailColumn = undefined;
 
             if (!wasSelected) {
                 // Select this category.
                 catDiv.dataset.selected = 1;
                 my.classId = classId;
+                my.detailColumn = cat.detailColumn;
 
                 // Show any subcategories under this category.
                 qsa('.main .categories .subcategory[data-parent-class="' + classId + '"]').forEach(function (node) {
@@ -394,6 +414,8 @@
      * @param {{object}[]} itemsList
      */
     function showItemList(itemsList) {
+        const detailColumn = Categories.getDetailColumn();
+
         const parent = qs('.main .search-result-target');
         while (parent.hasChildNodes()) {
             parent.removeChild(parent.firstChild);
@@ -409,6 +431,9 @@
         thead.appendChild(tr = ce('tr'));
         tr.appendChild(ce('td', {}, ct('Price')));
         tr.appendChild(ce('td', {}, ct('Name')));
+        if (detailColumn) {
+            tr.appendChild(ce('td', {}, ct(detailColumn.name)));
+        }
         tr.appendChild(ce('td', {}, ct('Available')));
 
         const tbody = ce('tbody');
@@ -429,6 +454,22 @@
                 },
             }));
             td.appendChild(ct(item.name));
+
+            if (detailColumn) {
+                let value = item[detailColumn.prop];
+                if (detailColumn.prop === 'reqLevel' && value <= 1) {
+                    value = 1;
+                }
+                tr.appendChild(td = ce('td', {
+                    className: detailColumn.prop,
+                    dataset: {
+                        sortValue: value,
+                    },
+                }));
+                if (detailColumn.prop !== 'reqLevel' || value > 1) {
+                    td.appendChild(ct(value.toLocaleString()));
+                }
+            }
 
             tr.appendChild(ce('td', {
                 className: 'quantity',
