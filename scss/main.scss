@@ -179,6 +179,13 @@ body {
             padding: $marginStep / 2 0 $marginStep / 2 $marginStep / 2;
             &:first-child {border-left: 0}
             &:last-child {border-right: 0}
+
+            &[data-sort="asc"]::after {
+              content: " ^";
+            }
+            &[data-sort="desc"]::after {
+              content: " v";
+            }
           }
         }
 

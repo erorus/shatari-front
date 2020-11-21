@@ -377,6 +377,47 @@
     // Init //
     //      //
 
+    function columnSort(headerTd, isString) {
+        let dir = 'asc';
+        if (headerTd.dataset.sort === 'asc') {
+            dir = 'desc';
+        }
+
+        const headerTr = headerTd.parentNode;
+        const headerTds = headerTr.querySelectorAll('td');
+        let columnPos = 0;
+        for (let x = 0; x < headerTds.length; x++) {
+            delete headerTds[x].dataset.sort;
+            if (headerTds[x] === headerTd) {
+                columnPos = x + 1;
+            }
+        }
+
+        headerTd.dataset.sort = dir;
+        let table = headerTr;
+        while (table.tagName !== 'TABLE') {
+            table = table.parentNode;
+        }
+        let rows = Array.from(table.querySelectorAll('tbody tr'));
+        rows.sort(function (a, b) {
+            const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+            const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+
+            if (isString) {
+                return aVal.localeCompare(bVal);
+            }
+
+            return parseInt(aVal) - parseInt(bVal);
+        });
+
+        if (dir === 'desc') {
+            rows.reverse();
+        }
+        rows.forEach(function (row) {
+            row.parentNode.appendChild(row);
+        });
+    }
+
     /**
      * Empty the item list. This is done separately from showing the list so we can ensure old results are wiped out
      * while we build a new long list.
@@ -441,12 +482,16 @@
         table.appendChild(thead);
 
         thead.appendChild(tr = ce('tr'));
-        tr.appendChild(ce('td', {}, ct('Price')));
-        tr.appendChild(ce('td', {}, ct('Name')));
+        tr.appendChild(td = ce('td', {}, ct('Price')));
+        td.addEventListener('click', columnSort.bind(null, td, false));
+        tr.appendChild(td = ce('td', {}, ct('Name')));
+        td.addEventListener('click', columnSort.bind(null, td, true));
         if (detailColumn) {
-            tr.appendChild(ce('td', {}, ct(detailColumn.name)));
+            tr.appendChild(td = ce('td', {}, ct(detailColumn.name)));
+            td.addEventListener('click', columnSort.bind(null, td, false));
         }
-        tr.appendChild(ce('td', {}, ct('Available')));
+        tr.appendChild(td = ce('td', {}, ct('Available')));
+        td.addEventListener('click', columnSort.bind(null, td, false));
 
         const tbody = ce('tbody');
         table.appendChild(tbody);
@@ -499,6 +544,8 @@
                 },
             }, ct((item.quantity || 0).toLocaleString())));
         });
+
+        columnSort(thead.querySelector('td'), false);
 
         parent.scrollTop = 0;
     }
