@@ -3,6 +3,9 @@
     const qs = document.body.querySelector.bind(document.body);
     const qsa = document.body.querySelectorAll.bind(document.body);
 
+    /**
+     * Manages item prices and availability.
+     */
     const Auctions = new function () {
         // ********************* //
         // ***** FUNCTIONS ***** //
@@ -26,6 +29,9 @@
         }
     };
 
+    /**
+     * Manages the categories sidebar list.
+     */
     const Categories = new function () {
         // ********************* //
         // ***** VARIABLES ***** //
@@ -206,6 +212,9 @@
         }
     };
 
+    /**
+     * Methods to handle item data, independent of any prices.
+     */
     const Items = new function () {
         // ********************* //
         // ***** VARIABLES ***** //
@@ -323,6 +332,180 @@
         }
     };
 
+    /**
+     * Manages the search result list.
+     */
+    const Search = new function () {
+        const self = this;
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Given an pricing-hydrated list of items, show it in the UI.
+         *
+         * @param {{object}[]} itemsList
+         */
+        this.showResults = function (itemsList) {
+            emptyItemList();
+
+            requestAnimationFrame(function () {
+                requestAnimationFrame(
+                    showItemList.bind(self, itemsList)
+                );
+            });
+        };
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Sorts the result table by the given column.
+         *
+         * @param {HTMLTableCellElement} headerTd The header table cell for the column to sort.
+         * @param {boolean} isString True when this column has string values.
+         */
+        function columnSort(headerTd, isString) {
+            let dir = 'asc';
+            if (headerTd.dataset.sort === 'asc') {
+                dir = 'desc';
+            }
+
+            const headerTr = headerTd.parentNode;
+            const headerTds = headerTr.querySelectorAll('td');
+            let columnPos = 0;
+            for (let x = 0; x < headerTds.length; x++) {
+                delete headerTds[x].dataset.sort;
+                if (headerTds[x] === headerTd) {
+                    columnPos = x + 1;
+                }
+            }
+
+            headerTd.dataset.sort = dir;
+            let table = headerTr;
+            while (table.tagName !== 'TABLE') {
+                table = table.parentNode;
+            }
+            let rows = Array.from(table.querySelectorAll('tbody tr'));
+            rows.sort(function (a, b) {
+                const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+                const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+
+                if (isString) {
+                    return aVal.localeCompare(bVal);
+                }
+
+                return parseInt(aVal) - parseInt(bVal);
+            });
+
+            if (dir === 'desc') {
+                rows.reverse();
+            }
+            rows.forEach(function (row) {
+                row.parentNode.appendChild(row);
+            });
+        }
+
+        /**
+         * Empty the item list. This is done separately from showing the list so we can ensure old results are wiped out
+         * while we build a new long list.
+         */
+        function emptyItemList() {
+            const parent = qs('.main .search-result-target');
+            while (parent.hasChildNodes()) {
+                parent.removeChild(parent.firstChild);
+            }
+        }
+
+        /**
+         * Given an pricing-hydrated list of items, show it in the UI.
+         *
+         * @param {{object}[]} itemsList
+         */
+        function showItemList(itemsList) {
+            const detailColumn = Categories.getDetailColumn();
+
+            const parent = qs('.main .search-result-target');
+
+            let tr, td;
+
+            const table = ce('table');
+            parent.appendChild(table);
+            const thead = ce('thead');
+            table.appendChild(thead);
+
+            thead.appendChild(tr = ce('tr'));
+            tr.appendChild(td = ce('td', {}, ct('Price')));
+            td.addEventListener('click', columnSort.bind(null, td, false));
+            tr.appendChild(td = ce('td', {}, ct('Name')));
+            td.addEventListener('click', columnSort.bind(null, td, true));
+            if (detailColumn) {
+                tr.appendChild(td = ce('td', {}, ct(detailColumn.name)));
+                td.addEventListener('click', columnSort.bind(null, td, false));
+            }
+            tr.appendChild(td = ce('td', {}, ct('Available')));
+            td.addEventListener('click', columnSort.bind(null, td, false));
+
+            const tbody = ce('tbody');
+            table.appendChild(tbody);
+            itemsList.forEach(function (item) {
+                tbody.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {
+                    className: 'price',
+                    dataset: {
+                        sortValue: item.price || 0,
+                    },
+                }, priceHtml(item.price || 0)));
+
+                tr.appendChild(td = ce('td', {
+                    className: 'name',
+                    dataset: {
+                        sortValue: item.name,
+                    },
+                }));
+                let a = ce('a', {
+                    href: '#',
+                    dataset: {wowhead: 'item=' + item.id},
+                });
+                a.appendChild(ce('img', {
+                    //src: 'icons/tiny/' + item.icon + '.png',
+                    src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
+                }));
+                a.appendChild(ct(item.name));
+                td.appendChild(a);
+
+                if (detailColumn) {
+                    let value = item[detailColumn.prop];
+                    if (detailColumn.prop === 'reqLevel' && value <= 1) {
+                        value = 1;
+                    }
+                    tr.appendChild(td = ce('td', {
+                        className: detailColumn.prop,
+                        dataset: {
+                            sortValue: value,
+                        },
+                    }));
+                    if (detailColumn.prop !== 'reqLevel' || value > 1) {
+                        td.appendChild(ct(value.toLocaleString()));
+                    }
+                }
+
+                tr.appendChild(ce('td', {
+                    className: 'quantity',
+                    dataset: {
+                        sortValue: item.quantity || 0,
+                    },
+                }, ct((item.quantity || 0).toLocaleString())));
+            });
+
+            columnSort(thead.querySelector('td'), false);
+
+            parent.scrollTop = 0;
+        }
+    }
+
     //                           //
     // Generic Utility Functions //
     //                           //
@@ -373,76 +556,6 @@
         }
     }
 
-    //      //
-    // Init //
-    //      //
-
-    function columnSort(headerTd, isString) {
-        let dir = 'asc';
-        if (headerTd.dataset.sort === 'asc') {
-            dir = 'desc';
-        }
-
-        const headerTr = headerTd.parentNode;
-        const headerTds = headerTr.querySelectorAll('td');
-        let columnPos = 0;
-        for (let x = 0; x < headerTds.length; x++) {
-            delete headerTds[x].dataset.sort;
-            if (headerTds[x] === headerTd) {
-                columnPos = x + 1;
-            }
-        }
-
-        headerTd.dataset.sort = dir;
-        let table = headerTr;
-        while (table.tagName !== 'TABLE') {
-            table = table.parentNode;
-        }
-        let rows = Array.from(table.querySelectorAll('tbody tr'));
-        rows.sort(function (a, b) {
-            const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
-            const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
-
-            if (isString) {
-                return aVal.localeCompare(bVal);
-            }
-
-            return parseInt(aVal) - parseInt(bVal);
-        });
-
-        if (dir === 'desc') {
-            rows.reverse();
-        }
-        rows.forEach(function (row) {
-            row.parentNode.appendChild(row);
-        });
-    }
-
-    /**
-     * Empty the item list. This is done separately from showing the list so we can ensure old results are wiped out
-     * while we build a new long list.
-     */
-    function emptyItemList() {
-        const parent = qs('.main .search-result-target');
-        while (parent.hasChildNodes()) {
-            parent.removeChild(parent.firstChild);
-        }
-    }
-
-    async function init() {
-        await Categories.init();
-        await Items.init();
-
-        qs('.main .search-box button').addEventListener('click', function () {
-            const itemsList = Items.search();
-            Auctions.hydrateList(itemsList);
-            emptyItemList();
-            requestAnimationFrame(function () {
-                requestAnimationFrame(showItemList.bind(null, itemsList));
-            });
-        });
-    }
-
     /**
      * Returns a document fragment for the given price.
      *
@@ -463,91 +576,19 @@
         return df;
     }
 
-    /**
-     * Given an pricing-hydrated list of items, show it in the UI.
-     *
-     * @param {{object}[]} itemsList
-     */
-    function showItemList(itemsList) {
-        const detailColumn = Categories.getDetailColumn();
+    //      //
+    // Init //
+    //      //
 
-        emptyItemList();
-        const parent = qs('.main .search-result-target');
+    async function init() {
+        await Categories.init();
+        await Items.init();
 
-        let tr, td;
-
-        const table = ce('table');
-        parent.appendChild(table);
-        const thead = ce('thead');
-        table.appendChild(thead);
-
-        thead.appendChild(tr = ce('tr'));
-        tr.appendChild(td = ce('td', {}, ct('Price')));
-        td.addEventListener('click', columnSort.bind(null, td, false));
-        tr.appendChild(td = ce('td', {}, ct('Name')));
-        td.addEventListener('click', columnSort.bind(null, td, true));
-        if (detailColumn) {
-            tr.appendChild(td = ce('td', {}, ct(detailColumn.name)));
-            td.addEventListener('click', columnSort.bind(null, td, false));
-        }
-        tr.appendChild(td = ce('td', {}, ct('Available')));
-        td.addEventListener('click', columnSort.bind(null, td, false));
-
-        const tbody = ce('tbody');
-        table.appendChild(tbody);
-        itemsList.forEach(function (item) {
-            tbody.appendChild(tr = ce('tr'));
-            tr.appendChild(ce('td', {
-                className: 'price',
-                dataset: {
-                    sortValue: item.price || 0,
-                },
-            }, priceHtml(item.price || 0)));
-
-            tr.appendChild(td = ce('td', {
-                className: 'name',
-                dataset: {
-                    sortValue: item.name,
-                },
-            }));
-            let a = ce('a', {
-                href: '#',
-                dataset: {wowhead: 'item=' + item.id},
-            });
-            a.appendChild(ce('img', {
-                //src: 'icons/tiny/' + item.icon + '.png',
-                src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
-            }));
-            a.appendChild(ct(item.name));
-            td.appendChild(a);
-
-            if (detailColumn) {
-                let value = item[detailColumn.prop];
-                if (detailColumn.prop === 'reqLevel' && value <= 1) {
-                    value = 1;
-                }
-                tr.appendChild(td = ce('td', {
-                    className: detailColumn.prop,
-                    dataset: {
-                        sortValue: value,
-                    },
-                }));
-                if (detailColumn.prop !== 'reqLevel' || value > 1) {
-                    td.appendChild(ct(value.toLocaleString()));
-                }
-            }
-
-            tr.appendChild(ce('td', {
-                className: 'quantity',
-                dataset: {
-                    sortValue: item.quantity || 0,
-                },
-            }, ct((item.quantity || 0).toLocaleString())));
+        qs('.main .search-box button').addEventListener('click', function () {
+            const itemsList = Items.search();
+            Auctions.hydrateList(itemsList);
+            Search.showResults(itemsList);
         });
-
-        columnSort(thead.querySelector('td'), false);
-
-        parent.scrollTop = 0;
     }
 
     init().catch(alert);
