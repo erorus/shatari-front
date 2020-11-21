@@ -255,7 +255,7 @@ new function () {
             const subClassId = Categories.getSubClassId();
 
             const wordExpressions = [];
-            const searchBox = qs('.main .search-box input[type="text"]');
+            const searchBox = qs('.main .search-bar input[type="text"]');
             searchBox.value.replace(/^\s+|\s+$/, '').split(/\s+/).forEach(function (word) {
                 wordExpressions.push(new RegExp('\\b' + escapeRegExp(word), 'i'));
             });
@@ -383,7 +383,7 @@ new function () {
         this.init = async function () {
             await getRealms();
 
-            const select = qs('.main .realms-box select');
+            const select = qs('.main .search-bar select');
             const removePlaceholder = function () {
                 if (!select.options[0].value) {
                     if (select.selectedIndex !== 0) {
@@ -701,7 +701,7 @@ new function () {
             Realms.init()
         ]);
 
-        qs('.main .search-box button').addEventListener('click', function () {
+        qs('.main .search-bar button').addEventListener('click', function () {
             const itemsList = Items.search();
             Auctions.hydrateList(itemsList);
             Search.showResults(itemsList);

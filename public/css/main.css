@@ -6,7 +6,7 @@
   src: url("../fonts/frizqt__.ttf") format("truetype"); }
 body {
   align-items: center;
-  background-color: #000;
+  background-color: #060100;
   color: #EEE;
   display: flex;
   font: 16px sans-serif;
@@ -32,8 +32,26 @@ body {
   .main .search-bar {
     display: flex;
     margin: 8px 8px 0; }
-    .main .search-bar > div {
+    .main .search-bar > * {
+      flex-grow: 1;
       margin: 8px; }
+    .main .search-bar select, .main .search-bar input, .main .search-bar button {
+      font-family: "Friz Quadrata TT", sans-serif;
+      font-size: 12.8px; }
+    .main .search-bar select, .main .search-bar input {
+      background-color: #282322;
+      border: 2px solid;
+      border-color: #060100 #060100 #4a4644;
+      border-radius: 8px;
+      color: #EEE;
+      padding: 4px; }
+    .main .search-bar input[type="text"] {
+      background-image: linear-gradient(rgba(40, 35, 34, 0.5), rgba(40, 35, 34, 0.5)), url("../images/eyeglass.png");
+      background-position: 3px center;
+      background-repeat: no-repeat;
+      background-size: 1.25em;
+      flex-grow: 5;
+      padding-left: 2em; }
   .main .main-result {
     display: flex;
     flex-grow: 1; }
@@ -49,6 +67,8 @@ body {
       .main .main-result .categories-parent {
         background-color: #161211;
         background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
+        border: 2px solid;
+        border-color: #060100 #161211 #4a4644;
         border-radius: 8px;
         flex-grow: 1;
         position: relative;
@@ -56,7 +76,8 @@ body {
         max-width: 200px; }
       .main .main-result .categories > div {
         background-color: #282322;
-        border: 1px solid #393433;
+        border: 2px solid;
+        border-color: #393433 #282322 #161211;
         border-radius: 8px;
         color: #CA4;
         cursor: pointer;
@@ -83,6 +104,8 @@ body {
     .main .main-result .search-result {
       background-color: #161211;
       background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
+      border: 2px solid;
+      border-color: #060100 #161211 #4a4644;
       border-radius: 8px;
       flex-grow: 4;
       font: 19px "Arial Narrow", sans-serif;

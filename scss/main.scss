@@ -1,7 +1,8 @@
-$background00: #000;
+$background00: #060100;
 $background10: #161211;
 $background15: #201b1a;
 $background20: #282322;
+$background20Tint: rgba(40,35,34,0.5);
 $background30: #393433;
 $background40: #4a4644;
 
@@ -24,6 +25,7 @@ $fontSizeFriz: 16px;
 $borderRadius: 8px;
 $marginStep: 8px;
 $thin: 1px;
+$bevel: 2px;
 
 $pageMinHeight: 400px;
 $pageMaxHeight: 800px;
@@ -75,8 +77,30 @@ body {
     display: flex;
     margin: $marginStep $marginStep 0;
 
-    & > div {
+    & > * {
+      flex-grow: 1;
       margin: $marginStep;
+    }
+
+    select, input, button {
+      font-family: $fontFriz;
+      font-size: $fontSizeFriz * 0.8;
+    }
+    select, input {
+      background-color: $background20;
+      border: $bevel solid;
+      border-color: $background00 $background00 $background40;
+      border-radius: $borderRadius;
+      color: $text10;
+      padding: $marginStep / 2;
+    }
+    input[type="text"] {
+      background-image: linear-gradient($background20Tint, $background20Tint), url("../images/eyeglass.png");
+      background-position: 3px center;
+      background-repeat: no-repeat;
+      background-size: 1.25em;
+      flex-grow: 5;
+      padding-left: 2em;
     }
   }
 
@@ -99,6 +123,8 @@ body {
       &-parent {
         background-color: $background10;
         background: linear-gradient(180deg, $background10 0%, $background15 100%);
+        border: $bevel solid;
+        border-color: $background00 $background10 $background40;
         border-radius: $borderRadius;
         flex-grow: 1;
         position: relative;
@@ -108,7 +134,8 @@ body {
 
       & > div {
         background-color: $background20;
-        border: $thin solid $background30;
+        border: $bevel solid;
+        border-color: $background30 $background20 $background10;
         border-radius: $borderRadius;
         color: $qColor;
         cursor: pointer;
@@ -148,6 +175,8 @@ body {
     .search-result {
       background-color: $background10;
       background: linear-gradient(180deg, $background10 0%, $background15 100%);
+      border: $bevel solid;
+      border-color: $background00 $background10 $background40;
       border-radius: $borderRadius;
       flex-grow: 4;
       font: $fontSizeArial $fontArial;
