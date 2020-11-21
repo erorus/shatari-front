@@ -70,7 +70,11 @@ body {
         .main .main-result .categories > div:first-child {
           margin-top: 0; }
         .main .main-result .categories > div[data-selected] {
-          box-shadow: inset 0 0 3px 2px #ffff98; }
+          box-shadow: inset 0 0 8px 2px #ff6; }
+        .main .main-result .categories > div:hover {
+          border-color: #aaf;
+          box-shadow: inset 0 0 20px 2px #8080ff;
+          color: #EEE; }
       .main .main-result .categories .subcategory {
         color: #DDD;
         margin-left: 16px; }
@@ -107,6 +111,7 @@ body {
             border: 1px solid #444;
             border-bottom-color: #333;
             border-radius: 4px 4px 0 0;
+            cursor: pointer;
             padding: 4px 0 4px 4px; }
             .main .main-result .search-result table thead td:first-child {
               border-left: 0; }
@@ -116,6 +121,19 @@ body {
               content: " ^"; }
             .main .main-result .search-result table thead td[data-sort="desc"]::after {
               content: " v"; }
+            .main .main-result .search-result table thead td:hover {
+              background-color: #8080ff;
+              box-shadow: inset 0 0 10px 10px #222; }
+        .main .main-result .search-result table tbody tr {
+          position: relative; }
+          .main .main-result .search-result table tbody tr a {
+            bottom: 0;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0; }
+          .main .main-result .search-result table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(102, 102, 255, 0) 0%, rgba(102, 102, 255, 0.6) 20%, rgba(102, 102, 255, 0.6) 80%, rgba(102, 102, 255, 0) 100%); }
         .main .main-result .search-result table tbody td {
           padding: 2px 8px; }
           .main .main-result .search-result table tbody td.price {
@@ -148,7 +166,9 @@ body {
       font-size: 75%;
       margin: 0 8px; }
 
-.wowhead-tooltip-powered {
-  display: none !important; }
+.wowhead-tooltip {
+  width: auto !important; }
+  .wowhead-tooltip-powered {
+    display: none !important; }
 
 /*# sourceMappingURL=main.css.map */

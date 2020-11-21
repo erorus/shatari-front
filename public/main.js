@@ -563,13 +563,20 @@ new function () {
             const tbody = ce('tbody');
             table.appendChild(tbody);
             itemsList.forEach(function (item) {
+                let tr, td;
                 tbody.appendChild(tr = ce('tr'));
-                tr.appendChild(ce('td', {
+
+                tr.appendChild(td = ce('td', {
                     className: 'price',
                     dataset: {
                         sortValue: item.price || 0,
                     },
                 }, priceHtml(item.price || 0)));
+                const rowLink = ce('a', {
+                    //href: './',
+                    dataset: {wowhead: 'item=' + item.id},
+                });
+                td.appendChild(rowLink);
 
                 tr.appendChild(td = ce('td', {
                     className: 'name',
@@ -577,16 +584,11 @@ new function () {
                         sortValue: item.name,
                     },
                 }));
-                let a = ce('a', {
-                    href: '#',
-                    dataset: {wowhead: 'item=' + item.id},
-                });
-                a.appendChild(ce('img', {
+                td.appendChild(ce('img', {
                     //src: 'icons/tiny/' + item.icon + '.png',
                     src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
                 }));
-                a.appendChild(ct(item.name));
-                td.appendChild(a);
+                td.appendChild(ct(item.name));
 
                 if (detailColumn) {
                     let value = item[detailColumn.prop];

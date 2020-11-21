@@ -8,7 +8,13 @@ $background40: #444;
 $text10: #EEE;
 
 $qColor: #CA4;
-$highlightBorderColor: #ffff98;
+$highlightBorderColor: #ff6;
+$categoryHoverBorder: #aaf;
+$categoryHoverGlow: #8080ff;
+
+$columnHeaderHoverBackground: #8080ff;
+$rowHoverStart: rgba(102,102,255,0);
+$rowHoverEnd: rgba(102,102,255,0.6);
 
 $fontArial: "Arial Narrow", sans-serif;
 $fontSizeArial: 19px;
@@ -119,7 +125,13 @@ body {
         }
 
         &[data-selected] {
-          box-shadow: inset 0 0 $thin * 3 $thin * 2 $highlightBorderColor;
+          box-shadow: inset 0 0 8px 2px $highlightBorderColor;
+        }
+
+        &:hover {
+          border-color: $categoryHoverBorder;
+          box-shadow: inset 0 0 20px 2px $categoryHoverGlow;
+          color: $text10;
         }
       }
 
@@ -169,6 +181,7 @@ body {
             border: $thin solid $background40;
             border-bottom-color: $background30;
             border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
+            cursor: pointer;
             padding: $marginStep / 2 0 $marginStep / 2 $marginStep / 2;
             &:first-child {border-left: 0}
             &:last-child {border-right: 0}
@@ -179,10 +192,21 @@ body {
             &[data-sort="desc"]::after {
               content: " v";
             }
+
+            &:hover {
+              background-color: $columnHeaderHoverBackground;
+              box-shadow: inset 0 0 10px 10px $background20;
+            }
           }
         }
 
         tbody {
+          tr {position:relative;
+            a {bottom:0; left:0; position:absolute; right:0; top:0;}
+            &:hover {
+              background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
+            }
+          }
           td {
             padding: $marginStep / 4 $marginStep;
             &.price {
@@ -229,4 +253,6 @@ body {
   }
 }
 
-.wowhead-tooltip-powered {display: none !important}
+.wowhead-tooltip {width: auto !important;
+  &-powered {display: none !important}
+}
