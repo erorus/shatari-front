@@ -81,6 +81,20 @@ body {
           background-color: #6c0d0d;
           box-shadow: none;
           color: #EEE; }
+      .main .search-bar button.filter {
+        padding-right: 1em;
+        position: relative; }
+        .main .search-bar button.filter::after {
+          background-image: url("../images/triangle-arrow.png");
+          background-size: contain;
+          background-position: center center;
+          background-repeat: no-repeat;
+          bottom: 0;
+          content: "";
+          position: absolute;
+          right: 4px;
+          top: 0;
+          width: 0.666em; }
   .main .main-result {
     display: flex;
     flex-grow: 1; }
