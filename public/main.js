@@ -863,6 +863,33 @@ new function () {
         ]);
 
         qs('.main .search-bar button.search').addEventListener('click', Search.perform);
+        qs('.main .search-bar > div.filter').addEventListener('mouseup', (event) => {
+            const div = qs('.main .search-bar > div.filter div');
+            if (div.style.display === 'block') {
+                return;
+            }
+
+            div.style.display = 'block';
+            const outside = document.body;
+            /**
+             * Called on mouseup to close the filter tooltip.
+             *
+             * @param {Event} event
+             */
+            const closeDiv = function (event) {
+                let target = event.target;
+                while (target.parentNode) {
+                    if (target === div) {
+                        return;
+                    }
+                    target = target.parentNode;
+                }
+                div.style.removeProperty('display');
+                outside.removeEventListener('mouseup', closeDiv);
+            }
+            outside.addEventListener('mouseup', closeDiv);
+            event.stopPropagation();
+        });
         qs('.main .search-bar input[type="text"]').addEventListener('keyup', event => {
             if (event.code === 'Enter') {
                 Search.perform();

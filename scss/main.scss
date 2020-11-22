@@ -39,6 +39,16 @@ $categoryMaxWidth: 200px;
 $priceWidth: 175px;
 $silverWidth: 35px;
 
+@mixin tooltip {
+  background-color: rgba(1, 7, 33, 0.8);
+  border: 1px solid;
+  border-color: #cfcfcf #777 #7f7f7f;
+  border-radius: 4px;
+  box-shadow: 0 0 1px 1px black;
+  padding: 8px;
+  z-index: 10;
+}
+
 @font-face {
   font-family: "Arial Narrow";
   src: url("../fonts/arialn.ttf") format("truetype");
@@ -107,7 +117,7 @@ body {
       margin: $marginStep;
     }
 
-    select, input, button {
+    select, input, > div.filter, button {
       font-family: $fontFriz;
       font-size: $fontSizeFriz * 0.8;
     }
@@ -127,7 +137,7 @@ body {
       flex-grow: 5;
       padding-left: 2em;
     }
-    button {
+    button, > div.filter {
       background-color: $background20;
       border: $bevel solid;
       border-color: $background30 $background25 $background10;
@@ -154,8 +164,12 @@ body {
         }
       }
       &.filter {
-        padding-right:1em;
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        padding-right: 1em;
         position: relative;
+
         &::after {
           background-image: url("../images/triangle-arrow.png");
           background-size: contain;
@@ -167,6 +181,15 @@ body {
           right: 4px;
           top: 0;
           width: 0.666em;
+        }
+
+        div {
+          @include tooltip();
+          display: none;
+          left: $marginStep;
+          position: absolute;
+          text-align: left;
+          top: calc(100% + #{$bevel});
         }
       }
     }
