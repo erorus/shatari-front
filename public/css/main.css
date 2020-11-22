@@ -218,6 +218,17 @@ body {
     .main .bottom-bar .links {
       font-size: 75%;
       margin: 0 8px; }
+  .main .gold, .main .silver, .main .copper {
+    background-position: right top;
+    background-repeat: no-repeat;
+    background-size: 1em;
+    padding-right: 1em; }
+  .main .gold {
+    background-image: url("../images/coin-gold.png"); }
+  .main .silver {
+    background-image: url("../images/coin-silver.png"); }
+  .main .copper {
+    background-image: url("../images/coin-copper.png"); }
 
 .wowhead-tooltip {
   width: auto !important; }

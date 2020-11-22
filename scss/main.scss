@@ -333,6 +333,16 @@ body {
       margin: 0 $marginStep;
     }
   }
+
+  .gold, .silver, .copper {
+    background-position: right top;
+    background-repeat: no-repeat;
+    background-size: 1em;
+    padding-right: 1em;
+  }
+  .gold {background-image: url("../images/coin-gold.png");}
+  .silver {background-image: url("../images/coin-silver.png");}
+  .copper {background-image: url("../images/coin-copper.png");}
 }
 
 .wowhead-tooltip {width: auto !important;

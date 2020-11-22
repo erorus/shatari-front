@@ -807,9 +807,9 @@ new function () {
         const gold = Math.floor(coppers / 10000);
 
         if (gold > 0) {
-            df.appendChild(ce('span', {className: 'gold moneygold'}, ct(gold.toLocaleString())));
+            df.appendChild(ce('span', {className: 'gold'}, ct(gold.toLocaleString())));
         }
-        df.appendChild(ce('span', {className: 'silver moneysilver'}, ct(silver)));
+        df.appendChild(ce('span', {className: 'silver'}, ct(silver)));
 
         return df;
     }
@@ -822,7 +822,7 @@ new function () {
         await Promise.all([
             Categories.init(),
             Items.init(),
-            Realms.init()
+            Realms.init(),
         ]);
 
         qs('.main .search-bar button.search').addEventListener('click', Search.perform);
