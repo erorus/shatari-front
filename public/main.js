@@ -508,38 +508,46 @@ new function () {
             }
             select.addEventListener('change', placeholderUsageCheck);
 
-            const byRegion = {};
+            const sorted = [];
             for (let k in my.realms) {
                 if (!my.realms.hasOwnProperty(k)) {
                     continue;
                 }
 
-                let realm = my.realms[k];
-                byRegion[realm.region] = byRegion[realm.region] || [];
-                byRegion[realm.region].push(realm);
+                sorted.push(my.realms[k]);
             }
+            sorted.sort((a, b) => {
+                return a.name.localeCompare(b.name) || (REGIONS.indexOf(a.region) - REGIONS.indexOf(b.region));
+            });
 
-            REGIONS.forEach(region => {
-                if (!byRegion.hasOwnProperty(region)) {
-                    return;
+            const seenNames = {};
+            sorted.forEach(realm => {
+                let o = ce('option');
+                o.value = realm.id;
+                o.label = realm.name;
+
+                if (seenNames[realm.name]) {
+                    if (seenNames[realm.name] !== true) {
+                        const opt = seenNames[realm.name];
+                        opt.label += ' ' + self.getRealm(parseInt(opt.value)).region.toUpperCase();
+                        while (opt.hasChildNodes()) {
+                            opt.removeChild(opt.firstChild);
+                        }
+                        opt.appendChild(ct(opt.label));
+
+                        seenNames[realm.name] = true;
+                    }
+                    o.label += ' ' + realm.region.toUpperCase();
+                } else {
+                    seenNames[realm.name] = o;
+                }
+                o.appendChild(ct(o.label));
+
+                if (realm.id === savedRealmId) {
+                    o.selected = true;
                 }
 
-                byRegion[region].sort(function (a, b) {
-                    return a.name.localeCompare(b.name);
-                });
-
-                byRegion[region].forEach(realm => {
-                    let o = ce('option');
-                    o.value = realm.id;
-                    o.label = region.toUpperCase() + ' ' + realm.name;
-                    o.appendChild(ct(o.label));
-
-                    if (realm.id === savedRealmId) {
-                        o.selected = true;
-                    }
-
-                    select.appendChild(o);
-                });
+                select.appendChild(o);
             });
 
             placeholderUsageCheck();
