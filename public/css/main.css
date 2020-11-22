@@ -46,10 +46,10 @@ body {
     .main .search-bar > * {
       flex-grow: 1;
       margin: 8px; }
-    .main .search-bar select, .main .search-bar input, .main .search-bar > div.filter, .main .search-bar button {
+    .main .search-bar select, .main .search-bar input[type="text"], .main .search-bar > div.filter, .main .search-bar button {
       font-family: "Friz Quadrata TT", sans-serif;
       font-size: 12.8px; }
-    .main .search-bar select, .main .search-bar input {
+    .main .search-bar select, .main .search-bar input[type="text"] {
       background-color: #282322;
       border: 2px solid;
       border-color: #060100 #060100 #4a4644;
@@ -110,7 +110,12 @@ body {
           left: 8px;
           position: absolute;
           text-align: left;
-          top: calc(100% + 2px); }
+          top: calc(100% + 2px);
+          width: 200%; }
+          .main .search-bar button.filter div input, .main .search-bar > div.filter.filter div input {
+            margin: 0;
+            position: relative;
+            top: 2px; }
   .main .main-result {
     display: flex;
     flex-grow: 1; }

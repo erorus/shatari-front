@@ -693,7 +693,8 @@ new function () {
          */
         function showItemList(itemsList) {
             const detailColumn = Categories.getDetailColumn();
-            const showUnavailable = false; // TODO: user option
+            const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
+            const showNeverSeen = qs('.main .search-bar .filter [name="never-seen"]').checked;
 
             const parent = qs('.main .search-result-target');
 
@@ -719,8 +720,16 @@ new function () {
             const tbody = ce('tbody');
             table.appendChild(tbody);
             itemsList.forEach(function (item) {
-                if (!showUnavailable && (item.quantity || 0) === 0) {
-                    return;
+                if ((item.quantity || 0) === 0) {
+                    if ((item.price || 0) === 0) {
+                        if (!showNeverSeen) {
+                            return;
+                        }
+                    } else {
+                        if (!showOutOfStock) {
+                            return;
+                        }
+                    }
                 }
 
                 let tr, td;
@@ -731,7 +740,10 @@ new function () {
                     dataset: {
                         sortValue: item.price || 0,
                     },
-                }, priceHtml(item.price || 0)));
+                }));
+                if (item.price) {
+                    td.appendChild(priceHtml(item.price));
+                }
                 const rowLink = ce('a', {
                     //href: './',
                     dataset: {wowhead: 'item=' + item.id},

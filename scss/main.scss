@@ -117,11 +117,11 @@ body {
       margin: $marginStep;
     }
 
-    select, input, > div.filter, button {
+    select, input[type="text"], > div.filter, button {
       font-family: $fontFriz;
       font-size: $fontSizeFriz * 0.8;
     }
-    select, input {
+    select, input[type="text"] {
       background-color: $background20;
       border: $bevel solid;
       border-color: $background00 $background00 $background40;
@@ -190,6 +190,13 @@ body {
           position: absolute;
           text-align: left;
           top: calc(100% + #{$bevel});
+          width: 200%;
+
+          input {
+            margin: 0;
+            position: relative;
+            top: 2px;
+          }
         }
       }
     }
