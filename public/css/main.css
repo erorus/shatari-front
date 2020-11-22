@@ -137,7 +137,8 @@ body {
         flex-grow: 1;
         position: relative;
         margin: 8px 0 8px 8px;
-        max-width: 200px; }
+        max-width: 200px;
+        min-width: 150px; }
       .main .main-result .categories > div {
         background-color: #282322;
         border: 2px solid;
@@ -165,13 +166,19 @@ body {
         margin-left: 16px; }
         .main .main-result .categories .subcategory:not([data-visible]) {
           display: none; }
+    .main .main-result .welcome {
+      font-family: "Friz Quadrata TT", sans-serif;
+      font-size: 16px;
+      padding: 8px; }
+      .main .main-result .welcome h1:first-child {
+        margin-top: 0; }
     .main .main-result .search-result {
       background-color: #161211;
       background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
       border: 2px solid;
       border-color: #060100 #161211 #4a4644;
       border-radius: 8px;
-      flex-grow: 4;
+      flex-grow: 3;
       font: 19px "Arial Narrow", sans-serif;
       position: relative; }
       .main .main-result .search-result .search-result-border {

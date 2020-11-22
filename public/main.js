@@ -587,14 +587,14 @@ new function () {
          * Perform a search for items, reading the parameters from the UI.
          */
         this.perform = async function () {
-            emptyItemList();
-
             if (!Realms.getCurrentRealm()) {
                 alert('Please select a realm in the top left corner.');
                 qs('.main .search-bar select').focus();
 
                 return;
             }
+
+            emptyItemList();
 
             const itemsList = Items.search();
             await Auctions.hydrateList(itemsList);
@@ -688,6 +688,11 @@ new function () {
          * while we build a new long list.
          */
         function emptyItemList() {
+            const welcome = qs('.main .welcome');
+            if (welcome) {
+                welcome.parentNode.removeChild(welcome);
+            }
+
             const parent = qs('.main .search-result-target');
             while (parent.hasChildNodes()) {
                 parent.removeChild(parent.firstChild);

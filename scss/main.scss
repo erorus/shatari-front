@@ -35,6 +35,7 @@ $pageMinHeight: 400px;
 $pageMaxHeight: 800px;
 $pageMaxWidth: 1050px;
 
+$categoryMinWidth: 150px;
 $categoryMaxWidth: 200px;
 $priceWidth: 175px;
 $silverWidth: 35px;
@@ -228,6 +229,7 @@ body {
         position: relative;
         margin: $marginStep 0 $marginStep $marginStep;
         max-width: $categoryMaxWidth;
+        min-width: $categoryMinWidth;
       }
 
       & > div {
@@ -270,13 +272,21 @@ body {
       }
     }
 
+    .welcome {
+      font-family: $fontFriz;
+      font-size: $fontSizeFriz;
+      padding: $marginStep;
+
+      h1:first-child {margin-top: 0}
+    }
+
     .search-result {
       background-color: $background10;
       background: linear-gradient(180deg, $background10 0%, $background15 100%);
       border: $bevel solid;
       border-color: $background00 $background10 $background40;
       border-radius: $borderRadius;
-      flex-grow: 4;
+      flex-grow: 3;
       font: $fontSizeArial $fontArial;
       position: relative;
 
