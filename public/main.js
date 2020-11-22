@@ -560,6 +560,17 @@ new function () {
     const Search = new function () {
         const self = this;
 
+        // ********************* //
+        // ***** CONSTANTS ***** //
+        // ********************* //
+
+        const COL_PRICE = 1;
+        const COL_NAME = 2;
+
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
         // ------ //
         // PUBLIC //
         // ------ //
@@ -627,7 +638,33 @@ new function () {
                     return aVal.localeCompare(bVal);
                 }
 
-                return parseInt(aVal) - parseInt(bVal);
+                const valDiff = parseInt(aVal) - parseInt(bVal);
+                if (valDiff) {
+                    return valDiff;
+                }
+
+                // Fallbacks.
+                if (columnPos !== COL_PRICE) {
+                    const aPrice = a.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
+                    const bPrice = b.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
+
+                    const valDiff = parseInt(aPrice) - parseInt(bPrice);
+                    if (valDiff) {
+                        return valDiff;
+                    }
+                }
+
+                if (columnPos !== COL_NAME) {
+                    const aName = a.querySelector('td:nth-child(2)').dataset.sortValue;
+                    const bName = b.querySelector('td:nth-child(2)').dataset.sortValue;
+
+                    const valDiff = aName.localeCompare(bName);
+                    if (valDiff) {
+                        return valDiff;
+                    }
+                }
+
+                return 0;
             });
 
             if (dir === 'desc') {
