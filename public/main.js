@@ -317,6 +317,12 @@ new function () {
             }
 
             my.items = await response.json();
+
+            for (let id in my.items) {
+                if (my.items.hasOwnProperty(id) && !my.items[id].icon) {
+                    my.items[id].icon = 'inv_misc_questionmark';
+                }
+            }
         }
 
         /**
@@ -585,8 +591,9 @@ new function () {
                     },
                 }));
                 td.appendChild(ce('img', {
-                    //src: 'icons/tiny/' + item.icon + '.png',
+                    //src: 'icons/medium/' + item.icon + '.jpg',
                     src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
+                    loading: 'lazy',
                 }));
                 td.appendChild(ct(item.name));
 
