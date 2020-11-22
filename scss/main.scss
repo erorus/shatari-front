@@ -132,7 +132,6 @@ body {
       border: $bevel solid;
       border-color: $background30 $background25 $background10;
       color: $text10;
-      font-weight: bold;
       text-shadow: $thin $thin $thin * 2 #000;
 
       &:hover {
