@@ -331,6 +331,11 @@ new function () {
                 wordExpressions.push(new RegExp('\\b' + escapeRegExp(word), 'i'));
             });
 
+            const validRarity = [];
+            qsa('.main .search-bar input[type="checkbox"].rarity:checked').forEach(function (checkBox) {
+                validRarity.push(parseInt(checkBox.value));
+            });
+
             for (let id in my.items) {
                 if (!my.items.hasOwnProperty(id)) {
                     continue;
@@ -341,6 +346,9 @@ new function () {
                     continue;
                 }
                 if (subClassId !== undefined && item['subclass'] !== subClassId) {
+                    continue;
+                }
+                if (!validRarity.includes(item.quality)) {
                     continue;
                 }
 
@@ -761,7 +769,7 @@ new function () {
                     src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
                     loading: 'lazy',
                 }));
-                td.appendChild(ct(item.name));
+                td.appendChild(ce('span', {className: 'q' + item.quality}, ct(item.name)));
 
                 if (detailColumn) {
                     let value = item[detailColumn.prop];
