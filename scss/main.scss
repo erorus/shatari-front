@@ -267,11 +267,20 @@ body {
             &:first-child {border-left: 0}
             &:last-child {border-right: 0}
 
-            &[data-sort="asc"]::after {
-              content: " ^";
+            &[data-sort]::after {
+              background-image: url("../images/sort-arrow.png");
+              background-repeat: no-repeat;
+              background-size: contain;
+              content: "";
+              display:inline-block;
+              height: 1em;
+              margin-left: 0.25em;
+              position: relative;
+              top: 2px;
+              width: 1em;
             }
-            &[data-sort="desc"]::after {
-              content: " v";
+            &[data-sort="asc"]::after {
+              transform:scaleY(-1);
             }
 
             &:hover {
