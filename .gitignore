@@ -1,4 +1,6 @@
 .idea/
 .sass-cache/
 public/css/*.map
-public/icons
+public/data/
+public/icons/
+public/json/realm-list*
