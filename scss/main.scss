@@ -14,8 +14,10 @@ $categoryHoverBorder: #aaf;
 $categoryHoverGlow: #8080ff;
 
 $columnHeaderHoverBackground: #8080ff;
-$rowHoverStart: rgba(102,102,255,0);
-$rowHoverEnd: rgba(102,102,255,0.6);
+$rowHoverStart: transparentize($columnHeaderHoverBackground, 1);
+$rowHoverEnd: transparentize($columnHeaderHoverBackground, 0.4);
+
+$buttonRed: #640000;
 
 $fontArial: "Arial Narrow", sans-serif;
 $fontSizeArial: 19px;
@@ -101,6 +103,22 @@ body {
       background-size: 1.25em;
       flex-grow: 5;
       padding-left: 2em;
+    }
+    button {
+      $borderUpper: mix($buttonRed, #CCC, 90%);
+      $borderLower: mix($buttonRed, #000, 70%);
+      background-color: $buttonRed;
+      border: $bevel solid;
+      border-color: $borderUpper $borderUpper $borderLower;
+      color: $qColor;
+      font-size: $fontSizeFriz * 1.1;
+      font-weight: bold;
+      text-shadow: $thin $thin $thin * 2 #000;
+
+      &:hover {
+        background-color: mix($buttonRed, #FFF, 95%);
+        color: $text10;
+      }
     }
   }
 

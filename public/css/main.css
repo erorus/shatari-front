@@ -52,6 +52,17 @@ body {
       background-size: 1.25em;
       flex-grow: 5;
       padding-left: 2em; }
+    .main .search-bar button {
+      background-color: #640000;
+      border: 2px solid;
+      border-color: #6e1414 #6e1414 #460000;
+      color: #CA4;
+      font-size: 17.6px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000; }
+      .main .search-bar button:hover {
+        background-color: #6c0d0d;
+        color: #EEE; }
   .main .main-result {
     display: flex;
     flex-grow: 1; }
@@ -156,7 +167,7 @@ body {
             right: 0;
             top: 0; }
           .main .main-result .search-result table tbody tr:hover {
-            background: linear-gradient(90deg, rgba(102, 102, 255, 0) 0%, rgba(102, 102, 255, 0.6) 20%, rgba(102, 102, 255, 0.6) 80%, rgba(102, 102, 255, 0) 100%); }
+            background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
         .main .main-result .search-result table tbody td {
           padding: 2px 8px; }
           .main .main-result .search-result table tbody td.price {
