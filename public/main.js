@@ -20,7 +20,7 @@ new function () {
          *
          * @param {{object}[]} items
          */
-        this.hydrateList = function (items) {
+        this.hydrateList = async function (items) {
             items.forEach(function (item) {
                 // TODO
                 item.price = Math.ceil(Math.random() * 10000 * (Math.pow(10, Math.random() * 4))) + 100;
@@ -461,12 +461,13 @@ new function () {
         // ------ //
 
         /**
-         * Given an pricing-hydrated list of items, show it in the UI.
-         *
-         * @param {{object}[]} itemsList
+         * Perform a search for items, reading the parameters from the UI.
          */
-        this.showResults = function (itemsList) {
+        this.perform = async function () {
             emptyItemList();
+
+            const itemsList = Items.search();
+            await Auctions.hydrateList(itemsList);
 
             requestAnimationFrame(function () {
                 requestAnimationFrame(
@@ -708,10 +709,11 @@ new function () {
             Realms.init()
         ]);
 
-        qs('.main .search-bar button').addEventListener('click', function () {
-            const itemsList = Items.search();
-            Auctions.hydrateList(itemsList);
-            Search.showResults(itemsList);
+        qs('.main .search-bar button.search').addEventListener('click', Search.perform);
+        qs('.main .search-bar input[type="text"]').addEventListener('keyup', event => {
+            if (event.code === 'Enter') {
+                Search.perform();
+            }
         });
     }
 
