@@ -47,6 +47,27 @@ $silverWidth: 35px;
   src: url("../fonts/frizqt__.ttf") format("truetype");
 }
 
+$scrollbarThumb: $background40;
+$scrollbarTrack: $background10;
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: $scrollbarThumb $scrollbarTrack;
+
+  &::-webkit-scrollbar {
+    width: 16px;
+
+    &-track {
+      background: $scrollbarTrack;
+    }
+
+    &-thumb {
+      background-color: $scrollbarThumb;
+      border-left: 6px solid $scrollbarTrack;
+    }
+  }
+}
+
 body {
   align-items: center;
   background-color: $background00;

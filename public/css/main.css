@@ -4,6 +4,17 @@
 @font-face {
   font-family: "Friz Quadrata TT";
   src: url("../fonts/frizqt__.ttf") format("truetype"); }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4644 #161211; }
+  *::-webkit-scrollbar {
+    width: 16px; }
+    *::-webkit-scrollbar-track {
+      background: #161211; }
+    *::-webkit-scrollbar-thumb {
+      background-color: #4a4644;
+      border-left: 6px solid #161211; }
+
 body {
   align-items: center;
   background-color: #060100;
