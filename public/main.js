@@ -453,6 +453,12 @@ new function () {
                 return;
             }
 
+            try {
+                localStorage.setItem('realm', realmId);
+            } catch (e) {
+                // Ignore
+            }
+
             return self.getRealm(parseInt(realmId));
         }
 
@@ -479,18 +485,20 @@ new function () {
         this.init = async function () {
             await getRealms();
 
+            const savedRealmId = parseInt(localStorage.getItem('realm') || 0);
+
             const select = qs('.main .search-bar select');
-            const removePlaceholder = function () {
+            const placeholderUsageCheck = function () {
                 if (!select.options[0].value) {
                     if (select.selectedIndex !== 0) {
                         select.removeChild(select.querySelector('option[value=""]'));
-                        select.removeEventListener('change', removePlaceholder);
+                        select.removeEventListener('change', placeholderUsageCheck);
                     }
                 } else {
-                    select.removeEventListener('change', removePlaceholder);
+                    select.removeEventListener('change', placeholderUsageCheck);
                 }
             }
-            select.addEventListener('change', removePlaceholder);
+            select.addEventListener('change', placeholderUsageCheck);
 
             const byRegion = {};
             for (let k in my.realms) {
@@ -518,9 +526,15 @@ new function () {
                     o.label = region.toUpperCase() + ' ' + realm.name;
                     o.appendChild(ct(o.label));
 
+                    if (realm.id === savedRealmId) {
+                        o.selected = true;
+                    }
+
                     select.appendChild(o);
                 });
             });
+
+            placeholderUsageCheck();
         }
 
         // ------- //
