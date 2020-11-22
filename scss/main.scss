@@ -18,6 +18,7 @@ $rowHoverStart: transparentize($columnHeaderHoverBackground, 1);
 $rowHoverEnd: transparentize($columnHeaderHoverBackground, 0.4);
 
 $buttonRed: #640000;
+$buttonText: #ffd100;
 
 $fontArial: "Arial Narrow", sans-serif;
 $fontSizeArial: 19px;
@@ -110,7 +111,7 @@ body {
       background-color: $buttonRed;
       border: $bevel solid;
       border-color: $borderUpper $borderUpper $borderLower;
-      color: $qColor;
+      color: $buttonText;
       font-size: $fontSizeFriz * 1.1;
       font-weight: bold;
       text-shadow: $thin $thin $thin * 2 #000;
