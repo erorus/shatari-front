@@ -8,6 +8,20 @@ new function () {
      */
     const Auctions = new function () {
         // ********************* //
+        // ***** CONSTANTS ***** //
+        // ********************* //
+
+        const VERSION_REALM_STATE = 1;
+
+        // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = {
+            realmState: {},
+        };
+
+        // ********************* //
         // ***** FUNCTIONS ***** //
         // ********************* //
 
@@ -21,11 +35,68 @@ new function () {
          * @param {{object}[]} items
          */
         this.hydrateList = async function (items) {
+            const realmState = await getRealmState(Realms.getCurrentRealm());
+
             items.forEach(function (item) {
-                // TODO
-                item.price = Math.ceil(Math.random() * 10000 * (Math.pow(10, Math.random() * 4))) + 100;
-                item.quantity = Math.ceil(Math.random() * 200);
+                const cur = realmState.summary[item.id];
+                if (cur) {
+                    item.price = cur[1];
+                    item.quantity = cur[0] === realmState.snapshot ? cur[2] : 0;
+                } else {
+                    item.price = 0;
+                    item.quantity = 0;
+                }
             });
+        }
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Given a realm object, return its current realm state.
+         *
+         * @param {object} realm
+         * @returns {object}
+         */
+        async function getRealmState(realm) {
+            if (my.realmState[realm.connectedRealm]) {
+                return my.realmState[realm.connectedRealm];
+            }
+
+            const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode:'same-origin'});
+            const buffer = await response.arrayBuffer();
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const read = function (byteCount) {
+                let result = offset;
+                offset += byteCount;
+
+                return result;
+            };
+
+            if (view.getUint8(read(1)) !== VERSION_REALM_STATE) {
+                throw "Unknown data version for realm state.";
+            }
+
+            const result = {};
+            result.snapshot = view.getUint32(read(4), true) * 1000;
+            result.lastCheck = view.getUint32(read(4), true) * 1000;
+            result.snapshots = [];
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                result.snapshots.push(view.getUint32(read(4), true) * 1000);
+            }
+            result.summary = {};
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                let itemId = view.getUint32(read(4), true);
+                let snapshot = view.getUint32(read(4), true) * 1000;
+                let price = view.getUint32(read(4), true) * 100;
+                let quantity = view.getUint32(read(4), true);
+                result.summary[itemId] = [snapshot, price, quantity];
+            }
+
+            return my.realmState[realm.connectedRealm] = result;
         }
     };
 
@@ -342,6 +413,8 @@ new function () {
      * Methods to handle realms and connected realms.
      */
     const Realms = new function () {
+        const self = this;
+
         // ********************* //
         // ***** CONSTANTS ***** //
         // ********************* //
@@ -368,7 +441,24 @@ new function () {
         // ------ //
 
         /**
+         * Get a copy of the realm object for the currently-selected realm, or undefined if not found.
+         *
+         * @return {object|undefined}
+         */
+        this.getCurrentRealm = function () {
+            const sel = qs('.main .search-bar select');
+            const realmId = sel.options[sel.selectedIndex].value;
+
+            if (!realmId) {
+                return;
+            }
+
+            return self.getRealm(parseInt(realmId));
+        }
+
+        /**
          * Get a copy of the realm object for the given realm ID, or undefined if not found.
+         *
          * @param {number} realmId
          * @return {object|undefined}
          */
@@ -466,6 +556,13 @@ new function () {
         this.perform = async function () {
             emptyItemList();
 
+            if (!Realms.getCurrentRealm()) {
+                alert('Please select a realm in the top left corner.');
+                qs('.main .search-bar select').focus();
+
+                return;
+            }
+
             const itemsList = Items.search();
             await Auctions.hydrateList(itemsList);
 
@@ -545,6 +642,7 @@ new function () {
          */
         function showItemList(itemsList) {
             const detailColumn = Categories.getDetailColumn();
+            const showUnavailable = false; // TODO: user option
 
             const parent = qs('.main .search-result-target');
 
@@ -570,6 +668,10 @@ new function () {
             const tbody = ce('tbody');
             table.appendChild(tbody);
             itemsList.forEach(function (item) {
+                if (!showUnavailable && (item.quantity || 0) === 0) {
+                    return;
+                }
+
                 let tr, td;
                 tbody.appendChild(tr = ce('tr'));
 
