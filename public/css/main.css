@@ -64,16 +64,24 @@ body {
       flex-grow: 5;
       padding-left: 2em; }
     .main .search-bar button {
-      background-color: #640000;
+      background-color: #282322;
       border: 2px solid;
-      border-color: #6e1414 #6e1414 #460000;
-      color: #ffd100;
-      font-size: 17.6px;
+      border-color: #393433 #312c2a #161211;
+      color: #EEE;
       font-weight: bold;
       text-shadow: 1px 1px 2px #000; }
       .main .search-bar button:hover {
-        background-color: #6c0d0d;
-        color: #EEE; }
+        background-color: #8080ff;
+        box-shadow: inset 0 0 10px 10px #282322; }
+      .main .search-bar button.search {
+        background-color: #640000;
+        border-color: #6e1414 #6e1414 #460000;
+        color: #ffd100;
+        font-size: 17.6px; }
+        .main .search-bar button.search:hover {
+          background-color: #6c0d0d;
+          box-shadow: none;
+          color: #EEE; }
   .main .main-result {
     display: flex;
     flex-grow: 1; }
