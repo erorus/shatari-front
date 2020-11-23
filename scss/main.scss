@@ -375,6 +375,12 @@ body {
             }
 
             &.name {
+              max-width: 0;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              width: 50%;
+
               a {text-decoration: none}
               img {
                 border: 1px solid #808080;
