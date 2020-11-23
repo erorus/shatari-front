@@ -50,6 +50,36 @@ $silverWidth: 35px;
   z-index: 10;
 }
 
+@mixin button {
+  background-color: $background20;
+  border: $bevel solid;
+  border-color: $background30 $background25 $background10;
+  color: $text10;
+  text-shadow: $thin $thin $thin * 2 #000;
+
+  &:hover {
+    background-color: $columnHeaderHoverBackground;
+    box-shadow: inset 0 0 10px 10px $background20;
+  }
+}
+
+@mixin button-red {
+  @include button();
+
+  $borderUpper: mix($buttonRed, #CCC, 90%);
+  $borderLower: mix($buttonRed, #000, 70%);
+  background-color: $buttonRed;
+  border-color: $borderUpper $borderUpper $borderLower;
+  color: $buttonText;
+  font-size: $fontSizeFriz * 1.1;
+
+  &:hover {
+    background-color: mix($buttonRed, #FFF, 95%);
+    box-shadow: none;
+    color: $text10;
+  }
+}
+
 @font-face {
   font-family: "Arial Narrow";
   src: url("../fonts/arialn.ttf") format("truetype");
@@ -119,8 +149,7 @@ body {
     }
 
     select, input[type="text"], > div.filter, button {
-      font-family: $fontFriz;
-      font-size: $fontSizeFriz * 0.8;
+      font: $fontSizeFriz * 0.8 $fontFriz;
     }
     select, input[type="text"] {
       background-color: $background20;
@@ -139,30 +168,10 @@ body {
       padding-left: 2em;
     }
     button, > div.filter {
-      background-color: $background20;
-      border: $bevel solid;
-      border-color: $background30 $background25 $background10;
-      color: $text10;
-      text-shadow: $thin $thin $thin * 2 #000;
-
-      &:hover {
-        background-color: $columnHeaderHoverBackground;
-        box-shadow: inset 0 0 10px 10px $background20;
-      }
+      @include button();
 
       &.search {
-        $borderUpper: mix($buttonRed, #CCC, 90%);
-        $borderLower: mix($buttonRed, #000, 70%);
-        background-color: $buttonRed;
-        border-color: $borderUpper $borderUpper $borderLower;
-        color: $buttonText;
-        font-size: $fontSizeFriz * 1.1;
-
-        &:hover {
-          background-color: mix($buttonRed, #FFF, 95%);
-          box-shadow: none;
-          color: $text10;
-        }
+        @include button-red();
       }
       &.filter {
         align-items: center;
@@ -273,11 +282,16 @@ body {
     }
 
     .welcome {
-      font-family: $fontFriz;
-      font-size: $fontSizeFriz;
+      font: $fontSizeFriz $fontFriz;
       padding: $marginStep;
 
       h1:first-child {margin-top: 0}
+    }
+
+    .search-result, .item {
+      flex-grow: 3;
+      font: $fontSizeArial $fontArial;
+      position: relative;
     }
 
     .search-result {
@@ -286,9 +300,6 @@ body {
       border: $bevel solid;
       border-color: $background00 $background10 $background40;
       border-radius: $borderRadius;
-      flex-grow: 3;
-      font: $fontSizeArial $fontArial;
-      position: relative;
 
       .search-result-border {
         border: $thin solid $background30;
@@ -382,7 +393,57 @@ body {
 
     .item {
       display: none;
-      font: $fontSizeArial $fontArial;
+      flex-direction: column;
+
+      button {
+        @include button-red();
+
+        padding:0 3em;
+      }
+
+      .back-bar {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: $marginStep;
+
+        .available {
+          color: $qColor;
+          font: $fontSizeFriz * 0.9 $fontFriz;
+          text-shadow: $thin $thin $thin #000;
+        }
+      }
+
+      .panels {
+        display: flex;
+        flex: 1 1;
+
+        & > div {
+          border: $bevel solid;
+          border-color: $background00 $background10 $background40;
+          border-radius: $borderRadius;
+          padding: $marginStep / 2;
+
+          &.details {
+            background-color: $background25;
+            background: linear-gradient(180deg, $background20 0%, $background15 100%);
+
+            flex: 14 1;
+          }
+          &.auctions {
+            background-color: $background10;
+            background: linear-gradient(180deg, $background10 0%, $background15 100%);
+
+            flex: 6 1;
+            margin-left: $marginStep;
+          }
+        }
+      }
+    }
+
+    &[data-detail-mode] {
+      .item {display: flex}
+      .search-result {display: none}
     }
   }
 

@@ -47,8 +47,7 @@ body {
       flex-grow: 1;
       margin: 8px; }
     .main .search-bar select, .main .search-bar input[type="text"], .main .search-bar > div.filter, .main .search-bar button {
-      font-family: "Friz Quadrata TT", sans-serif;
-      font-size: 12.8px; }
+      font: 12.8px "Friz Quadrata TT", sans-serif; }
     .main .search-bar select, .main .search-bar input[type="text"] {
       background-color: #282322;
       border: 2px solid;
@@ -73,10 +72,18 @@ body {
         background-color: #8080ff;
         box-shadow: inset 0 0 10px 10px #282322; }
       .main .search-bar button.search, .main .search-bar > div.filter.search {
+        background-color: #282322;
+        border: 2px solid;
+        border-color: #393433 #312c2a #161211;
+        color: #EEE;
+        text-shadow: 1px 1px 2px #000;
         background-color: #640000;
         border-color: #6e1414 #6e1414 #460000;
         color: #ffd100;
         font-size: 17.6px; }
+        .main .search-bar button.search:hover, .main .search-bar > div.filter.search:hover {
+          background-color: #8080ff;
+          box-shadow: inset 0 0 10px 10px #282322; }
         .main .search-bar button.search:hover, .main .search-bar > div.filter.search:hover {
           background-color: #6c0d0d;
           box-shadow: none;
@@ -167,20 +174,20 @@ body {
         .main .main-result .categories .subcategory:not([data-visible]) {
           display: none; }
     .main .main-result .welcome {
-      font-family: "Friz Quadrata TT", sans-serif;
-      font-size: 16px;
+      font: 16px "Friz Quadrata TT", sans-serif;
       padding: 8px; }
       .main .main-result .welcome h1:first-child {
         margin-top: 0; }
+    .main .main-result .search-result, .main .main-result .item {
+      flex-grow: 3;
+      font: 19px "Arial Narrow", sans-serif;
+      position: relative; }
     .main .main-result .search-result {
       background-color: #161211;
       background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
       border: 2px solid;
       border-color: #060100 #161211 #4a4644;
-      border-radius: 8px;
-      flex-grow: 3;
-      font: 19px "Arial Narrow", sans-serif;
-      position: relative; }
+      border-radius: 8px; }
       .main .main-result .search-result .search-result-border {
         border: 1px solid #393433;
         border-top: 0;
@@ -259,7 +266,55 @@ body {
             width: 17px; }
     .main .main-result .item {
       display: none;
-      font: 19px "Arial Narrow", sans-serif; }
+      flex-direction: column; }
+      .main .main-result .item button {
+        background-color: #282322;
+        border: 2px solid;
+        border-color: #393433 #312c2a #161211;
+        color: #EEE;
+        text-shadow: 1px 1px 2px #000;
+        background-color: #640000;
+        border-color: #6e1414 #6e1414 #460000;
+        color: #ffd100;
+        font-size: 17.6px;
+        padding: 0 3em; }
+        .main .main-result .item button:hover {
+          background-color: #8080ff;
+          box-shadow: inset 0 0 10px 10px #282322; }
+        .main .main-result .item button:hover {
+          background-color: #6c0d0d;
+          box-shadow: none;
+          color: #EEE; }
+      .main .main-result .item .back-bar {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 8px; }
+        .main .main-result .item .back-bar .available {
+          color: #CA4;
+          font: 14.4px "Friz Quadrata TT", sans-serif;
+          text-shadow: 1px 1px 1px #000; }
+      .main .main-result .item .panels {
+        display: flex;
+        flex: 1 1; }
+        .main .main-result .item .panels > div {
+          border: 2px solid;
+          border-color: #060100 #161211 #4a4644;
+          border-radius: 8px;
+          padding: 4px; }
+          .main .main-result .item .panels > div.details {
+            background-color: #312c2a;
+            background: linear-gradient(180deg, #282322 0%, #201b1a 100%);
+            flex: 14 1; }
+          .main .main-result .item .panels > div.auctions {
+            background-color: #161211;
+            background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
+            flex: 6 1;
+            margin-left: 8px; }
+    .main .main-result[data-detail-mode] .item {
+      display: flex; }
+    .main .main-result[data-detail-mode] .search-result {
+      display: none; }
   .main .bottom-bar {
     display: flex;
     justify-content: flex-end;

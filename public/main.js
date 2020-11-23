@@ -165,9 +165,7 @@ new function () {
             const data = await getCategories();
 
             const categoriesParent = qs('.main .categories');
-            while (categoriesParent.hasChildNodes()) {
-                categoriesParent.removeChild(categoriesParent.firstChild);
-            }
+            ee(categoriesParent);
 
             data.forEach(function (cat) {
                 const catDiv = ce(
@@ -280,6 +278,60 @@ new function () {
             }
 
             return my.categories = await response.json();
+        }
+    };
+
+    /**
+     * Manages the display of an individual item's details.
+     */
+    const Detail = new function () {
+        const self = this;
+
+        /**
+         * Hide detail mode to revert to search result mode.
+         */
+        this.hide = function () {
+            delete qs('.main .main-result').dataset.detailMode;
+        }
+
+        /**
+         * Enters detail mode to show the given item's details.
+         *
+         * @param {object} item
+         */
+        this.show = function (item) {
+            qs('.main .main-result').dataset.detailMode = 1;
+
+            const itemDiv = qs('.main .main-result .item');
+            ee(itemDiv);
+
+            {
+                const backBar = ce('div', {className: 'back-bar'});
+                itemDiv.appendChild(backBar);
+
+                const backButton = ce('button', {}, ct('Back'));
+                backBar.appendChild(backButton);
+                backButton.addEventListener('click', self.hide);
+
+                backBar.appendChild(ce(
+                    'span',
+                    {className: 'available'},
+                    ct(item.quantity.toLocaleString() + ' Available')
+                ));
+            }
+
+            const panels = ce('div', {className: 'panels'});
+            itemDiv.appendChild(panels);
+
+            const details = ce('div', {className: 'details'});
+            panels.appendChild(details);
+            const auctions = ce('div', {className: 'auctions'});
+            panels.appendChild(auctions);
+
+            details.appendChild(ct('alpha'));
+            auctions.appendChild(ct('omega'));
+
+            console.log(item);
         }
     };
 
@@ -530,9 +582,7 @@ new function () {
                     if (seenNames[realm.name] !== true) {
                         const opt = seenNames[realm.name];
                         opt.label += ' ' + self.getRealm(parseInt(opt.value)).region.toUpperCase();
-                        while (opt.hasChildNodes()) {
-                            opt.removeChild(opt.firstChild);
-                        }
+                        ee(opt);
                         opt.appendChild(ct(opt.label));
 
                         seenNames[realm.name] = true;
@@ -602,6 +652,7 @@ new function () {
                 return;
             }
 
+            Detail.hide();
             emptyItemList();
 
             const itemsList = Items.search();
@@ -701,10 +752,7 @@ new function () {
                 welcome.parentNode.removeChild(welcome);
             }
 
-            const parent = qs('.main .search-result-target');
-            while (parent.hasChildNodes()) {
-                parent.removeChild(parent.firstChild);
-            }
+            ee(qs('.main .search-result-target'));
         }
 
         /**
@@ -766,9 +814,9 @@ new function () {
                     td.appendChild(priceHtml(item.price));
                 }
                 const rowLink = ce('a', {
-                    //href: './',
                     dataset: {wowhead: 'item=' + item.id},
                 });
+                rowLink.addEventListener('click', Detail.show.bind(null, item));
                 td.appendChild(rowLink);
 
                 tr.appendChild(td = ce('td', {
@@ -861,6 +909,17 @@ new function () {
             } else {
                 dest[k] = source[k];
             }
+        }
+    }
+
+    /**
+     * Empties an element of all children.
+     *
+     * @param {Node} ele
+     */
+    function ee(ele) {
+        while (ele.hasChildNodes()) {
+            ele.removeChild(ele.firstChild);
         }
     }
 
