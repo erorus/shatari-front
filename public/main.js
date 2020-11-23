@@ -461,6 +461,8 @@ new function () {
             icon.style.backgroundImage = 'url("https://wow.zamimg.com/images/wow/icons/large/' + item.icon + '.jpg")';
             namePanel.appendChild(icon);
             namePanel.appendChild(ct(item.name));
+
+            scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
     };
 
