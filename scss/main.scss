@@ -360,7 +360,7 @@ body {
         }
 
         tbody {
-          tr {position:relative;
+          tr {transform: translateY(0);
             a {bottom:0; left:0; position:absolute; right:0; top:0;}
             &:hover {
               background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
