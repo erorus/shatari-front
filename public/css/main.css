@@ -66,6 +66,7 @@ body {
       background-color: #282322;
       border: 2px solid;
       border-color: #393433 #312c2a #161211;
+      border-radius: 6px;
       color: #EEE;
       font: 12.8px "Friz Quadrata TT", sans-serif;
       text-shadow: 1px 1px 2px #000; }
@@ -76,6 +77,7 @@ body {
         background-color: #282322;
         border: 2px solid;
         border-color: #393433 #312c2a #161211;
+        border-radius: 6px;
         color: #EEE;
         font: 12.8px "Friz Quadrata TT", sans-serif;
         text-shadow: 1px 1px 2px #000;
@@ -273,6 +275,7 @@ body {
         background-color: #282322;
         border: 2px solid;
         border-color: #393433 #312c2a #161211;
+        border-radius: 6px;
         color: #EEE;
         font: 12.8px "Friz Quadrata TT", sans-serif;
         text-shadow: 1px 1px 2px #000;
@@ -321,6 +324,7 @@ body {
               padding: 16px;
               text-decoration: none; }
               .main .main-result .item .panels > div.details .title .icon {
+                background-position: center center;
                 background-repeat: no-repeat;
                 background-size: contain;
                 border-radius: 2em;
@@ -331,6 +335,7 @@ body {
                 width: 2em; }
                 .main .main-result .item .panels > div.details .title .icon:after {
                   background-image: url("../images/ring-1.png");
+                  background-position: center center;
                   background-repeat: no-repeat;
                   background-size: contain;
                   bottom: -0.5em;
@@ -379,6 +384,7 @@ body {
     background-image: url("../images/coin-copper.png"); }
 
 .wowhead-tooltip {
+  max-width: 320px !important;
   width: auto !important; }
   .wowhead-tooltip-powered {
     display: none !important; }

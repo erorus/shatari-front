@@ -54,6 +54,7 @@ $silverWidth: 35px;
   background-color: $background20;
   border: $bevel solid;
   border-color: $background30 $background25 $background10;
+  border-radius: $borderRadius * 0.75;
   color: $text10;
   font: $fontSizeFriz * 0.8 $fontFriz;
   text-shadow: $thin $thin $thin * 2 #000;
@@ -444,6 +445,7 @@ body {
               text-decoration: none;
 
               .icon {
+                background-position: center center;
                 background-repeat: no-repeat;
                 background-size: contain;
                 border-radius: 2em;
@@ -455,6 +457,7 @@ body {
 
                 &:after {
                   background-image: url("../images/ring-1.png");
+                  background-position: center center;
                   background-repeat: no-repeat;
                   background-size: contain;
                   bottom: -0.5em;
@@ -512,6 +515,6 @@ body {
   .copper {background-image: url("../images/coin-copper.png");}
 }
 
-.wowhead-tooltip {width: auto !important;
+.wowhead-tooltip {max-width: 320px !important; width: auto !important;
   &-powered {display: none !important}
 }
