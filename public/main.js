@@ -328,10 +328,31 @@ new function () {
             const auctions = ce('div', {className: 'auctions'});
             panels.appendChild(auctions);
 
-            details.appendChild(ct('alpha'));
+            populateDetails(item);
+
             auctions.appendChild(ct('omega'));
 
             console.log(item);
+        }
+
+        /**
+         * Populate the empty details panel for the given item.
+         *
+         * @param {object} item
+         */
+        function populateDetails(item) {
+            const parent = qs('.main .main-result .item .details');
+
+            const namePanel = ce('a', {
+                className: 'title q' + item.quality,
+                href: 'https://www.wowhead.com/item=' + item.id
+            });
+            parent.appendChild(namePanel);
+
+            const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
+            icon.style.backgroundImage = 'url("https://wow.zamimg.com/images/wow/icons/large/' + item.icon + '.jpg")';
+            namePanel.appendChild(icon);
+            namePanel.appendChild(ct(item.name));
         }
     };
 

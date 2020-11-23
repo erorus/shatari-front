@@ -55,6 +55,7 @@ $silverWidth: 35px;
   border: $bevel solid;
   border-color: $background30 $background25 $background10;
   color: $text10;
+  font: $fontSizeFriz * 0.8 $fontFriz;
   text-shadow: $thin $thin $thin * 2 #000;
 
   &:hover {
@@ -144,7 +145,7 @@ body {
     margin: $marginStep $marginStep 0;
 
     & > * {
-      flex-grow: 1;
+      flex: 1 1;
       margin: $marginStep;
     }
 
@@ -164,7 +165,7 @@ body {
       background-position: 3px center;
       background-repeat: no-repeat;
       background-size: 1.25em;
-      flex-grow: 5;
+      flex: 5 1;
       padding-left: 2em;
     }
     button, > div.filter {
@@ -214,7 +215,7 @@ body {
 
   .main-result {
     display: flex;
-    flex-grow: 1;
+    flex: 1 1;
 
     & > div {
       margin: $marginStep
@@ -234,7 +235,7 @@ body {
         border: $bevel solid;
         border-color: $background00 $background10 $background40;
         border-radius: $borderRadius;
-        flex-grow: 1;
+        flex: 2 1;
         position: relative;
         margin: $marginStep 0 $marginStep $marginStep;
         max-width: $categoryMaxWidth;
@@ -289,7 +290,7 @@ body {
     }
 
     .search-result, .item {
-      flex-grow: 3;
+      flex: 7 1;
       font: $fontSizeArial $fontArial;
       position: relative;
     }
@@ -429,6 +430,47 @@ body {
             background: linear-gradient(180deg, $background20 0%, $background15 100%);
 
             flex: 14 1;
+
+            .title {
+              align-items: center;
+              background-color: $background15;
+              border: $bevel solid;
+              border-color: $background00 $background10 $background40;
+              border-radius: $borderRadius;
+              display: flex;
+              font: $fontSizeFriz * 1.75 $fontFriz;
+              margin: 2 * $marginStep;
+              padding: 2 * $marginStep;
+              text-decoration: none;
+
+              .icon {
+                background-repeat: no-repeat;
+                background-size: contain;
+                border-radius: 2em;
+                display: inline-block;
+                height: 2em;
+                margin-right: 0.75em;
+                position: relative;
+                width: 2em;
+
+                &:after {
+                  background-image: url("../images/ring-1.png");
+                  background-repeat: no-repeat;
+                  background-size: contain;
+                  bottom: -0.5em;
+                  content: "";
+                  left: -0.5em;
+                  position: absolute;
+                  right: -0.5em;
+                  top: -0.5em;
+                }
+                &[data-quality="0"]:after {background-image: url("../images/ring-0.png")}
+                &[data-quality="2"]:after {background-image: url("../images/ring-2.png")}
+                &[data-quality="3"]:after {background-image: url("../images/ring-3.png")}
+                &[data-quality="4"]:after {background-image: url("../images/ring-4.png")}
+                &[data-quality="5"]:after {background-image: url("../images/ring-5.png")}
+              }
+            }
           }
           &.auctions {
             background-color: $background10;

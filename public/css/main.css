@@ -44,7 +44,7 @@ body {
     display: flex;
     margin: 8px 8px 0; }
     .main .search-bar > * {
-      flex-grow: 1;
+      flex: 1 1;
       margin: 8px; }
     .main .search-bar select, .main .search-bar input[type="text"], .main .search-bar > div.filter, .main .search-bar button {
       font: 12.8px "Friz Quadrata TT", sans-serif; }
@@ -60,13 +60,14 @@ body {
       background-position: 3px center;
       background-repeat: no-repeat;
       background-size: 1.25em;
-      flex-grow: 5;
+      flex: 5 1;
       padding-left: 2em; }
     .main .search-bar button, .main .search-bar > div.filter {
       background-color: #282322;
       border: 2px solid;
       border-color: #393433 #312c2a #161211;
       color: #EEE;
+      font: 12.8px "Friz Quadrata TT", sans-serif;
       text-shadow: 1px 1px 2px #000; }
       .main .search-bar button:hover, .main .search-bar > div.filter:hover {
         background-color: #8080ff;
@@ -76,6 +77,7 @@ body {
         border: 2px solid;
         border-color: #393433 #312c2a #161211;
         color: #EEE;
+        font: 12.8px "Friz Quadrata TT", sans-serif;
         text-shadow: 1px 1px 2px #000;
         background-color: #640000;
         border-color: #6e1414 #6e1414 #460000;
@@ -125,7 +127,7 @@ body {
             top: 2px; }
   .main .main-result {
     display: flex;
-    flex-grow: 1; }
+    flex: 1 1; }
     .main .main-result > div {
       margin: 8px; }
     .main .main-result .categories {
@@ -141,7 +143,7 @@ body {
         border: 2px solid;
         border-color: #060100 #161211 #4a4644;
         border-radius: 8px;
-        flex-grow: 1;
+        flex: 2 1;
         position: relative;
         margin: 8px 0 8px 8px;
         max-width: 200px;
@@ -179,7 +181,7 @@ body {
       .main .main-result .welcome h1:first-child {
         margin-top: 0; }
     .main .main-result .search-result, .main .main-result .item {
-      flex-grow: 3;
+      flex: 7 1;
       font: 19px "Arial Narrow", sans-serif;
       position: relative; }
     .main .main-result .search-result {
@@ -272,6 +274,7 @@ body {
         border: 2px solid;
         border-color: #393433 #312c2a #161211;
         color: #EEE;
+        font: 12.8px "Friz Quadrata TT", sans-serif;
         text-shadow: 1px 1px 2px #000;
         background-color: #640000;
         border-color: #6e1414 #6e1414 #460000;
@@ -306,6 +309,46 @@ body {
             background-color: #312c2a;
             background: linear-gradient(180deg, #282322 0%, #201b1a 100%);
             flex: 14 1; }
+            .main .main-result .item .panels > div.details .title {
+              align-items: center;
+              background-color: #201b1a;
+              border: 2px solid;
+              border-color: #060100 #161211 #4a4644;
+              border-radius: 8px;
+              display: flex;
+              font: 28px "Friz Quadrata TT", sans-serif;
+              margin: 16px;
+              padding: 16px;
+              text-decoration: none; }
+              .main .main-result .item .panels > div.details .title .icon {
+                background-repeat: no-repeat;
+                background-size: contain;
+                border-radius: 2em;
+                display: inline-block;
+                height: 2em;
+                margin-right: 0.75em;
+                position: relative;
+                width: 2em; }
+                .main .main-result .item .panels > div.details .title .icon:after {
+                  background-image: url("../images/ring-1.png");
+                  background-repeat: no-repeat;
+                  background-size: contain;
+                  bottom: -0.5em;
+                  content: "";
+                  left: -0.5em;
+                  position: absolute;
+                  right: -0.5em;
+                  top: -0.5em; }
+                .main .main-result .item .panels > div.details .title .icon[data-quality="0"]:after {
+                  background-image: url("../images/ring-0.png"); }
+                .main .main-result .item .panels > div.details .title .icon[data-quality="2"]:after {
+                  background-image: url("../images/ring-2.png"); }
+                .main .main-result .item .panels > div.details .title .icon[data-quality="3"]:after {
+                  background-image: url("../images/ring-3.png"); }
+                .main .main-result .item .panels > div.details .title .icon[data-quality="4"]:after {
+                  background-image: url("../images/ring-4.png"); }
+                .main .main-result .item .panels > div.details .title .icon[data-quality="5"]:after {
+                  background-image: url("../images/ring-5.png"); }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
             background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
