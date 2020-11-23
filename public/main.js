@@ -11,15 +11,11 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
+        const COPPER_SILVER = 100;
+        const MS_SEC = 1000;
+
+        const VERSION_ITEM_STATE = 1;
         const VERSION_REALM_STATE = 1;
-
-        // ********************* //
-        // ***** VARIABLES ***** //
-        // ********************* //
-
-        const my = {
-            realmState: {},
-        };
 
         // ********************* //
         // ***** FUNCTIONS ***** //
@@ -28,6 +24,23 @@ new function () {
         // ------ //
         // PUBLIC //
         // ------ //
+
+        /**
+         * Given an item object, return its item state for the current realm.
+         *
+         * @param {object} item
+         * @return {object}
+         */
+        this.getItem = async function (item) {
+            return getItemState(Realms.getCurrentRealm(), item);
+        }
+
+        /**
+         * Return the current realm's state.
+         *
+         * @return {object}
+         */
+        this.getRealmState = () => getRealmState(Realms.getCurrentRealm());
 
         /**
          * Hydrates a list of items with prices and quantities for the currently-selected realm.
@@ -53,6 +66,65 @@ new function () {
         // PRIVATE //
         // ------- //
 
+
+        /**
+         * Given realm and item objects, return its item state.
+         *
+         * @param {object} realm
+         * @param {object} item
+         * @return {object}
+         */
+        async function getItemState(realm, item) {
+            const url = 'data/' + realm.connectedId + '/' + (item.id & 0xFF) + '/' + item.id + '.bin';
+            const response = await fetch(url, {mode: 'same-origin'});
+            if (!response.ok) {
+                return {
+                    snapshot: 0,
+                    price: 0,
+                    quantity: 0,
+                    auctions: [],
+                    snapshots: [],
+                };
+            }
+
+            const buffer = await response.arrayBuffer();
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const read = function (byteCount) {
+                let result = offset;
+                offset += byteCount;
+
+                return result;
+            };
+
+            if (view.getUint8(read(1)) !== VERSION_ITEM_STATE) {
+                throw "Unknown data version for item state.";
+            }
+
+            const result = {};
+            result.snapshot = view.getUint32(read(4), true) * MS_SEC;
+            result.price = view.getUint32(read(4), true) * COPPER_SILVER;
+            result.quantity = view.getUint32(read(4), true);
+
+            result.auctions = [];
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                let price = view.getUint32(read(4), true) * COPPER_SILVER;
+                let quantity = view.getUint32(read(4), true);
+                result.auctions.push([price, quantity]);
+            }
+
+            result.snapshots = [];
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                let snapshot = view.getUint32(read(4), true) * MS_SEC;
+                let price = view.getUint32(read(4), true) * COPPER_SILVER;
+                let quantity = view.getUint32(read(4), true);
+                result.snapshots.push([snapshot, price, quantity]);
+            }
+
+            return result;
+        }
+
         /**
          * Given a realm object, return its current realm state.
          *
@@ -60,11 +132,7 @@ new function () {
          * @returns {object}
          */
         async function getRealmState(realm) {
-            if (my.realmState[realm.connectedRealm]) {
-                return my.realmState[realm.connectedRealm];
-            }
-
-            const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode:'same-origin'});
+            const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode: 'same-origin'});
             const buffer = await response.arrayBuffer();
             const view = new DataView(buffer);
 
@@ -81,22 +149,22 @@ new function () {
             }
 
             const result = {};
-            result.snapshot = view.getUint32(read(4), true) * 1000;
-            result.lastCheck = view.getUint32(read(4), true) * 1000;
+            result.snapshot = view.getUint32(read(4), true) * MS_SEC;
+            result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
             result.snapshots = [];
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
-                result.snapshots.push(view.getUint32(read(4), true) * 1000);
+                result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
             }
             result.summary = {};
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 let itemId = view.getUint32(read(4), true);
-                let snapshot = view.getUint32(read(4), true) * 1000;
-                let price = view.getUint32(read(4), true) * 100;
+                let snapshot = view.getUint32(read(4), true) * MS_SEC;
+                let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
                 result.summary[itemId] = [snapshot, price, quantity];
             }
 
-            return my.realmState[realm.connectedRealm] = result;
+            return result;
         }
     };
 
@@ -299,7 +367,7 @@ new function () {
          *
          * @param {object} item
          */
-        this.show = function (item) {
+        this.show = async function (item) {
             qs('.main .main-result').dataset.detailMode = 1;
 
             const itemDiv = qs('.main .main-result .item');
@@ -313,11 +381,7 @@ new function () {
                 backBar.appendChild(backButton);
                 backButton.addEventListener('click', self.hide);
 
-                backBar.appendChild(ce(
-                    'span',
-                    {className: 'available'},
-                    ct(item.quantity.toLocaleString() + ' Available')
-                ));
+                backBar.appendChild(ce('span', {className: 'available'}));
             }
 
             const panels = ce('div', {className: 'panels'});
@@ -328,11 +392,53 @@ new function () {
             const auctions = ce('div', {className: 'auctions'});
             panels.appendChild(auctions);
 
-            populateDetails(item);
+            let realmState;
+            let itemState;
 
-            auctions.appendChild(ct('omega'));
+            await Promise.all([
+                Auctions.getRealmState().then(result => realmState = result),
+                Auctions.getItem(item).then(result => itemState = result),
+            ]);
+
+            populateDetails(item);
+            populateAuctions(item, realmState, itemState);
 
             console.log(item);
+        }
+
+        /**
+         * Populate the auctions list in the rightmost panel.
+         *
+         * @param {object} item
+         * @param {object} realmState
+         * @param {object} itemState
+         */
+        function populateAuctions(item, realmState, itemState) {
+            const availableSpan = qs('.main .main-result .item .back-bar .available');
+
+            if (itemState.snapshot < realmState.snapshot) {
+                // Item hasn't been updated in the most recent snapshot, so assume there are none available.
+                availableSpan.appendChild(ct('0 Available'));
+
+                return;
+            }
+
+            availableSpan.appendChild(ct(itemState.quantity.toLocaleString() + ' Available'));
+
+            const auctionsPanel = qs('.main .main-result .item .auctions');
+            const scroller = ce('div', {className: 'scroller'});
+            auctionsPanel.appendChild(scroller);
+
+            const table = ce('table');
+            scroller.appendChild(table);
+
+            itemState.auctions.forEach(auction => {
+                const tr = ce('tr');
+                table.appendChild(tr);
+
+                tr.appendChild(ce('td', {}, priceElement(auction[0])));
+                tr.appendChild(ce('td', {}, ct(auction[1].toLocaleString())));
+            });
         }
 
         /**
@@ -342,12 +448,14 @@ new function () {
          */
         function populateDetails(item) {
             const parent = qs('.main .main-result .item .details');
+            const scroller = ce('div', {className: 'scroller'});
+            parent.appendChild(scroller);
 
             const namePanel = ce('a', {
                 className: 'title q' + item.quality,
                 href: 'https://www.wowhead.com/item=' + item.id
             });
-            parent.appendChild(namePanel);
+            scroller.appendChild(namePanel);
 
             const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
             icon.style.backgroundImage = 'url("https://wow.zamimg.com/images/wow/icons/large/' + item.icon + '.jpg")';
@@ -832,7 +940,7 @@ new function () {
                     },
                 }));
                 if (item.price) {
-                    td.appendChild(priceHtml(item.price));
+                    td.appendChild(priceElement(item.price));
                 }
                 const rowLink = ce('a', {
                     dataset: {wowhead: 'item=' + item.id},
@@ -945,13 +1053,13 @@ new function () {
     }
 
     /**
-     * Returns a document fragment for the given price.
+     * Returns an element for the given price.
      *
      * @param {number} coppers
-     * @return {DocumentFragment}
+     * @return {HTMLSpanElement}
      */
-    function priceHtml(coppers) {
-        const df = document.createDocumentFragment();
+    function priceElement(coppers) {
+        const df = ce('span', {style: {whiteSpace: 'nowrap'}});
         coppers = Math.abs(coppers);
         const silver = Math.floor(coppers / 100) % 100;
         const gold = Math.floor(coppers / 10000);

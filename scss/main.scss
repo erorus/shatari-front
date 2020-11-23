@@ -425,6 +425,16 @@ body {
           border-color: $background00 $background10 $background40;
           border-radius: $borderRadius;
           padding: $marginStep / 2;
+          position: relative;
+
+          .scroller {
+            bottom: $marginStep / 2;
+            left: $marginStep / 2;
+            overflow-y: auto;
+            position: absolute;
+            right: $marginStep / 2;
+            top: $marginStep / 2;
+          }
 
           &.details {
             background-color: $background25;
@@ -481,6 +491,16 @@ body {
 
             flex: 6 1;
             margin-left: $marginStep;
+
+            table {
+              width: 100%;
+              td {
+                text-align: right;
+                width: 50%;
+
+                .silver {display: inline-block; width: $silverWidth}
+              }
+            }
           }
         }
       }
