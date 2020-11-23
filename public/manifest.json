@@ -1,0 +1,8 @@
+{
+  "name": "Sha'tari Project",
+  "short_name": "Sha'tari",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#060100",
+  "description": "Alpha version of a World of Warcraft Auction House stats app"
+}
