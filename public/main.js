@@ -1,4 +1,81 @@
 new function () {
+    /**
+     * @typedef {Object} Auction
+     * @property {Money} price
+     * @property {number} quantity
+     */
+
+    /** @typedef {number} ClassID */
+
+    /** @typedef {number} ConnectedRealmID */
+
+    /** @typedef {number} ItemID */
+
+    /** @typedef {number} Money  Expressed in coppers. */
+
+    /**
+     * @typedef {UnnamedItem} Item
+     * @property {ItemID} id
+     * @property {string} name
+     */
+
+    /**
+     * @typedef {object} ItemState
+     * @property {Timestamp}      snapshot   The last snapshot when this item was seen
+     * @property {Money}          price      The cheapest price when this item was last seen
+     * @property {number}         quantity   How many were available when this was last seen
+     * @property {Auction[]}      auctions   An array of distinct prices and quantities, ordered by price ascending
+     * @property {SummaryLine[]}  snapshots  An array of summary prices, order by snapshot ascending
+     */
+
+    /**
+     * @typedef {Item} PricedItem
+     * @property {Money}  price
+     * @property {number} quantity
+     */
+
+    /**
+     * @typedef {Object} Realm
+     * @property {string} region  "us" or "eu"
+     * @property {string} name
+     * @property {string} slug
+     * @property {RealmID} id
+     * @property {ConnectedRealmID} connectedId
+     */
+
+    /** @typedef {number} RealmID */
+
+    /**
+     * @typedef {Object} RealmState
+     * @property {Timestamp}                    snapshot   The timestamp of the most recent snapshot
+     * @property {Timestamp}                    lastCheck  The timestamp when we last checked for a new snapshot
+     * @property {Timestamp[]}                  snapshots  An array of snapshot timestamps, in ascending order
+     * @property {Object.<ItemID, SummaryLine>} summary
+     */
+
+    /** @typedef {number} SubclassID */
+
+    /**
+     * @typedef {Object} SummaryLine
+     * @property {Timestamp} snapshot  When this item was last seen
+     * @property {Money}     price     The cheapest price when it was last seen
+     * @property {number}    quantity  The total quantity available when it was last seen
+     */
+
+    /** @typedef {number} Timestamp  A UNIX timestamp, in milliseconds. */
+
+    /**
+     * @typedef {Object} UnnamedItem
+     * @property {number} class
+     * @property {string} icon
+     * @property {number} [itemLevel]
+     * @property {number} quality
+     * @property {number} [reqLevel]
+     * @property {number} [slots]
+     * @property {number} subclass
+     * @property {Money}  vendorSell  The money you get when you sell this item to a vendor
+     */
+
     const ct = document.createTextNode.bind(document);
     const qs = document.body.querySelector.bind(document.body);
     const qsa = document.body.querySelectorAll.bind(document.body);
@@ -28,8 +105,8 @@ new function () {
         /**
          * Given an item object, return its item state for the current realm.
          *
-         * @param {object} item
-         * @return {object}
+         * @param {Item} item
+         * @return {Promise<ItemState>}
          */
         this.getItem = async function (item) {
             return getItemState(Realms.getCurrentRealm(), item);
@@ -38,41 +115,50 @@ new function () {
         /**
          * Return the current realm's state.
          *
-         * @return {object}
+         * @return {Promise<RealmState>}
          */
         this.getRealmState = () => getRealmState(Realms.getCurrentRealm());
 
         /**
          * Hydrates a list of items with prices and quantities for the currently-selected realm.
          *
-         * @param {{object}[]} items
+         * @param {Item[]} items
+         * @return {Promise<PricedItem[]>}
          */
         this.hydrateList = async function (items) {
             const realmState = await getRealmState(Realms.getCurrentRealm());
 
+            const result = [];
+
             items.forEach(function (item) {
+                let pricedItem = {};
+                co(pricedItem, item);
+
                 const cur = realmState.summary[item.id];
                 if (cur) {
-                    item.price = cur[1];
-                    item.quantity = cur[0] === realmState.snapshot ? cur[2] : 0;
+                    pricedItem.price = cur.price;
+                    pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
                 } else {
-                    item.price = 0;
-                    item.quantity = 0;
+                    pricedItem.price = 0;
+                    pricedItem.quantity = 0;
                 }
+
+                result.push(pricedItem);
             });
+
+            return result;
         }
 
         // ------- //
         // PRIVATE //
         // ------- //
 
-
         /**
          * Given realm and item objects, return its item state.
          *
-         * @param {object} realm
-         * @param {object} item
-         * @return {object}
+         * @param {Realm} realm
+         * @param {Item} item
+         * @return {Promise<ItemState>}
          */
         async function getItemState(realm, item) {
             const url = 'data/' + realm.connectedId + '/' + (item.id & 0xFF) + '/' + item.id + '.bin';
@@ -111,7 +197,7 @@ new function () {
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.auctions.push([price, quantity]);
+                result.auctions.push({price: price, quantity: quantity});
             }
 
             result.snapshots = [];
@@ -119,7 +205,7 @@ new function () {
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.snapshots.push([snapshot, price, quantity]);
+                result.snapshots.push({snapshot: snapshot, price: price, quantity: quantity});
             }
 
             return result;
@@ -128,8 +214,8 @@ new function () {
         /**
          * Given a realm object, return its current realm state.
          *
-         * @param {object} realm
-         * @returns {object}
+         * @param {Realm} realm
+         * @return {Promise<RealmState>}
          */
         async function getRealmState(realm) {
             const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode: 'same-origin'});
@@ -161,7 +247,11 @@ new function () {
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.summary[itemId] = [snapshot, price, quantity];
+                result.summary[itemId] = {
+                    snapshot: snapshot,
+                    price: price,
+                    quantity: quantity,
+                };
             }
 
             return result;
@@ -172,16 +262,46 @@ new function () {
      * Manages the categories sidebar list.
      */
     const Categories = new function () {
+        /**
+         * @typedef {Object} Category
+         * @property {string}        name
+         * @property {ClassID}       class
+         * @property {DetailColumn}  [detailColumn]
+         * @property {Subcategory[]} [subcategories]
+         */
+
+        /**
+         * @typedef {Object} DetailColumn
+         * @property {string} prop  The field in an Item with the value for this column
+         * @property {string} name
+         */
+
+        /**
+         * @typedef {Object} Subcategory
+         * @property {string}     name
+         * @property {ClassID}    class
+         * @property {SubclassID} subClass
+         */
+
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
 
+        /**
+         * @type {{
+         *  classId: ClassID|undefined,
+         *  subClassId: SubclassID|undefined,
+         *  detailColumn: DetailColumn|undefined,
+         *  categories: Category[],
+         *  }}
+         */
         const my = {
             categories: undefined,
 
             classId: undefined,
-            detailColumn: undefined,
             subClassId: undefined,
+
+            detailColumn: undefined,
         };
 
         // ********************* //
@@ -195,7 +315,7 @@ new function () {
         /**
          * Returns the class ID to use in search filtering, or undefined for none.
          *
-         * @return {number|undefined}
+         * @return {ClassID|undefined}
          */
         this.getClassId = function () {
             return my.classId;
@@ -204,7 +324,7 @@ new function () {
         /**
          * Returns the detail column to show in the item list, based on the selected category.
          *
-         * @return {object|undefined}
+         * @return {DetailColumn|undefined}
          */
         this.getDetailColumn = function () {
             if (!my.detailColumn) {
@@ -220,7 +340,7 @@ new function () {
         /**
          * Returns the subclass ID to use in search filtering, or undefined for none.
          *
-         * @return {number|undefined}
+         * @return {SubclassID|undefined}
          */
         this.getSubClassId = function () {
             return my.subClassId;
@@ -249,7 +369,10 @@ new function () {
                 categoriesParent.appendChild(catDiv);
                 catDiv.addEventListener('click', clickCategory.bind(null, catDiv, cat));
 
-                (cat.subcategories || []).forEach(function (subcat) {
+                if (!cat.subcategories) {
+                    return;
+                }
+                cat.subcategories.forEach(function (subcat) {
                     const subcatDiv = ce(
                         'div',
                         {
@@ -276,7 +399,7 @@ new function () {
          * Event handler for clicking a primary category.
          *
          * @param {HTMLElement} catDiv
-         * @param {object} cat
+         * @param {Category} cat
          */
         function clickCategory(catDiv, cat) {
             const classId = parseInt(catDiv.dataset.classId);
@@ -333,7 +456,7 @@ new function () {
         /**
          * Fetches (if necessary) and returns the categories list.
          *
-         * @returns {{object}[]}
+         * @return {Promise<Category[]>}
          */
         async function getCategories() {
             if (my.categories) {
@@ -365,7 +488,7 @@ new function () {
         /**
          * Enters detail mode to show the given item's details.
          *
-         * @param {object} item
+         * @param {PricedItem} item
          */
         this.show = async function (item) {
             qs('.main .main-result').dataset.detailMode = 1;
@@ -400,18 +523,16 @@ new function () {
                 Auctions.getItem(item).then(result => itemState = result),
             ]);
 
-            populateDetails(item);
+            populateDetails(item, realmState, itemState);
             populateAuctions(item, realmState, itemState);
-
-            console.log(item);
         }
 
         /**
          * Populate the auctions list in the rightmost panel.
          *
-         * @param {object} item
-         * @param {object} realmState
-         * @param {object} itemState
+         * @param {Item} item
+         * @param {RealmState} realmState
+         * @param {ItemState} itemState
          */
         function populateAuctions(item, realmState, itemState) {
             const availableSpan = qs('.main .main-result .item .back-bar .available');
@@ -436,17 +557,19 @@ new function () {
                 const tr = ce('tr');
                 table.appendChild(tr);
 
-                tr.appendChild(ce('td', {}, priceElement(auction[0])));
-                tr.appendChild(ce('td', {}, ct(auction[1].toLocaleString())));
+                tr.appendChild(ce('td', {}, priceElement(auction.price)));
+                tr.appendChild(ce('td', {}, ct(auction.quantity.toLocaleString())));
             });
         }
 
         /**
          * Populate the empty details panel for the given item.
          *
-         * @param {object} item
+         * @param {Item} item
+         * @param {RealmState} realmState
+         * @param {ItemState} itemState
          */
-        function populateDetails(item) {
+        function populateDetails(item, realmState, itemState) {
             const parent = qs('.main .main-result .item .details');
             const scroller = ce('div', {className: 'scroller'});
             parent.appendChild(scroller);
@@ -474,9 +597,12 @@ new function () {
         // ***** VARIABLES ***** //
         // ********************* //
 
+        /**
+         * @type {{items: Object.<ItemID, UnnamedItem>, names: Object.<ItemID, string>}}
+         */
         const my = {
-            items: undefined,
-            names: undefined,
+            items: {},
+            names: {},
         };
 
         // ********************* //
@@ -500,7 +626,7 @@ new function () {
         /**
          * Performs a search depending on the UI state, and returns item objects that match.
          *
-         * @return {{object}[]}
+         * @return {Item[]}
          */
         this.search = function () {
             const result = [];
@@ -528,7 +654,7 @@ new function () {
                 if (classId !== undefined && item['class'] !== classId) {
                     continue;
                 }
-                if (subClassId !== undefined && item['subclass'] !== subClassId) {
+                if (subClassId !== undefined && item.subclass !== subClassId) {
                     continue;
                 }
                 if (!validRarity.includes(item.quality)) {
@@ -619,8 +745,9 @@ new function () {
         // ***** VARIABLES ***** //
         // ********************* //
 
+        /** @type {{realms: Object.<RealmID, Realm>}} */
         const my = {
-            realms: undefined,
+            realms: {},
         };
 
         // ********************* //
@@ -634,7 +761,7 @@ new function () {
         /**
          * Get a copy of the realm object for the currently-selected realm, or undefined if not found.
          *
-         * @return {object|undefined}
+         * @return {Realm|undefined}
          */
         this.getCurrentRealm = function () {
             const sel = qs('.main .search-bar select');
@@ -656,8 +783,8 @@ new function () {
         /**
          * Get a copy of the realm object for the given realm ID, or undefined if not found.
          *
-         * @param {number} realmId
-         * @return {object|undefined}
+         * @param {RealmID} realmId
+         * @return {Realm|undefined}
          */
         this.getRealm = function (realmId) {
             if (!my.realms[realmId]) {
@@ -786,8 +913,7 @@ new function () {
             Detail.hide();
             emptyItemList();
 
-            const itemsList = Items.search();
-            await Auctions.hydrateList(itemsList);
+            const itemsList = await Auctions.hydrateList(Items.search());
 
             requestAnimationFrame(function () {
                 requestAnimationFrame(
@@ -889,7 +1015,7 @@ new function () {
         /**
          * Given an pricing-hydrated list of items, show it in the UI.
          *
-         * @param {{object}[]} itemsList
+         * @param {PricedItem[]} itemsList
          */
         function showItemList(itemsList) {
             const detailColumn = Categories.getDetailColumn();
@@ -1003,7 +1129,7 @@ new function () {
      * @param {string} tag
      * @param {object} [props]
      * @param {HTMLElement} [child]
-     * @returns {HTMLElement}
+     * @return {HTMLElement}
      */
     function ce(tag, props, child) {
         const result = document.createElement(tag);
@@ -1057,7 +1183,7 @@ new function () {
     /**
      * Returns an element for the given price.
      *
-     * @param {number} coppers
+     * @param {Money} coppers
      * @return {HTMLSpanElement}
      */
     function priceElement(coppers) {
