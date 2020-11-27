@@ -92,7 +92,6 @@ new function () {
      * @property {number} [side]
      * @property {number} [slots]
      * @property {number} subclass
-     * @property {Money}  vendorSell  The money you get when you sell this item to a vendor
      */
 
     const SIDE_ALLIANCE = 1;
