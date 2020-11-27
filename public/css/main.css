@@ -172,11 +172,33 @@ body {
           border-color: #aaf;
           box-shadow: inset 0 0 20px 2px #8080ff;
           color: #EEE; }
-      .main .main-result .categories .subcategory {
+      .main .main-result .categories .subcategory, .main .main-result .categories .subsubcategory {
         color: #DDD;
         margin-left: 16px; }
-        .main .main-result .categories .subcategory:not([data-visible]) {
+        .main .main-result .categories .subcategory:not([data-visible]), .main .main-result .categories .subsubcategory:not([data-visible]) {
           display: none; }
+      .main .main-result .categories .subsubcategory {
+        background-color: transparent;
+        border: 0;
+        border-radius: 0;
+        padding-left: 16px;
+        position: relative; }
+        .main .main-result .categories .subsubcategory:after {
+          background-image: url("../images/subsub.png");
+          background-repeat: no-repeat;
+          background-size: contain;
+          bottom: 4px;
+          content: '';
+          left: 4px;
+          position: absolute;
+          top: 4px;
+          width: 8px; }
+        .main .main-result .categories .subsubcategory[data-selected] {
+          box-shadow: none;
+          background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.6) 40%, rgba(230, 179, 53, 0.6) 60%, rgba(230, 179, 53, 0.1) 100%); }
+        .main .main-result .categories .subsubcategory:hover {
+          box-shadow: none;
+          background: linear-gradient(90deg, rgba(128, 128, 255, 0.1) 0%, rgba(128, 128, 255, 0.6) 40%, rgba(128, 128, 255, 0.6) 60%, rgba(128, 128, 255, 0.1) 100%); }
     .main .main-result .welcome {
       font: 16px "Friz Quadrata TT", sans-serif;
       padding: 8px; }

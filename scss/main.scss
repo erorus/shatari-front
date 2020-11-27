@@ -8,6 +8,7 @@ $background30: #393433;
 $background40: #4a4644;
 
 $text10: #EEE;
+$text20: #DDD;
 
 $qColor: #CA4;
 $highlightBorderColor: #ff6;
@@ -17,6 +18,11 @@ $categoryHoverGlow: #8080ff;
 $columnHeaderHoverBackground: #8080ff;
 $rowHoverStart: transparentize($columnHeaderHoverBackground, 1);
 $rowHoverEnd: transparentize($columnHeaderHoverBackground, 0.4);
+
+$subsubCategoryHoverStart: transparentize($columnHeaderHoverBackground, 0.9);
+$subsubCategoryHoverEnd: $rowHoverEnd;
+$subsubCategoryBackgroundStart: transparentize(#e6b335, 0.9);
+$subsubCategoryBackgroundEnd: transparentize(#e6b335, 0.4);
 
 $buttonRed: #640000;
 $buttonText: #ffd100;
@@ -273,12 +279,41 @@ body {
         }
       }
 
-      .subcategory {
-        color: #DDD;
+      .subcategory, .subsubcategory {
+        color: $text20;
         margin-left: $marginStep * 2;
 
         &:not([data-visible]) {
           display: none
+        }
+      }
+
+      .subsubcategory {
+        background-color: transparent;
+        border: 0;
+        border-radius: 0;
+        padding-left: $marginStep * 2;
+        position: relative;
+        &:after {
+          background-image: url("../images/subsub.png");
+          background-repeat: no-repeat;
+          background-size: contain;
+          bottom: 4px;
+          content: '';
+          left: $marginStep * 0.5;
+          position:absolute;
+          top: 4px;
+          width: $marginStep;
+        }
+
+        &[data-selected] {
+          box-shadow: none;
+          background: linear-gradient(90deg, $subsubCategoryBackgroundStart 0%, $subsubCategoryBackgroundEnd 40%, $subsubCategoryBackgroundEnd 60%, $subsubCategoryBackgroundStart 100%);
+        }
+
+        &:hover {
+          box-shadow: none;
+          background: linear-gradient(90deg, $subsubCategoryHoverStart 0%, $subsubCategoryHoverEnd 40%, $subsubCategoryHoverEnd 60%, $subsubCategoryHoverStart 100%);
         }
       }
     }

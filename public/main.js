@@ -341,7 +341,9 @@ new function () {
          * @typedef {Object} Subcategory
          * @property {string}     name
          * @property {ClassID}    class
-         * @property {SubclassID} subClass
+         * @property {SubclassID} [subClass]
+         * @property {SubclassID[]} [subClasses]
+         * @property {Subcategory[]} [subcategories]
          */
 
         // ********************* //
@@ -352,6 +354,7 @@ new function () {
          * @type {{
          *  classId: ClassID|undefined,
          *  subClassId: SubclassID|undefined,
+         *  subClassIds: SubclassID[]|undefined,
          *  detailColumn: DetailColumn|undefined,
          *  categories: Category[],
          *  }}
@@ -361,6 +364,7 @@ new function () {
 
             classId: undefined,
             subClassId: undefined,
+            subClassIds: undefined,
 
             detailColumn: undefined,
         };
@@ -399,12 +403,14 @@ new function () {
         }
 
         /**
-         * Returns the subclass ID to use in search filtering, or undefined for none.
+         * Returns the subclass IDs to use in search filtering, or undefined for none.
          *
-         * @return {SubclassID|undefined}
+         * @return {SubclassID[]|undefined}
          */
-        this.getSubClassId = function () {
-            return my.subClassId;
+        this.getSubClassIds = function () {
+            return my.subClassIds && my.subClassIds.slice(0) ||
+                my.subClassId !== undefined && [my.subClassId] ||
+                undefined;
         }
 
         /**
@@ -433,6 +439,8 @@ new function () {
                 if (!cat.subcategories) {
                     return;
                 }
+
+                let subCatIndex = -1;
                 cat.subcategories.forEach(function (subcat) {
                     const subcatDiv = ce(
                         'div',
@@ -441,13 +449,42 @@ new function () {
                             dataset: {
                                 parentClass: cat['class'],
                                 classId: subcat['class'],
-                                subClassId: subcat.subClass,
+                                subCategoryIndex: ++subCatIndex,
                             },
                         },
                         ct(subcat.name)
                     );
+                    if (subcat.hasOwnProperty('subClass')) {
+                        subcatDiv.dataset.subClassId = subcat.subClass;
+                    } else if (subcat.hasOwnProperty('subClasses')) {
+                        subcatDiv.dataset.subClassIds = subcat.subClasses.join(',');
+                    }
                     categoriesParent.appendChild(subcatDiv);
                     subcatDiv.addEventListener('click', clickSubCategory.bind(null, subcatDiv));
+
+                    if (!subcat.subcategories) {
+                        return;
+                    }
+
+                    subcat.subcategories.forEach(function (subsubcat) {
+                        const subsubcatDiv = ce(
+                            'div',
+                            {
+                                className: 'subsubcategory',
+                                dataset: {
+                                    parentClass: cat['class'],
+                                    parentSubCategory: subCatIndex,
+                                    classId: subsubcat['class'],
+                                },
+                            },
+                            ct(subsubcat.name)
+                        );
+                        if (subsubcat.hasOwnProperty('subClass')) {
+                            subsubcatDiv.dataset.subClassId = subsubcat.subClass;
+                        }
+                        categoriesParent.appendChild(subsubcatDiv);
+                        subsubcatDiv.addEventListener('click', clickSubSubCategory.bind(null, subsubcatDiv));
+                    });
                 });
             });
         }
@@ -473,6 +510,7 @@ new function () {
             });
             my.classId = undefined;
             my.subClassId = undefined;
+            my.subClassIds = undefined;
             my.detailColumn = undefined;
 
             if (!wasSelected) {
@@ -501,16 +539,69 @@ new function () {
                 delete node.dataset.selected;
             });
 
+            // De-select and hide every subsubcategory.
+            qsa('.main .categories .subsubcategory').forEach(function (node) {
+                delete node.dataset.selected;
+                delete node.dataset.visible;
+            });
+
             if (!wasSelected) {
                 // Select this subcategory.
                 subCatDiv.dataset.selected = 1;
 
                 my.classId = parseInt(subCatDiv.dataset.classId);
-                my.subClassId = parseInt(subCatDiv.dataset.subClassId);
+                if (subCatDiv.dataset.hasOwnProperty('subClassId')) {
+                    my.subClassId = parseInt(subCatDiv.dataset.subClassId);
+                } else {
+                    my.subClassId = undefined;
+                }
+                my.subClassIds = subCatDiv.dataset.hasOwnProperty('subClassIds') &&
+                    subCatDiv.dataset.subClassIds.split(',').map(value => parseInt(value)) || undefined;
+
+                // Show any subsubcategories under this subcategory.
+                let selector = '.main .categories .subsubcategory';
+                selector += '[data-parent-class="' + subCatDiv.dataset.classId + '"]';
+                selector += '[data-parent-sub-category="' + subCatDiv.dataset.subCategoryIndex + '"]';
+                qsa(selector).forEach(function (node) {
+                    node.dataset.visible = 1;
+                });
             } else {
                 // De-select this subcategory, reverting back to the parent category criteria.
                 my.classId = parseInt(subCatDiv.dataset.parentClass);
                 my.subClassId = undefined;
+                my.subClassIds = undefined;
+            }
+        }
+
+        /**
+         * Event handler for clicking a subsubcategory.
+         *
+         * @param {HTMLElement} subsubCatDiv
+         */
+        function clickSubSubCategory(subsubCatDiv) {
+            const wasSelected = !!subsubCatDiv.dataset.selected;
+
+            // De-select every subsubcategory.
+            qsa('.main .categories .subsubcategory[data-selected]').forEach(function (node) {
+                delete node.dataset.selected;
+            });
+
+            if (!wasSelected) {
+                // Select this subsubcategory.
+                subsubCatDiv.dataset.selected = 1;
+
+                my.classId = parseInt(subsubCatDiv.dataset.classId);
+                my.subClassId = parseInt(subsubCatDiv.dataset.subClassId);
+                my.subClassIds = undefined;
+            } else {
+                // De-select this subsubcategory, reverting back to the parent subcategory criteria.
+                let selector = '.main .categories .subcategory';
+                selector += '[data-parent-class="' + subsubCatDiv.dataset.parentClass + '"]';
+                selector += '[data-sub-category-index="' + subsubCatDiv.dataset.parentSubCategory + '"]';
+
+                const subCatDiv = qs(selector);
+                delete subCatDiv.dataset.selected;
+                clickSubCategory(subCatDiv);
             }
         }
 
@@ -760,7 +851,7 @@ new function () {
             const result = [];
 
             const classId = Categories.getClassId();
-            const subClassId = Categories.getSubClassId();
+            const subClassIds = Categories.getSubClassIds();
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
@@ -782,7 +873,7 @@ new function () {
                 if (classId !== undefined && item['class'] !== classId) {
                     continue;
                 }
-                if (subClassId !== undefined && item.subclass !== subClassId) {
+                if (subClassIds !== undefined && !subClassIds.includes(item.subclass)) {
                     continue;
                 }
                 if (!validRarity.includes(item.quality)) {
