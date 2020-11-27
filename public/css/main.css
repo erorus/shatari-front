@@ -407,6 +407,8 @@ body {
                 .main .main-result .item .panels > div.auctions table td .silver {
                   display: inline-block;
                   width: 35px; }
+                .main .main-result .item .panels > div.auctions table td a {
+                  display: block; }
     .main .main-result[data-detail-mode] .item {
       display: flex; }
     .main .main-result[data-detail-mode] .search-result {

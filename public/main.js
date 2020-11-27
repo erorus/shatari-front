@@ -5,6 +5,13 @@ new function () {
      * @property {number} quantity
      */
 
+    /**
+     * @typedef {Object} AuctionDetail
+     * @property {Money} price
+     * @property {number} lootedLevel
+     * @property {number[]} bonuses
+     */
+
     /** @typedef {number} ClassID */
 
     /** @typedef {number} ConnectedRealmID */
@@ -34,11 +41,12 @@ new function () {
 
     /**
      * @typedef {object} ItemState
-     * @property {Timestamp}      snapshot   The last snapshot when this item was seen
-     * @property {Money}          price      The cheapest price when this item was last seen
-     * @property {number}         quantity   How many were available when this was last seen
-     * @property {Auction[]}      auctions   An array of distinct prices and quantities, ordered by price ascending
-     * @property {SummaryLine[]}  snapshots  An array of summary prices, order by snapshot ascending
+     * @property {Timestamp}       snapshot   The last snapshot when this item was seen
+     * @property {Money}           price      The cheapest price when this item was last seen
+     * @property {number}          quantity   How many were available when this was last seen
+     * @property {Auction[]}       auctions   An array of distinct prices and quantities, ordered by price ascending
+     * @property {AuctionDetail[]} specifics  An array of prices and bonus information, ordered by price ascending
+     * @property {SummaryLine[]}   snapshots  An array of summary prices, order by snapshot ascending
      */
 
     /**
@@ -112,7 +120,7 @@ new function () {
         const COPPER_SILVER = 100;
         const MS_SEC = 1000;
 
-        const VERSION_ITEM_STATE = 1;
+        const VERSION_ITEM_STATE = 2;
         const VERSION_REALM_STATE = 2;
 
         // ********************* //
@@ -224,7 +232,11 @@ new function () {
                 return result;
             };
 
-            if (view.getUint8(read(1)) !== VERSION_ITEM_STATE) {
+            let version = view.getUint8(read(1));
+            let noSpecifics = false;
+            if (version === 1) {
+                noSpecifics = true;
+            } else if (version !== VERSION_ITEM_STATE) {
                 throw "Unknown data version for item state.";
             }
 
@@ -238,6 +250,23 @@ new function () {
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
                 result.auctions.push({price: price, quantity: quantity});
+            }
+
+            result.specifics = [];
+            if (!noSpecifics) {
+                for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                    let price = view.getUint32(read(4), true) * COPPER_SILVER;
+                    let lootedLevel = view.getUint8(read(1));
+                    let bonuses = [];
+                    for (let remainingBonuses = view.getUint8(read(1)); remainingBonuses > 0; remainingBonuses--) {
+                        bonuses.push(view.getUint16(read(2), true));
+                    }
+                    result.specifics.push({
+                        price: price,
+                        lootedLevel: lootedLevel,
+                        bonuses: bonuses,
+                    });
+                }
             }
 
             result.snapshots = [];
@@ -779,6 +808,33 @@ new function () {
 
                 tr.appendChild(ce('td', {}, priceElement(auction.price)));
                 tr.appendChild(ce('td', {}, ct(auction.quantity.toLocaleString())));
+            });
+
+            itemState.specifics.forEach(specLine => {
+                const tr = ce('tr');
+                table.appendChild(tr);
+
+                const td = ce('td');
+                tr.appendChild(td);
+
+                const wowheadParams = [
+                    'item=' + item.id,
+                ];
+                if (specLine.bonuses.length) {
+                    wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
+                }
+                if (specLine.lootedLevel) {
+                    wowheadParams.push('lvl=' + specLine.lootedLevel);
+                }
+                if (item.bonusLevel) {
+                    wowheadParams.push('ilvl=' + item.bonusLevel);
+                }
+
+                const a = ce('a',
+                    {dataset: {wowhead: wowheadParams.join('&')}},
+                    priceElement(specLine.price)
+                );
+                td.appendChild(a);
             });
         }
 
