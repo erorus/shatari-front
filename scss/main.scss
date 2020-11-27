@@ -360,6 +360,10 @@ body {
         }
 
         tbody {
+          $iconBorderSize: 1px;
+          $iconMargin: 6px;
+          $iconSize: $fontSizeArial - 2 * $iconBorderSize;
+
           tr {transform: translateY(0);
             a {bottom:0; left:0; position:absolute; right:0; top:0;}
             &:hover {
@@ -383,17 +387,21 @@ body {
 
               a {text-decoration: none}
               img {
-                border: 1px solid #808080;
+                border: $iconBorderSize solid #808080;
                 border-right-color: #555;
                 border-bottom-color: #555;
                 border-radius: 4px;
-                height: $fontSizeArial - 2px;
+                height: $iconSize;
                 margin-right: 6px;
                 position: relative;
                 top: 2px;
-                width: $fontSizeArial - 2px;
+                width: $iconSize;
               }
             }
+          }
+          &[data-side-icon] td.name {
+            img {margin-left: $iconSize + $iconMargin + 2 * $iconBorderSize;}
+            &[data-side-icon] img {margin-left:0}
           }
         }
       }

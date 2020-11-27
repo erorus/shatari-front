@@ -82,13 +82,18 @@ new function () {
      * @typedef {Object} UnnamedItem
      * @property {number} class
      * @property {string} icon
+     * @property {number} [inventoryType]
      * @property {number} [itemLevel]
      * @property {number} quality
      * @property {number} [reqLevel]
+     * @property {number} [side]
      * @property {number} [slots]
      * @property {number} subclass
      * @property {Money}  vendorSell  The money you get when you sell this item to a vendor
      */
+
+    const SIDE_ALLIANCE = 1;
+    const SIDE_HORDE = 2;
 
     const ct = document.createTextNode.bind(document);
     const qs = document.body.querySelector.bind(document.body);
@@ -637,7 +642,7 @@ new function () {
             scroller.appendChild(namePanel);
 
             const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
-            icon.style.backgroundImage = 'url("https://wow.zamimg.com/images/wow/icons/large/' + item.icon + '.jpg")';
+            icon.style.backgroundImage = 'url("' + Items.getIconUrl(item.icon, Items.ICON_SIZE.LARGE) + '")';
             namePanel.appendChild(icon);
             let itemName = item.name;
             if (item.bonusSuffix) {
@@ -656,6 +661,24 @@ new function () {
      * Methods to handle item data, independent of any prices.
      */
     const Items = new function () {
+        // ********************* //
+        // ***** CONSTANTS ***** //
+        // ********************* //
+
+        /** @typedef {string} IconSize */
+
+        /**
+         * Icon sizes.
+         *
+         * @readonly
+         * @enum {IconSize}
+         */
+        this.ICON_SIZE = {
+            LARGE: 'large',
+            MEDIUM: 'medium',
+            // SMALL: 'small',
+        };
+
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
@@ -680,6 +703,16 @@ new function () {
         // ------ //
         // PUBLIC //
         // ------ //
+
+        /**
+         * Returns the full URL to an icon image.
+         *
+         * @param {string} iconName
+         * @param {IconSize} size
+         */
+        this.getIconUrl = function (iconName, size) {
+            return 'https://wow.zamimg.com/images/wow/icons/' + size + '/' + iconName + '.jpg';
+        }
 
         /**
          * Returns the localized name suffix for the given suffix ID.
@@ -1186,41 +1219,68 @@ new function () {
                 let tr, td;
                 tbody.appendChild(tr = ce('tr'));
 
-                tr.appendChild(td = ce('td', {
-                    className: 'price',
-                    dataset: {
-                        sortValue: item.price || 0,
-                    },
-                }));
-                if (item.price) {
-                    td.appendChild(priceElement(item.price));
+                //
+                // PRICE
+                //
+                {
+                    tr.appendChild(td = ce('td', {
+                        className: 'price',
+                        dataset: {
+                            sortValue: item.price || 0,
+                        },
+                    }));
+                    if (item.price) {
+                        td.appendChild(priceElement(item.price));
+                    }
+                    const rowLink = ce('a', {
+                        dataset: {wowhead: 'item=' + item.id},
+                    });
+                    if (item.bonusLevel) {
+                        rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
+                    }
+                    rowLink.addEventListener('click', Detail.show.bind(null, item));
+                    td.appendChild(rowLink);
                 }
-                const rowLink = ce('a', {
-                    dataset: {wowhead: 'item=' + item.id},
-                });
-                if (item.bonusLevel) {
-                    rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
-                }
-                rowLink.addEventListener('click', Detail.show.bind(null, item));
-                td.appendChild(rowLink);
 
-                let itemName = item.name;
-                if (item.bonusSuffix) {
-                    itemName += ' ' + Items.getSuffix(item.bonusSuffix);
+                //
+                // NAME
+                //
+                {
+                    let itemName = item.name;
+                    if (item.bonusSuffix) {
+                        itemName += ' ' + Items.getSuffix(item.bonusSuffix);
+                    }
+                    tr.appendChild(td = ce('td', {
+                        className: 'name',
+                        dataset: {
+                            sortValue: itemName,
+                        },
+                    }));
+                    if (item.side === SIDE_ALLIANCE) {
+                        td.appendChild(ce('img', {
+                            src: Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM),
+                            loading: 'lazy',
+                        }));
+                        td.dataset.sideIcon = 1;
+                        tbody.dataset.sideIcon = 1;
+                    } else if (item.side === SIDE_HORDE) {
+                        td.appendChild(ce('img', {
+                            src: Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM),
+                            loading: 'lazy',
+                        }));
+                        td.dataset.sideIcon = 1;
+                        tbody.dataset.sideIcon = 1;
+                    }
+                    td.appendChild(ce('img', {
+                        src: Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM),
+                        loading: 'lazy',
+                    }));
+                    td.appendChild(ce('span', {className: 'q' + item.quality}, ct(itemName)));
                 }
-                tr.appendChild(td = ce('td', {
-                    className: 'name',
-                    dataset: {
-                        sortValue: itemName,
-                    },
-                }));
-                td.appendChild(ce('img', {
-                    //src: 'icons/medium/' + item.icon + '.jpg',
-                    src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
-                    loading: 'lazy',
-                }));
-                td.appendChild(ce('span', {className: 'q' + item.quality}, ct(itemName)));
 
+                //
+                // DETAIL
+                //
                 if (detailColumn) {
                     let value = item[detailColumn.prop];
                     if (detailColumn.prop === 'reqLevel' && value <= 1) {
@@ -1240,6 +1300,9 @@ new function () {
                     }
                 }
 
+                //
+                // QUANTITY
+                //
                 tr.appendChild(ce('td', {
                     className: 'quantity',
                     dataset: {

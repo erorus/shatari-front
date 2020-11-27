@@ -274,6 +274,10 @@ body {
               position: relative;
               top: 2px;
               width: 17px; }
+        .main .main-result .search-result table tbody[data-side-icon] td.name img {
+          margin-left: 25px; }
+        .main .main-result .search-result table tbody[data-side-icon] td.name[data-side-icon] img {
+          margin-left: 0; }
     .main .main-result .item {
       display: none;
       flex-direction: column; }
