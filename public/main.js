@@ -9,6 +9,8 @@ new function () {
 
     /** @typedef {number} ConnectedRealmID */
 
+    /** @typedef {number} InventoryType */
+
     /** @typedef {number} ItemID */
 
     /** @typedef {string} ItemKeyString */
@@ -82,7 +84,7 @@ new function () {
      * @typedef {Object} UnnamedItem
      * @property {number} class
      * @property {string} icon
-     * @property {number} [inventoryType]
+     * @property {InventoryType} [inventoryType]
      * @property {number} [itemLevel]
      * @property {number} quality
      * @property {number} [reqLevel]
@@ -341,6 +343,7 @@ new function () {
          * @typedef {Object} Subcategory
          * @property {string}     name
          * @property {ClassID}    class
+         * @property {InventoryType[]} [invTypes]
          * @property {SubclassID} [subClass]
          * @property {SubclassID[]} [subClasses]
          * @property {Subcategory[]} [subcategories]
@@ -353,6 +356,7 @@ new function () {
         /**
          * @type {{
          *  classId: ClassID|undefined,
+         *  invTypes: InventoryType[]|undefined,
          *  subClassId: SubclassID|undefined,
          *  subClassIds: SubclassID[]|undefined,
          *  detailColumn: DetailColumn|undefined,
@@ -363,6 +367,7 @@ new function () {
             categories: undefined,
 
             classId: undefined,
+            invTypes: undefined,
             subClassId: undefined,
             subClassIds: undefined,
 
@@ -400,6 +405,15 @@ new function () {
             co(result, my.detailColumn);
 
             return result;
+        }
+
+        /**
+         * Returns the inventory type IDs to use in search filtering, or undefined for none.
+         *
+         * @return {InventoryType[]}
+         */
+        this.getInvTypes = function () {
+            return my.invTypes && my.invTypes.slice(0);
         }
 
         /**
@@ -459,6 +473,9 @@ new function () {
                     } else if (subcat.hasOwnProperty('subClasses')) {
                         subcatDiv.dataset.subClassIds = subcat.subClasses.join(',');
                     }
+                    if (subcat.hasOwnProperty('invTypes')) {
+                        subcatDiv.dataset.invTypes = subcat.invTypes.join(',');
+                    }
                     categoriesParent.appendChild(subcatDiv);
                     subcatDiv.addEventListener('click', clickSubCategory.bind(null, subcatDiv));
 
@@ -481,6 +498,11 @@ new function () {
                         );
                         if (subsubcat.hasOwnProperty('subClass')) {
                             subsubcatDiv.dataset.subClassId = subsubcat.subClass;
+                        } else if (subcat.hasOwnProperty('subClasses')) {
+                            subsubcatDiv.dataset.subClassIds = subsubcat.subClasses.join(',');
+                        }
+                        if (subsubcat.hasOwnProperty('invTypes')) {
+                            subsubcatDiv.dataset.invTypes = subsubcat.invTypes.join(',');
                         }
                         categoriesParent.appendChild(subsubcatDiv);
                         subsubcatDiv.addEventListener('click', clickSubSubCategory.bind(null, subsubcatDiv));
@@ -511,6 +533,7 @@ new function () {
             my.classId = undefined;
             my.subClassId = undefined;
             my.subClassIds = undefined;
+            my.invTypes = undefined;
             my.detailColumn = undefined;
 
             if (!wasSelected) {
@@ -557,6 +580,8 @@ new function () {
                 }
                 my.subClassIds = subCatDiv.dataset.hasOwnProperty('subClassIds') &&
                     subCatDiv.dataset.subClassIds.split(',').map(value => parseInt(value)) || undefined;
+                my.invTypes = subCatDiv.dataset.hasOwnProperty('invTypes') &&
+                    subCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
 
                 // Show any subsubcategories under this subcategory.
                 let selector = '.main .categories .subsubcategory';
@@ -570,6 +595,7 @@ new function () {
                 my.classId = parseInt(subCatDiv.dataset.parentClass);
                 my.subClassId = undefined;
                 my.subClassIds = undefined;
+                my.invTypes = undefined;
             }
         }
 
@@ -592,7 +618,10 @@ new function () {
 
                 my.classId = parseInt(subsubCatDiv.dataset.classId);
                 my.subClassId = parseInt(subsubCatDiv.dataset.subClassId);
-                my.subClassIds = undefined;
+                my.subClassIds = subsubCatDiv.dataset.hasOwnProperty('subClassIds') &&
+                    subsubCatDiv.dataset.subClassIds.split(',').map(value => parseInt(value)) || undefined;
+                my.invTypes = subsubCatDiv.dataset.hasOwnProperty('invTypes') &&
+                    subsubCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
             } else {
                 // De-select this subsubcategory, reverting back to the parent subcategory criteria.
                 let selector = '.main .categories .subcategory';
@@ -852,6 +881,7 @@ new function () {
 
             const classId = Categories.getClassId();
             const subClassIds = Categories.getSubClassIds();
+            const invTypes = Categories.getInvTypes();
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
@@ -874,6 +904,9 @@ new function () {
                     continue;
                 }
                 if (subClassIds !== undefined && !subClassIds.includes(item.subclass)) {
+                    continue;
+                }
+                if (invTypes !== undefined && !invTypes.includes(item.inventoryType)) {
                     continue;
                 }
                 if (!validRarity.includes(item.quality)) {
