@@ -83,6 +83,7 @@ new function () {
     /**
      * @typedef {Object} UnnamedItem
      * @property {number} class
+     * @property {number[]} [extraFilters]
      * @property {string} icon
      * @property {InventoryType} [inventoryType]
      * @property {number} [itemLevel]
@@ -343,6 +344,7 @@ new function () {
          * @typedef {Object} Subcategory
          * @property {string}     name
          * @property {ClassID}    class
+         * @property {number[]} [extraFilters]
          * @property {InventoryType[]} [invTypes]
          * @property {SubclassID} [subClass]
          * @property {SubclassID[]} [subClasses]
@@ -356,6 +358,7 @@ new function () {
         /**
          * @type {{
          *  classId: ClassID|undefined,
+         *  extraFilters: number[]|undefined,
          *  invTypes: InventoryType[]|undefined,
          *  subClassId: SubclassID|undefined,
          *  subClassIds: SubclassID[]|undefined,
@@ -367,6 +370,7 @@ new function () {
             categories: undefined,
 
             classId: undefined,
+            extraFilters: undefined,
             invTypes: undefined,
             subClassId: undefined,
             subClassIds: undefined,
@@ -408,6 +412,15 @@ new function () {
         }
 
         /**
+         * Returns extra filter IDs to use in search filtering, or undefined for none.
+         *
+         * @return {number[]}
+         */
+        this.getExtraFilters = function () {
+            return my.extraFilters && my.extraFilters.slice(0);
+        }
+
+        /**
          * Returns the inventory type IDs to use in search filtering, or undefined for none.
          *
          * @return {InventoryType[]}
@@ -445,7 +458,7 @@ new function () {
                             classId: cat['class'],
                         },
                     },
-                    ct(cat.name)
+                    getNameNode(cat.name)
                 );
                 categoriesParent.appendChild(catDiv);
                 catDiv.addEventListener('click', clickCategory.bind(null, catDiv, cat));
@@ -466,7 +479,7 @@ new function () {
                                 subCategoryIndex: ++subCatIndex,
                             },
                         },
-                        ct(subcat.name)
+                        getNameNode(subcat.name)
                     );
                     if (subcat.hasOwnProperty('subClass')) {
                         subcatDiv.dataset.subClassId = subcat.subClass;
@@ -475,6 +488,9 @@ new function () {
                     }
                     if (subcat.hasOwnProperty('invTypes')) {
                         subcatDiv.dataset.invTypes = subcat.invTypes.join(',');
+                    }
+                    if (subcat.hasOwnProperty('extraFilters')) {
+                        subcatDiv.dataset.extraFilters = subcat.extraFilters.join(',');
                     }
                     categoriesParent.appendChild(subcatDiv);
                     subcatDiv.addEventListener('click', clickSubCategory.bind(null, subcatDiv));
@@ -494,7 +510,7 @@ new function () {
                                     classId: subsubcat['class'],
                                 },
                             },
-                            ct(subsubcat.name)
+                            getNameNode(subsubcat.name)
                         );
                         if (subsubcat.hasOwnProperty('subClass')) {
                             subsubcatDiv.dataset.subClassId = subsubcat.subClass;
@@ -503,6 +519,9 @@ new function () {
                         }
                         if (subsubcat.hasOwnProperty('invTypes')) {
                             subsubcatDiv.dataset.invTypes = subsubcat.invTypes.join(',');
+                        }
+                        if (subsubcat.hasOwnProperty('extraFilters')) {
+                            subsubcatDiv.dataset.extraFilters = subsubcat.extraFilters.join(',');
                         }
                         categoriesParent.appendChild(subsubcatDiv);
                         subsubcatDiv.addEventListener('click', clickSubSubCategory.bind(null, subsubcatDiv));
@@ -534,6 +553,7 @@ new function () {
             my.subClassId = undefined;
             my.subClassIds = undefined;
             my.invTypes = undefined;
+            my.extraFilters = undefined;
             my.detailColumn = undefined;
 
             if (!wasSelected) {
@@ -582,6 +602,8 @@ new function () {
                     subCatDiv.dataset.subClassIds.split(',').map(value => parseInt(value)) || undefined;
                 my.invTypes = subCatDiv.dataset.hasOwnProperty('invTypes') &&
                     subCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
+                my.extraFilters = subCatDiv.dataset.hasOwnProperty('extraFilters') &&
+                    subCatDiv.dataset.extraFilters.split(',').map(value => parseInt(value)) || undefined;
 
                 // Show any subsubcategories under this subcategory.
                 let selector = '.main .categories .subsubcategory';
@@ -596,6 +618,7 @@ new function () {
                 my.subClassId = undefined;
                 my.subClassIds = undefined;
                 my.invTypes = undefined;
+                my.extraFilters = undefined;
             }
         }
 
@@ -622,6 +645,8 @@ new function () {
                     subsubCatDiv.dataset.subClassIds.split(',').map(value => parseInt(value)) || undefined;
                 my.invTypes = subsubCatDiv.dataset.hasOwnProperty('invTypes') &&
                     subsubCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
+                my.extraFilters = subsubCatDiv.dataset.hasOwnProperty('extraFilters') &&
+                    subsubCatDiv.dataset.extraFilters.split(',').map(value => parseInt(value)) || undefined;
             } else {
                 // De-select this subsubcategory, reverting back to the parent subcategory criteria.
                 let selector = '.main .categories .subcategory';
@@ -650,6 +675,21 @@ new function () {
             }
 
             return my.categories = await response.json();
+        }
+
+        /**
+         * Parses the colors out of a name string and returns a node to use in the category div.
+         *
+         * @param {string} nameString
+         * @return {Node}
+         */
+        function getNameNode(nameString) {
+            let match = /^\|c([0-9a-f]{2})([0-9a-f]{6})(.*)\|r$/.exec(nameString);
+            if (match) {
+                return ce('span', {style: {color: '#' + match[2] + match[1]}}, ct(match[3]));
+            }
+
+            return ct(nameString);
         }
     };
 
@@ -882,6 +922,7 @@ new function () {
             const classId = Categories.getClassId();
             const subClassIds = Categories.getSubClassIds();
             const invTypes = Categories.getInvTypes();
+            const extraFilters = Categories.getExtraFilters();
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
@@ -907,6 +948,9 @@ new function () {
                     continue;
                 }
                 if (invTypes !== undefined && !invTypes.includes(item.inventoryType)) {
+                    continue;
+                }
+                if (extraFilters !== undefined && !(item.extraFilters || []).some(value => extraFilters.includes(value))) {
                     continue;
                 }
                 if (!validRarity.includes(item.quality)) {
