@@ -11,6 +11,17 @@ new function () {
 
     /** @typedef {number} ItemID */
 
+    /** @typedef {string} ItemKeyString */
+
+    /** @typedef {number} SuffixID */
+
+    /**
+     * @typedef {object} ItemKey
+     * @property {ItemID} itemId
+     * @property {number} itemLevel
+     * @property {SuffixID} itemSuffix
+     */
+
     /** @typedef {number} Money  Expressed in coppers. */
 
     /**
@@ -32,6 +43,8 @@ new function () {
      * @typedef {Item} PricedItem
      * @property {Money}  price
      * @property {number} quantity
+     * @property {number} bonusLevel
+     * @property {SuffixID} bonusSuffix
      */
 
     /**
@@ -50,7 +63,8 @@ new function () {
      * @property {Timestamp}                    snapshot   The timestamp of the most recent snapshot
      * @property {Timestamp}                    lastCheck  The timestamp when we last checked for a new snapshot
      * @property {Timestamp[]}                  snapshots  An array of snapshot timestamps, in ascending order
-     * @property {Object.<ItemID, SummaryLine>} summary
+     * @property {Object.<ItemKeyString, SummaryLine>} summary
+     * @property {Object.<ItemID, Array<ItemKeyString>>} variants
      */
 
     /** @typedef {number} SubclassID */
@@ -92,7 +106,7 @@ new function () {
         const MS_SEC = 1000;
 
         const VERSION_ITEM_STATE = 1;
-        const VERSION_REALM_STATE = 1;
+        const VERSION_REALM_STATE = 2;
 
         // ********************* //
         // ***** FUNCTIONS ***** //
@@ -105,7 +119,7 @@ new function () {
         /**
          * Given an item object, return its item state for the current realm.
          *
-         * @param {Item} item
+         * @param {PricedItem} item
          * @return {Promise<ItemState>}
          */
         this.getItem = async function (item) {
@@ -131,19 +145,33 @@ new function () {
             const result = [];
 
             items.forEach(function (item) {
-                let pricedItem = {};
-                co(pricedItem, item);
+                /** @type {Array.<ItemKeyString>} variants */
+                let variants = realmState.variants[item.id] || [Items.stringifyKey({
+                    itemId: item.id,
+                    itemLevel: 0,
+                    itemSuffix: 0,
+                })];
 
-                const cur = realmState.summary[item.id];
-                if (cur) {
-                    pricedItem.price = cur.price;
-                    pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
-                } else {
-                    pricedItem.price = 0;
-                    pricedItem.quantity = 0;
-                }
+                variants.forEach(keyString => {
+                    /** @type {PricedItem} pricedItem */
+                    let pricedItem = {};
+                    co(pricedItem, item);
 
-                result.push(pricedItem);
+                    const itemKey = Items.parseKey(keyString);
+                    pricedItem.bonusLevel = itemKey.itemLevel;
+                    pricedItem.bonusSuffix = itemKey.itemSuffix;
+
+                    const cur = realmState.summary[keyString];
+                    if (cur) {
+                        pricedItem.price = cur.price;
+                        pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
+                    } else {
+                        pricedItem.price = 0;
+                        pricedItem.quantity = 0;
+                    }
+
+                    result.push(pricedItem);
+                });
             });
 
             return result;
@@ -157,11 +185,16 @@ new function () {
          * Given realm and item objects, return its item state.
          *
          * @param {Realm} realm
-         * @param {Item} item
+         * @param {PricedItem} item
          * @return {Promise<ItemState>}
          */
         async function getItemState(realm, item) {
-            const url = 'data/' + realm.connectedId + '/' + (item.id & 0xFF) + '/' + item.id + '.bin';
+            let basename = Items.stringifyKey({
+                itemId: item.id,
+                itemLevel: item.bonusLevel,
+                itemSuffix: item.bonusSuffix,
+            });
+            const url = 'data/' + realm.connectedId + '/' + (item.id & 0xFF) + '/' + basename + '.bin';
             const response = await fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return {
@@ -230,10 +263,15 @@ new function () {
                 return result;
             };
 
-            if (view.getUint8(read(1)) !== VERSION_REALM_STATE) {
+            let version = view.getUint8(read(1));
+            let simpleItemKeys = false;
+            if (version === 1) {
+                simpleItemKeys = true;
+            } else if (version !== VERSION_REALM_STATE) {
                 throw "Unknown data version for realm state.";
             }
 
+            /** @type {RealmState} result */
             const result = {};
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
@@ -242,12 +280,30 @@ new function () {
                 result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
             }
             result.summary = {};
+            result.variants = {};
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 let itemId = view.getUint32(read(4), true);
+                let itemLevel = 0;
+                let itemSuffix = 0;
+                if (!simpleItemKeys) {
+                    itemLevel = view.getUint16(read(2), true);
+                    itemSuffix = view.getUint16(read(2), true);
+                }
+                let itemKey = {
+                    itemId: itemId,
+                    itemLevel: itemLevel,
+                    itemSuffix: itemSuffix,
+                };
+                let itemKeyString = Items.stringifyKey(itemKey);
+                if (itemKey.itemLevel) {
+                    result.variants[itemId] = result.variants[itemId] || [];
+                    result.variants[itemId].push(itemKeyString);
+                }
+
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.summary[itemId] = {
+                result.summary[itemKeyString] = {
                     snapshot: snapshot,
                     price: price,
                     quantity: quantity,
@@ -530,7 +586,7 @@ new function () {
         /**
          * Populate the auctions list in the rightmost panel.
          *
-         * @param {Item} item
+         * @param {PricedItem} item
          * @param {RealmState} realmState
          * @param {ItemState} itemState
          */
@@ -565,7 +621,7 @@ new function () {
         /**
          * Populate the empty details panel for the given item.
          *
-         * @param {Item} item
+         * @param {PricedItem} item
          * @param {RealmState} realmState
          * @param {ItemState} itemState
          */
@@ -583,7 +639,14 @@ new function () {
             const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
             icon.style.backgroundImage = 'url("https://wow.zamimg.com/images/wow/icons/large/' + item.icon + '.jpg")';
             namePanel.appendChild(icon);
-            namePanel.appendChild(ct(item.name));
+            let itemName = item.name;
+            if (item.bonusSuffix) {
+                itemName += ' ' + Items.getSuffix(item.bonusSuffix);
+            }
+            if (item.bonusLevel) {
+                itemName += ' (' + item.bonusLevel + ')';
+            }
+            namePanel.appendChild(ct(itemName));
 
             scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
@@ -598,11 +661,16 @@ new function () {
         // ********************* //
 
         /**
-         * @type {{items: Object.<ItemID, UnnamedItem>, names: Object.<ItemID, string>}}
+         * @type {{
+         * items: Object.<ItemID, UnnamedItem>,
+         * names: Object.<ItemID, string>,
+         * suffixes: Object.<SuffixID, string>
+         * }}
          */
         const my = {
             items: {},
             names: {},
+            suffixes: {},
         };
 
         // ********************* //
@@ -614,14 +682,41 @@ new function () {
         // ------ //
 
         /**
+         * Returns the localized name suffix for the given suffix ID.
+         *
+         * @param {SuffixID} suffixId
+         * @return {string|undefined}
+         */
+        this.getSuffix = function (suffixId) {
+            return my.suffixes[suffixId];
+        };
+
+        /**
          * Fetches the item list data.
          */
         this.init = async function () {
             const idTask = fetchItemIds();
             const nameTask = fetchItemNames();
+            const suffixTask = fetchItemSuffixes();
 
-            await Promise.all([idTask, nameTask]);
+            await Promise.all([idTask, nameTask, suffixTask]);
         };
+
+        /**
+         * Turns an item key string into an item key object.
+         *
+         * @param {ItemKeyString} itemKeyString
+         * @return {ItemKey}
+         */
+        this.parseKey = function (itemKeyString) {
+            const parts = itemKeyString.split('-');
+
+            return {
+                itemId: parseInt(parts[0] || 0),
+                itemLevel: parseInt(parts[1] || 0),
+                itemSuffix: parseInt(parts[2] || 0),
+            };
+        }
 
         /**
          * Performs a search depending on the UI state, and returns item objects that match.
@@ -681,6 +776,24 @@ new function () {
             return result;
         }
 
+        /**
+         * Serialize an item key into a short string.
+         *
+         * @param {ItemKey} itemKey
+         * @return {ItemKeyString}
+         */
+        this.stringifyKey = function (itemKey) {
+            let result = '' + itemKey.itemId;
+            if (itemKey.itemLevel) {
+                result += '-' + itemKey.itemLevel;
+                if (itemKey.itemSuffix) {
+                    result += '-' + itemKey.itemSuffix;
+                }
+            }
+
+            return result;
+        };
+
         // ------- //
         // PRIVATE //
         // ------- //
@@ -723,6 +836,18 @@ new function () {
             }
 
             my.names = await response.json();
+        }
+
+        /**
+         * Fetches the list of item names and stores it locally.
+         */
+        async function fetchItemSuffixes() {
+            const response = await fetch('json/name-suffixes.enus.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of item suffixes!';
+            }
+
+            my.suffixes = await response.json();
         }
     };
 
@@ -1073,13 +1198,20 @@ new function () {
                 const rowLink = ce('a', {
                     dataset: {wowhead: 'item=' + item.id},
                 });
+                if (item.bonusLevel) {
+                    rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
+                }
                 rowLink.addEventListener('click', Detail.show.bind(null, item));
                 td.appendChild(rowLink);
 
+                let itemName = item.name;
+                if (item.bonusSuffix) {
+                    itemName += ' ' + Items.getSuffix(item.bonusSuffix);
+                }
                 tr.appendChild(td = ce('td', {
                     className: 'name',
                     dataset: {
-                        sortValue: item.name,
+                        sortValue: itemName,
                     },
                 }));
                 td.appendChild(ce('img', {
@@ -1087,12 +1219,15 @@ new function () {
                     src: 'https://wow.zamimg.com/images/wow/icons/medium/' + item.icon + '.jpg',
                     loading: 'lazy',
                 }));
-                td.appendChild(ce('span', {className: 'q' + item.quality}, ct(item.name)));
+                td.appendChild(ce('span', {className: 'q' + item.quality}, ct(itemName)));
 
                 if (detailColumn) {
                     let value = item[detailColumn.prop];
                     if (detailColumn.prop === 'reqLevel' && value <= 1) {
                         value = 1;
+                    }
+                    if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
+                        value = item.bonusLevel;
                     }
                     tr.appendChild(td = ce('td', {
                         className: detailColumn.prop,
