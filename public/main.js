@@ -795,23 +795,39 @@ new function () {
             const scroller = ce('div', {className: 'scroller'});
             parent.appendChild(scroller);
 
-            const namePanel = ce('a', {
-                className: 'title q' + item.quality,
-                href: 'https://www.wowhead.com/item=' + item.id
-            });
-            scroller.appendChild(namePanel);
+            // Name panel
+            {
+                let wowheadParams = [];
 
-            const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
-            icon.style.backgroundImage = 'url("' + Items.getIconUrl(item.icon, Items.ICON_SIZE.LARGE) + '")';
-            namePanel.appendChild(icon);
-            let itemName = item.name;
-            if (item.bonusSuffix) {
-                itemName += ' ' + Items.getSuffix(item.bonusSuffix);
+                const namePanel = ce('a', {
+                    className: 'title q' + item.quality,
+                    href: 'https://www.wowhead.com/item=' + item.id
+                });
+                scroller.appendChild(namePanel);
+
+                const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
+                icon.style.backgroundImage = 'url("' + Items.getIconUrl(item.icon, Items.ICON_SIZE.LARGE) + '")';
+                namePanel.appendChild(icon);
+                let itemName = item.name;
+                if (item.bonusSuffix) {
+                    let suffix = Items.getSuffix(item.bonusSuffix);
+                    if (suffix) {
+                        itemName += ' ' + suffix.name;
+                        if (suffix.bonus) {
+                            wowheadParams.push('bonus=' + suffix.bonus);
+                        }
+                    }
+                }
+                if (item.bonusLevel) {
+                    itemName += ' (' + item.bonusLevel + ')';
+                    wowheadParams.push('ilvl=' + item.bonusLevel);
+                }
+                namePanel.appendChild(ct(itemName));
+
+                if (wowheadParams.length) {
+                    namePanel.dataset.wowhead = wowheadParams.join('&');
+                }
             }
-            if (item.bonusLevel) {
-                itemName += ' (' + item.bonusLevel + ')';
-            }
-            namePanel.appendChild(ct(itemName));
 
             scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
@@ -826,6 +842,12 @@ new function () {
         // ********************* //
 
         /** @typedef {string} IconSize */
+
+        /**
+         * @typedef {object} Suffix
+         * @property {string} name
+         * @property {number|null} bonus
+         */
 
         /**
          * Icon sizes.
@@ -847,7 +869,7 @@ new function () {
          * @type {{
          * items: Object.<ItemID, UnnamedItem>,
          * names: Object.<ItemID, string>,
-         * suffixes: Object.<SuffixID, string>
+         * suffixes: Object.<SuffixID, Suffix>
          * }}
          */
         const my = {
@@ -878,7 +900,7 @@ new function () {
          * Returns the localized name suffix for the given suffix ID.
          *
          * @param {SuffixID} suffixId
-         * @return {string|undefined}
+         * @return {Suffix|undefined}
          */
         this.getSuffix = function (suffixId) {
             return my.suffixes[suffixId];
@@ -1384,6 +1406,11 @@ new function () {
                     }
                 }
 
+                let suffix;
+                if (item.bonusSuffix) {
+                    suffix = Items.getSuffix(item.bonusSuffix);
+                }
+
                 let tr, td;
                 tbody.appendChild(tr = ce('tr'));
 
@@ -1406,6 +1433,9 @@ new function () {
                     if (item.bonusLevel) {
                         rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
                     }
+                    if (suffix && suffix.bonus) {
+                        rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                    }
                     rowLink.addEventListener('click', Detail.show.bind(null, item));
                     td.appendChild(rowLink);
                 }
@@ -1415,8 +1445,8 @@ new function () {
                 //
                 {
                     let itemName = item.name;
-                    if (item.bonusSuffix) {
-                        itemName += ' ' + Items.getSuffix(item.bonusSuffix);
+                    if (suffix) {
+                        itemName += ' ' + suffix.name;
                     }
                     tr.appendChild(td = ce('td', {
                         className: 'name',
