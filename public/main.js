@@ -37,6 +37,8 @@ new function () {
      * @typedef {UnnamedItem} Item
      * @property {ItemID} id
      * @property {string} name
+     * @property {number} bonusLevel
+     * @property {SuffixID} bonusSuffix
      */
 
     /**
@@ -53,8 +55,6 @@ new function () {
      * @typedef {Item} PricedItem
      * @property {Money}  price
      * @property {number} quantity
-     * @property {number} bonusLevel
-     * @property {SuffixID} bonusSuffix
      */
 
     /**
@@ -89,7 +89,7 @@ new function () {
     /** @typedef {number} Timestamp  A UNIX timestamp, in milliseconds. */
 
     /**
-     * @typedef {Object} UnnamedItem
+     * @typedef {object} UnnamedItem
      * @property {number} class
      * @property {number[]} [extraFilters]
      * @property {string} icon
@@ -160,33 +160,26 @@ new function () {
             const result = [];
 
             items.forEach(function (item) {
-                /** @type {Array.<ItemKeyString>} variants */
-                let variants = realmState.variants[item.id] || [Items.stringifyKey({
+                const keyString = Items.stringifyKey({
                     itemId: item.id,
-                    itemLevel: 0,
-                    itemSuffix: 0,
-                })];
-
-                variants.forEach(keyString => {
-                    /** @type {PricedItem} pricedItem */
-                    let pricedItem = {};
-                    co(pricedItem, item);
-
-                    const itemKey = Items.parseKey(keyString);
-                    pricedItem.bonusLevel = itemKey.itemLevel;
-                    pricedItem.bonusSuffix = itemKey.itemSuffix;
-
-                    const cur = realmState.summary[keyString];
-                    if (cur) {
-                        pricedItem.price = cur.price;
-                        pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
-                    } else {
-                        pricedItem.price = 0;
-                        pricedItem.quantity = 0;
-                    }
-
-                    result.push(pricedItem);
+                    itemLevel: item.bonusLevel,
+                    itemSuffix: item.bonusSuffix,
                 });
+
+                /** @type {PricedItem} pricedItem */
+                let pricedItem = {};
+                co(pricedItem, item);
+
+                const cur = realmState.summary[keyString];
+                if (cur) {
+                    pricedItem.price = cur.price;
+                    pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
+                } else {
+                    pricedItem.price = 0;
+                    pricedItem.quantity = 0;
+                }
+
+                result.push(pricedItem);
             });
 
             return result;
@@ -892,6 +885,8 @@ new function () {
      * Methods to handle item data, independent of any prices.
      */
     const Items = new function () {
+        const self = this;
+
         // ********************* //
         // ***** CONSTANTS ***** //
         // ********************* //
@@ -903,6 +898,10 @@ new function () {
          * @property {string} name
          * @property {number|null} bonus
          */
+
+        this.CLASS_ARMOR = 4;
+        this.CLASS_WEAPON = 2;
+        this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON];
 
         /**
          * Icon sizes.
@@ -991,20 +990,23 @@ new function () {
         /**
          * Performs a search depending on the UI state, and returns item objects that match.
          *
-         * @return {Item[]}
+         * @return {Promise<Item[]>}
          */
-        this.search = function () {
+        this.search = async function () {
             const result = [];
 
             const classId = Categories.getClassId();
             const subClassIds = Categories.getSubClassIds();
             const invTypes = Categories.getInvTypes();
             const extraFilters = Categories.getExtraFilters();
+            const realmState = await Auctions.getRealmState();
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
             searchBox.value.replace(/^\s+|\s+$/, '').split(/\s+/).forEach(function (word) {
-                wordExpressions.push(new RegExp('\\b' + escapeRegExp(word), 'i'));
+                if (word) {
+                    wordExpressions.push(new RegExp('\\b' + escapeRegExp(word), 'i'));
+                }
             });
 
             const validRarity = [];
@@ -1034,21 +1036,38 @@ new function () {
                     continue;
                 }
 
-                let name = my.names[id];
+                /** @type {Array.<ItemKeyString>} variants */
+                let variants = realmState.variants[id] || [Items.stringifyKey({
+                    itemId: parseInt(id),
+                    itemLevel: self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
+                    itemSuffix: 0,
+                })];
 
-                let foundAllWords = true;
-                for (let regex, x = 0; foundAllWords && (regex = wordExpressions[x]); x++) {
-                    foundAllWords = regex.test(name);
-                }
-                if (!foundAllWords) {
-                    continue;
-                }
+                variants.forEach(keyString => {
+                    const itemKey = Items.parseKey(keyString);
 
-                let newItem = {};
-                co(newItem, item);
-                newItem.id = parseInt(id);
-                newItem.name = name;
-                result.push(newItem);
+                    let name = my.names[itemKey.itemId];
+                    if (itemKey.itemSuffix) {
+                        name += ' ' + Items.getSuffix(itemKey.itemSuffix).name;
+                    }
+
+                    let foundAllWords = true;
+                    for (let regex, x = 0; foundAllWords && (regex = wordExpressions[x]); x++) {
+                        foundAllWords = regex.test(name);
+                    }
+                    if (!foundAllWords) {
+                        return;
+                    }
+
+                    /** @type {Item} newItem */
+                    let newItem = {};
+                    co(newItem, item);
+                    newItem.id = parseInt(id);
+                    newItem.name = my.names[id];
+                    newItem.bonusLevel = itemKey.itemLevel;
+                    newItem.bonusSuffix = itemKey.itemSuffix;
+                    result.push(newItem);
+                });
             }
 
             return result;
@@ -1316,7 +1335,7 @@ new function () {
             Detail.hide();
             emptyItemList();
 
-            const itemsList = await Auctions.hydrateList(Items.search());
+            const itemsList = await Auctions.hydrateList(await Items.search());
 
             requestAnimationFrame(function () {
                 requestAnimationFrame(
