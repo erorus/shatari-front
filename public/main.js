@@ -1584,6 +1584,9 @@ new function () {
                     if (suffix) {
                         itemName += ' ' + suffix.name;
                     }
+                    if (item.bonusLevel) {
+                        itemName += ' (' + item.bonusLevel + ')';
+                    }
                     tr.appendChild(td = ce('td', {
                         className: 'name',
                         dataset: {
