@@ -124,6 +124,14 @@ new function () {
         const VERSION_REALM_STATE = 2;
 
         // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = {
+            lastRealmState: undefined,
+        };
+
+        // ********************* //
         // ***** FUNCTIONS ***** //
         // ********************* //
 
@@ -281,6 +289,22 @@ new function () {
          */
         async function getRealmState(realm) {
             const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode: 'same-origin'});
+            if (!response.ok) {
+                throw "Unable to get realm state for " + realm.connectedId;
+            }
+
+            if ((my.lastRealmState || {}).data &&
+                my.lastRealmState.id === realm.connectedId &&
+                my.lastRealmState.modified === response.headers.get('last-modified')
+            ) {
+                return my.lastRealmState.data;
+            }
+
+            my.lastRealmState = {
+                id: realm.connectedId,
+                modified: response.headers.get('last-modified'),
+            };
+
             const buffer = await response.arrayBuffer();
             const view = new DataView(buffer);
 
@@ -339,7 +363,7 @@ new function () {
                 };
             }
 
-            return result;
+            return my.lastRealmState.data = result;
         }
     };
 
