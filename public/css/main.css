@@ -55,13 +55,34 @@ body {
       border-radius: 8px;
       color: #EEE;
       padding: 4px; }
-    .main .search-bar input[type="text"] {
-      background-image: linear-gradient(rgba(40, 35, 34, 0.5), rgba(40, 35, 34, 0.5)), url("../images/eyeglass.png");
-      background-position: 3px center;
-      background-repeat: no-repeat;
-      background-size: 1.25em;
+    .main .search-bar div.text-container {
       flex: 5 1;
-      padding-left: 2em; }
+      position: relative; }
+      .main .search-bar div.text-container .text-reset {
+        background-image: url("../images/clear-search.png");
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        bottom: 0;
+        opacity: 0.5;
+        position: absolute;
+        right: 4px;
+        top: 0;
+        width: 1em;
+        z-index: 10; }
+        .main .search-bar div.text-container .text-reset:hover {
+          opacity: 1; }
+      .main .search-bar div.text-container input[type="text"] {
+        background-image: linear-gradient(rgba(40, 35, 34, 0.5), rgba(40, 35, 34, 0.5)), url("../images/eyeglass.png");
+        background-position: 3px center;
+        background-repeat: no-repeat;
+        background-size: 1.25em;
+        box-sizing: border-box;
+        height: 100%;
+        padding-left: 2em;
+        width: 100%; }
+        .main .search-bar div.text-container input[type="text"]:placeholder-shown + .text-reset {
+          display: none; }
     .main .search-bar button, .main .search-bar > div.filter {
       background-color: #282322;
       border: 2px solid;

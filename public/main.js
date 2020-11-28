@@ -1733,10 +1733,14 @@ new function () {
             outside.addEventListener('mouseup', closeDiv);
             event.stopPropagation();
         });
-        qs('.main .search-bar input[type="text"]').addEventListener('keyup', event => {
+        const searchBox = qs('.main .search-bar input[type="text"]');
+        searchBox.addEventListener('keyup', event => {
             if (event.code === 'Enter') {
                 Search.perform();
             }
+        });
+        qs('.main .search-bar .text-reset').addEventListener('click', event => {
+            searchBox.value = '';
         });
     }
 
