@@ -1584,7 +1584,7 @@ new function () {
                     if (suffix) {
                         itemName += ' ' + suffix.name;
                     }
-                    if (item.bonusLevel) {
+                    if (item.bonusLevel && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
                     tr.appendChild(td = ce('td', {
