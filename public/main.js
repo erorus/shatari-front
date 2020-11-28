@@ -923,8 +923,10 @@ new function () {
          * @property {number|null} bonus
          */
 
-        this.CLASS_ARMOR = 4;
+        this.CLASS_CONSUMABLE = 0;
         this.CLASS_WEAPON = 2;
+        this.CLASS_GEM = 3;
+        this.CLASS_ARMOR = 4;
         this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON];
 
         /**
@@ -1038,6 +1040,15 @@ new function () {
                 validRarity.push(parseInt(checkBox.value));
             });
 
+            let minLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-min"]').value) || [])[0];
+            let maxLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-max"]').value) || [])[0];
+            if (minLevel !== undefined) {
+                minLevel = parseInt(minLevel);
+            }
+            if (maxLevel !== undefined) {
+                maxLevel = parseInt(maxLevel);
+            }
+
             for (let id in my.items) {
                 if (!my.items.hasOwnProperty(id)) {
                     continue;
@@ -1059,6 +1070,24 @@ new function () {
                 if (!validRarity.includes(item.quality)) {
                     continue;
                 }
+                switch (item['class']) {
+                    case Items.CLASS_CONSUMABLE:
+                        if (minLevel !== undefined && item.reqLevel < minLevel) {
+                            continue;
+                        }
+                        if (maxLevel !== undefined && item.reqLevel > maxLevel) {
+                            continue;
+                        }
+                        break;
+                    case Items.CLASS_GEM:
+                        if (minLevel !== undefined && item.itemLevel < minLevel) {
+                            continue;
+                        }
+                        if (maxLevel !== undefined && item.itemLevel > maxLevel) {
+                            continue;
+                        }
+                        break;
+                }
 
                 /** @type {Array.<ItemKeyString>} variants */
                 let variants = realmState.variants[id] || [Items.stringifyKey({
@@ -1069,6 +1098,15 @@ new function () {
 
                 variants.forEach(keyString => {
                     const itemKey = Items.parseKey(keyString);
+
+                    if (itemKey.itemLevel) {
+                        if (minLevel !== undefined && itemKey.itemLevel < minLevel) {
+                            return;
+                        }
+                        if (maxLevel !== undefined && itemKey.itemLevel > maxLevel) {
+                            return;
+                        }
+                    }
 
                     let name = my.names[itemKey.itemId];
                     if (itemKey.itemSuffix) {

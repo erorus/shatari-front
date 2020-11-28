@@ -156,7 +156,7 @@ body {
       margin: $marginStep;
     }
 
-    select, input[type="text"], > div.filter, button {
+    select, input[type="text"], input[type="number"], > div.filter, button {
       font: $fontSizeFriz * 0.8 $fontFriz;
     }
     select, input[type="text"] {
@@ -239,6 +239,23 @@ body {
             margin: 0;
             position: relative;
             top: 2px;
+          }
+
+          input[type="number"] {
+            background-color: $background20;
+            border: $bevel solid;
+            border-color: $background00 $background00 $background40;
+            border-radius: $borderRadius;
+            color: $text10;
+            padding: 0 0.5em;
+            text-align: right;
+            width: 3em;
+
+            &::-webkit-outer-spin-button, &::-webkit-inner-spin-button {
+              -webkit-appearance: none;
+              margin: 0;
+            }
+            -moz-appearance: textfield;
           }
         }
       }

@@ -46,7 +46,7 @@ body {
     .main .search-bar > * {
       flex: 1 1;
       margin: 8px; }
-    .main .search-bar select, .main .search-bar input[type="text"], .main .search-bar > div.filter, .main .search-bar button {
+    .main .search-bar select, .main .search-bar input[type="text"], .main .search-bar input[type="number"], .main .search-bar > div.filter, .main .search-bar button {
       font: 12.8px "Friz Quadrata TT", sans-serif; }
     .main .search-bar select, .main .search-bar input[type="text"] {
       background-color: #282322;
@@ -148,6 +148,19 @@ body {
             margin: 0;
             position: relative;
             top: 2px; }
+          .main .search-bar button.filter div input[type="number"], .main .search-bar > div.filter.filter div input[type="number"] {
+            background-color: #282322;
+            border: 2px solid;
+            border-color: #060100 #060100 #4a4644;
+            border-radius: 8px;
+            color: #EEE;
+            padding: 0 0.5em;
+            text-align: right;
+            width: 3em;
+            -moz-appearance: textfield; }
+            .main .search-bar button.filter div input[type="number"]::-webkit-outer-spin-button, .main .search-bar button.filter div input[type="number"]::-webkit-inner-spin-button, .main .search-bar > div.filter.filter div input[type="number"]::-webkit-outer-spin-button, .main .search-bar > div.filter.filter div input[type="number"]::-webkit-inner-spin-button {
+              -webkit-appearance: none;
+              margin: 0; }
   .main .main-result {
     display: flex;
     flex: 1 1; }
