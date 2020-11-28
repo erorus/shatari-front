@@ -252,6 +252,7 @@ new function () {
                 let quantity = view.getUint32(read(4), true);
                 result.auctions.push({price: price, quantity: quantity});
             }
+            result.auctions.sort((a, b) => a.price - b.price);
 
             result.specifics = [];
             if (!noSpecifics) {
@@ -262,12 +263,14 @@ new function () {
                     for (let remainingBonuses = view.getUint8(read(1)); remainingBonuses > 0; remainingBonuses--) {
                         bonuses.push(view.getUint16(read(2), true));
                     }
+                    bonuses.sort((a, b) => a - b);
                     result.specifics.push({
                         price: price,
                         lootedLevel: lootedLevel,
                         bonuses: bonuses,
                     });
                 }
+                result.specifics.sort((a, b) => a.price - b.price);
             }
 
             result.snapshots = [];
