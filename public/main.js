@@ -1632,9 +1632,7 @@ new function () {
                             sortValue: value,
                         },
                     }));
-                    if (detailColumn.prop !== 'reqLevel' || value > 1) {
-                        td.appendChild(ct(value.toLocaleString()));
-                    }
+                    td.appendChild(ct(value.toLocaleString()));
                 }
 
                 //
