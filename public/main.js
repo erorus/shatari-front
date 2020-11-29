@@ -121,7 +121,7 @@ new function () {
         const MS_SEC = 1000;
 
         const VERSION_ITEM_STATE = 2;
-        const VERSION_REALM_STATE = 2;
+        const VERSION_REALM_STATE = 3;
 
         // ********************* //
         // ***** VARIABLES ***** //
