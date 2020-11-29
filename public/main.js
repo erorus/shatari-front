@@ -321,10 +321,19 @@ new function () {
 
             let version = view.getUint8(read(1));
             let simpleItemKeys = false;
-            if (version === 1) {
-                simpleItemKeys = true;
-            } else if (version !== VERSION_REALM_STATE) {
-                throw "Unknown data version for realm state.";
+            let shortSummaryCount = false;
+            switch (version) {
+                case 1:
+                    simpleItemKeys = true;
+                    // no break
+                case 2:
+                    shortSummaryCount = true;
+                    break;
+                case VERSION_REALM_STATE:
+                    // no op
+                    break;
+                default:
+                    throw "Unknown data version for realm state.";
             }
 
             /** @type {RealmState} result */
@@ -337,7 +346,8 @@ new function () {
             }
             result.summary = {};
             result.variants = {};
-            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+            let remaining = shortSummaryCount ? view.getUint16(read(2), true) : view.getUint32(read(4), true);
+            for (; remaining > 0; remaining--) {
                 let itemId = view.getUint32(read(4), true);
                 let itemLevel = 0;
                 let itemSuffix = 0;
