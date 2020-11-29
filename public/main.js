@@ -1029,6 +1029,7 @@ new function () {
             const invTypes = Categories.getInvTypes();
             const extraFilters = Categories.getExtraFilters();
             const realmState = await Auctions.getRealmState();
+            const useVariants = !qs('.main .search-bar .filter [name="transmog-mode"]').checked;
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
@@ -1082,6 +1083,13 @@ new function () {
                             continue;
                         }
                         break;
+                    case Items.CLASS_WEAPON:
+                    case Items.CLASS_ARMOR:
+                        if (useVariants) {
+                            // Normally we'll check item level for each variant.
+                            break;
+                        }
+                        // Check the item level of the base item, not the variant. No break.
                     case Items.CLASS_GEM:
                         if (minLevel !== undefined && item.itemLevel < minLevel) {
                             continue;
@@ -1093,9 +1101,9 @@ new function () {
                 }
 
                 /** @type {Array.<ItemKeyString>} variants */
-                let variants = realmState.variants[id] || [Items.stringifyKey({
+                let variants = (useVariants && realmState.variants[id]) || [Items.stringifyKey({
                     itemId: parseInt(id),
-                    itemLevel: self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
+                    itemLevel: (useVariants && self.CLASSES_EQUIPMENT.includes(item['class'])) ? item.itemLevel : 0,
                     itemSuffix: 0,
                 })];
 
