@@ -120,7 +120,7 @@ new function () {
         const COPPER_SILVER = 100;
         const MS_SEC = 1000;
 
-        const VERSION_ITEM_STATE = 2;
+        const VERSION_ITEM_STATE = 3;
         const VERSION_REALM_STATE = 3;
 
         // ********************* //
@@ -235,10 +235,19 @@ new function () {
 
             let version = view.getUint8(read(1));
             let noSpecifics = false;
-            if (version === 1) {
-                noSpecifics = true;
-            } else if (version !== VERSION_ITEM_STATE) {
-                throw "Unknown data version for item state.";
+            let notSparse = false;
+            switch (version) {
+                case 1:
+                    noSpecifics = true;
+                    // no break
+                case 2:
+                    notSparse = true;
+                    // no break
+                case VERSION_ITEM_STATE:
+                    // no op
+                    break;
+                default:
+                    throw "Unknown data version for item state.";
             }
 
             const result = {};
@@ -279,6 +288,14 @@ new function () {
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
                 result.snapshots.push({snapshot: snapshot, price: price, quantity: quantity});
+            }
+
+            if (notSparse) {
+                // This is an older version of data file, before snapshots were sparse, so it was not updated to set
+                // quantity = 0 when all its auctions expired. Let's do that now.
+                result.quantity = 0;
+                result.auctions = [];
+                result.specifics = [];
             }
 
             return result;
@@ -328,7 +345,7 @@ new function () {
                     // no break
                 case 2:
                     shortSummaryCount = true;
-                    break;
+                    // no break
                 case VERSION_REALM_STATE:
                     // no op
                     break;
