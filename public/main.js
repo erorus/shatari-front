@@ -816,13 +816,6 @@ new function () {
         function populateAuctions(item, realmState, itemState) {
             const availableSpan = qs('.main .main-result .item .back-bar .available');
 
-            if (itemState.snapshot < realmState.snapshot) {
-                // Item hasn't been updated in the most recent snapshot, so assume there are none available.
-                availableSpan.appendChild(ct('0 Available'));
-
-                return;
-            }
-
             availableSpan.appendChild(ct(itemState.quantity.toLocaleString() + ' Available'));
 
             const auctionsPanel = qs('.main .main-result .item .auctions');
