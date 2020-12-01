@@ -83,7 +83,7 @@ body {
         width: 100%; }
         .main .search-bar div.text-container input[type="text"]:placeholder-shown + .text-reset {
           display: none; }
-      .main .search-bar div.text-container datalist {
+      .main .search-bar div.text-container .datalist {
         background-color: rgba(1, 7, 33, 0.8);
         border: 1px solid;
         border-color: #cfcfcf #777 #7f7f7f;
@@ -92,17 +92,36 @@ body {
         padding: 8px;
         z-index: 10;
         background-color: #282322;
+        box-sizing: border-box;
+        display: none;
         font: 12.8px "Friz Quadrata TT", sans-serif;
-        max-height: calc((1.25em + 8px) * 4);
+        max-height: calc((1.25em + 8px) * 4 + (1px + 8px) * 2);
         left: 2em;
         overflow-y: auto;
-        position: absolute; }
-        .main .search-bar div.text-container datalist option {
+        position: absolute;
+        top: calc(100% + 2px);
+        width: calc(100% - 2em); }
+        .main .search-bar div.text-container .datalist div {
           cursor: pointer;
-          padding: 4px; }
-          .main .search-bar div.text-container datalist option:empty {
+          overflow: hidden;
+          padding: 4px;
+          position: relative;
+          padding-left: 27px;
+          text-overflow: ellipsis;
+          white-space: nowrap; }
+          .main .search-bar div.text-container .datalist div:empty {
             display: none; }
-      .main .search-bar div.text-container[data-with-focus] datalist[data-with-items] {
+          .main .search-bar div.text-container .datalist div img {
+            border: 1px solid #808080;
+            border-right-color: #555;
+            border-bottom-color: #555;
+            border-radius: 4px;
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            top: 3px;
+            width: 16px; }
+      .main .search-bar div.text-container[data-with-focus] .datalist[data-with-items] {
         display: block; }
     .main .search-bar button, .main .search-bar > div.filter {
       background-color: #282322;

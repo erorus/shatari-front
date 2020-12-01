@@ -1687,7 +1687,7 @@ new function () {
     const Suggestions = new function () {
         const searchBox = qs('.main .search-bar input[type="text"]');
         const textContainer = searchBox.parentNode;
-        const datalist = qs('.main .search-bar datalist');
+        const datalist = qs('.main .search-bar .datalist');
 
         const MIN_SEARCH_LENGTH = 2;
         const MAX_SUGGESTIONS = 10;
@@ -1695,45 +1695,61 @@ new function () {
 
         let searchTimer;
         let lastSearch;
+        let blurTimeout;
 
         function init() {
-            queueUpdate = function (typedLetter) {
+            const queueUpdate = () => {
                 if (searchTimer !== undefined) {
                     clearTimeout(searchTimer);
                 }
-                searchTimer = setTimeout(update.bind(null, typedLetter), SEARCH_DELAY);
+                searchTimer = setTimeout(update, SEARCH_DELAY);
             };
 
             searchBox.addEventListener('keyup', event => {
                 let typedLetter = event.key.length === 1;
                 if (event.key === 'Backspace' || typedLetter || searchBox.value.length < MIN_SEARCH_LENGTH) {
-                    queueUpdate(typedLetter);
+                    queueUpdate();
                 } else if (event.key === 'Enter') {
                     searchBox.selectionStart = searchBox.selectionEnd = searchBox.value.length;
                     searchBox.blur();
                 }
             });
             searchBox.addEventListener('blur', event => {
-                delete textContainer.dataset.withFocus;
+                if (blurTimeout !== undefined) {
+                    clearTimeout(blurTimeout);
+                }
+                blurTimeout = setTimeout(() => {
+                    blurTimeout = undefined;
+                    delete textContainer.dataset.withFocus;
+                }, SEARCH_DELAY);
             });
-            searchBox.addEventListener('focus', async function (event) {
+            searchBox.addEventListener('focus', function (event) {
+                if (blurTimeout) {
+                    clearTimeout(blurTimeout);
+                    blurTimeout = undefined;
+                }
                 queueUpdate();
                 delete datalist.dataset.withItems;
                 textContainer.dataset.withFocus = 1;
             });
 
+            const onOptionClick = option => {
+                searchBox.value = option.dataset.value;
+                Search.perform();
+            };
             for (let x = 0; x < MAX_SUGGESTIONS; x++) {
-                datalist.appendChild(ce('option'));
+                let option = ce('div');
+                option.addEventListener('click', onOptionClick.bind(null, option));
+                datalist.appendChild(option);
             }
         }
 
         /**
          * Updates the search suggestions datalist element.
-         *
-         * @param {boolean} includeSelection
          */
-        async function update(includeSelection) {
-            const options = datalist.querySelectorAll('option');
+        async function update() {
+            searchTimer = undefined;
+            const options = datalist.querySelectorAll('div');
 
             const typed = searchBox.value.toLowerCase().replace(/^\s+|\s+$/, '');
             if (typed.length < MIN_SEARCH_LENGTH) {
@@ -1763,7 +1779,11 @@ new function () {
                 let name = item.name + (item.bonusSuffix ? ' ' + Items.getSuffix(item.bonusSuffix).name : '');
                 let option = options[index];
                 ee(option);
-                option.value = name;
+                option.dataset.value = name;
+                option.appendChild(ce('img', {
+                    src: Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM),
+                    loading: 'lazy',
+                }));
                 option.appendChild(document.createTextNode(name));
             }
             while (index < MAX_SUGGESTIONS) {
@@ -1771,16 +1791,6 @@ new function () {
             }
             if (options[0].firstChild) {
                 datalist.dataset.withItems = 1;
-
-                if (includeSelection && searchBox.selectionStart === searchBox.value.length) {
-                    let fullName = options[0].textContent;
-                    // We use currentSearch here instead of re-using typed in case it was updated between then and now.
-                    let currentSearch = searchBox.value.toLowerCase().replace(/^\s+|\s+$/, '');
-                    if (fullName.toLowerCase().startsWith(currentSearch)) {
-                        let remaining = fullName.substr(currentSearch.length);
-                        searchBox.setRangeText(remaining, searchBox.value.length, searchBox.value.length + remaining.length, 'select');
-                    }
-                }
             } else {
                 delete datalist.dataset.withItems;
             }
@@ -1918,6 +1928,7 @@ new function () {
         qs('.main .search-bar .text-reset').addEventListener('click', event => {
             searchBox.value = '';
             searchBox.focus();
+            searchBox.dispatchEvent(new Event('focus'));
         });
     }
 

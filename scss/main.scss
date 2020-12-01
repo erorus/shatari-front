@@ -46,13 +46,15 @@ $categoryMaxWidth: 200px;
 $priceWidth: 175px;
 $silverWidth: 35px;
 
+$tooltipBorderSize: 1px;
+$tooltipPadding: 8px;
 @mixin tooltip {
   background-color: rgba(1, 7, 33, 0.8);
-  border: 1px solid;
+  border: $tooltipBorderSize solid;
   border-color: #cfcfcf #777 #7f7f7f;
   border-radius: 4px;
   box-shadow: 0 0 1px 1px black;
-  padding: 8px;
+  padding: $tooltipPadding;
   z-index: 10;
 }
 
@@ -187,6 +189,8 @@ body {
         &:hover {opacity: 1}
       }
 
+      $textLeftPadding: 2em;
+
       input[type="text"] {
         background-image: linear-gradient($background20Tint, $background20Tint), url("../images/eyeglass.png");
         background-position: 3px center;
@@ -194,32 +198,57 @@ body {
         background-size: 1.25em;
         box-sizing: border-box;
         height: 100%;
-        padding-left: 2em;
+        padding-left: $textLeftPadding;
         width: 100%;
 
         &:placeholder-shown + .text-reset {display: none}
       }
 
-      datalist {
+      .datalist {
         @include tooltip();
         background-color: $background20;
+        box-sizing: border-box;
+        display: none;
         font: $fontSizeFriz * 0.8 $fontFriz;
-        max-height: calc((1.25em + #{$marginStep}) * 4);
-        left: 2em;
+        max-height: calc((1.25em + #{$marginStep}) * 4 + (#{$tooltipBorderSize} + #{$tooltipPadding}) * 2);
+        left: $textLeftPadding;
         overflow-y: auto;
         position: absolute;
+        top: calc(100% + 2px);
+        width: calc(100% - #{$textLeftPadding});
 
-        option {
+        div {
+          $iconBorderSize: 1px;
+          $iconMargin: 5px;
+          $iconSize: $fontSizeFriz;
+
           cursor: pointer;
+          overflow: hidden;
           padding: $marginStep * 0.5;
+          position: relative;
+          padding-left: $marginStep * 0.5 + $iconSize + 2 * $iconBorderSize + $iconMargin;
+          text-overflow: ellipsis;
+          white-space: nowrap;
 
           &:empty {
             display: none;
           }
+
+          img {
+            border: $iconBorderSize solid #808080;
+            border-right-color: #555;
+            border-bottom-color: #555;
+            border-radius: 4px;
+            height: $iconSize;
+            left: $marginStep * 0.5;
+            position: absolute;
+            top: 3px;
+            width: $iconSize;
+          }
         }
       }
 
-      &[data-with-focus] datalist[data-with-items] {
+      &[data-with-focus] .datalist[data-with-items] {
         display: block;
       }
     }
