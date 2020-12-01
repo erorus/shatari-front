@@ -234,15 +234,7 @@ new function () {
             };
 
             let version = view.getUint8(read(1));
-            let noSpecifics = false;
-            let notSparse = false;
             switch (version) {
-                case 1:
-                    noSpecifics = true;
-                    // no break
-                case 2:
-                    notSparse = true;
-                    // no break
                 case VERSION_ITEM_STATE:
                     // no op
                     break;
@@ -264,23 +256,21 @@ new function () {
             result.auctions.sort((a, b) => a.price - b.price);
 
             result.specifics = [];
-            if (!noSpecifics) {
-                for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
-                    let price = view.getUint32(read(4), true) * COPPER_SILVER;
-                    let lootedLevel = view.getUint8(read(1));
-                    let bonuses = [];
-                    for (let remainingBonuses = view.getUint8(read(1)); remainingBonuses > 0; remainingBonuses--) {
-                        bonuses.push(view.getUint16(read(2), true));
-                    }
-                    bonuses.sort((a, b) => a - b);
-                    result.specifics.push({
-                        price: price,
-                        lootedLevel: lootedLevel,
-                        bonuses: bonuses,
-                    });
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                let price = view.getUint32(read(4), true) * COPPER_SILVER;
+                let lootedLevel = view.getUint8(read(1));
+                let bonuses = [];
+                for (let remainingBonuses = view.getUint8(read(1)); remainingBonuses > 0; remainingBonuses--) {
+                    bonuses.push(view.getUint16(read(2), true));
                 }
-                result.specifics.sort((a, b) => a.price - b.price);
+                bonuses.sort((a, b) => a - b);
+                result.specifics.push({
+                    price: price,
+                    lootedLevel: lootedLevel,
+                    bonuses: bonuses,
+                });
             }
+            result.specifics.sort((a, b) => a.price - b.price);
 
             result.snapshots = [];
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
@@ -288,14 +278,6 @@ new function () {
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
                 result.snapshots.push({snapshot: snapshot, price: price, quantity: quantity});
-            }
-
-            if (notSparse) {
-                // This is an older version of data file, before snapshots were sparse, so it was not updated to set
-                // quantity = 0 when all its auctions expired. Let's do that now.
-                result.quantity = 0;
-                result.auctions = [];
-                result.specifics = [];
             }
 
             return result;
@@ -337,15 +319,7 @@ new function () {
             };
 
             let version = view.getUint8(read(1));
-            let simpleItemKeys = false;
-            let shortSummaryCount = false;
             switch (version) {
-                case 1:
-                    simpleItemKeys = true;
-                    // no break
-                case 2:
-                    shortSummaryCount = true;
-                    // no break
                 case VERSION_REALM_STATE:
                     // no op
                     break;
@@ -363,15 +337,10 @@ new function () {
             }
             result.summary = {};
             result.variants = {};
-            let remaining = shortSummaryCount ? view.getUint16(read(2), true) : view.getUint32(read(4), true);
-            for (; remaining > 0; remaining--) {
+            for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
                 let itemId = view.getUint32(read(4), true);
-                let itemLevel = 0;
-                let itemSuffix = 0;
-                if (!simpleItemKeys) {
-                    itemLevel = view.getUint16(read(2), true);
-                    itemSuffix = view.getUint16(read(2), true);
-                }
+                let itemLevel = view.getUint16(read(2), true);
+                let itemSuffix = view.getUint16(read(2), true);
                 let itemKey = {
                     itemId: itemId,
                     itemLevel: itemLevel,
