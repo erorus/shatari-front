@@ -1705,19 +1705,32 @@ new function () {
                 searchTimer = setTimeout(update, SEARCH_DELAY);
             };
 
+            searchBox.addEventListener('keydown', event => {
+                if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+                    // Avoid the up/down arrows from moving the cursor.
+                    event.preventDefault();
+                }
+            });
             searchBox.addEventListener('keyup', event => {
                 let typedLetter = event.key.length === 1;
                 if (event.key === 'Backspace' || typedLetter || searchBox.value.length < MIN_SEARCH_LENGTH) {
+                    // Updates are queued with a short delay, so fast typing doesn't have earlier results overwriting
+                    // later ones.
                     queueUpdate();
                 } else if (event.key === 'Enter') {
-                    searchBox.selectionStart = searchBox.selectionEnd = searchBox.value.length;
+                    // The actual search functionality was added in the keyup listener in the main init.
                     searchBox.blur();
+                } else if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+                    navigateList(event.key === 'ArrowDown');
                 }
             });
             searchBox.addEventListener('blur', event => {
                 if (blurTimeout !== undefined) {
                     clearTimeout(blurTimeout);
                 }
+                // We set a blur timeout so if you click the data list, the click actually lands (instead of the click
+                // blurring the text box, which then immediately hides the data list, which causes the click to land
+                // under where the list was.
                 blurTimeout = setTimeout(() => {
                     blurTimeout = undefined;
                     delete textContainer.dataset.withFocus;
@@ -1725,6 +1738,9 @@ new function () {
             });
             searchBox.addEventListener('focus', function (event) {
                 if (blurTimeout) {
+                    // We might get a blur then immediate focus when the "clear all" button is clicked, causing the
+                    // button to gain focus, then immediately set it back to the search box. Clear the blur timeout
+                    // so we don't keep the data list hidden once we start typing.
                     clearTimeout(blurTimeout);
                     blurTimeout = undefined;
                 }
@@ -1735,7 +1751,7 @@ new function () {
 
             const onOptionClick = option => {
                 searchBox.value = option.dataset.value;
-                Search.perform();
+                searchBox.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter'}));
             };
             for (let x = 0; x < MAX_SUGGESTIONS; x++) {
                 let option = ce('div');
@@ -1744,11 +1760,44 @@ new function () {
             }
         }
 
+        function navigateList(down) {
+            if (!datalist.dataset.withItems) {
+                return;
+            }
+
+            let curSelection = datalist.querySelector('div.selected');
+            let newSelection;
+            if (!curSelection) {
+                if (down) {
+                    newSelection = datalist.querySelector('div');
+                } else {
+                    return;
+                }
+            } else {
+                newSelection = down ? curSelection.nextSibling : curSelection.previousSibling;
+            }
+            if (!newSelection || !newSelection.textContent) {
+                return;
+            }
+
+            if (curSelection) {
+                curSelection.classList.remove('selected');
+            }
+            newSelection.classList.add('selected');
+            newSelection.parentNode.scrollTop = newSelection.offsetTop - newSelection.parentNode.firstChild.offsetTop;
+
+            searchBox.value = newSelection.dataset.value;
+            searchBox.selectionStart = searchBox.value.length;
+        }
+
         /**
          * Updates the search suggestions datalist element.
          */
         async function update() {
             searchTimer = undefined;
+            datalist.querySelectorAll('div.selected').forEach(div => {
+                div.classList.remove('selected');
+            });
             const options = datalist.querySelectorAll('div');
 
             const typed = searchBox.value.toLowerCase().replace(/^\s+|\s+$/, '');
@@ -1921,14 +1970,14 @@ new function () {
         });
         const searchBox = qs('.main .search-bar input[type="text"]');
         searchBox.addEventListener('keyup', event => {
-            if (event.code === 'Enter') {
+            if (event.key === 'Enter') {
                 Search.perform();
             }
         });
         qs('.main .search-bar .text-reset').addEventListener('click', event => {
             searchBox.value = '';
             searchBox.focus();
-            searchBox.dispatchEvent(new Event('focus'));
+            searchBox.dispatchEvent(new FocusEvent('focus'));
         });
     }
 

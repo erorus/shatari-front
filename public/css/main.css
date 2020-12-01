@@ -111,6 +111,8 @@ body {
           white-space: nowrap; }
           .main .search-bar div.text-container .datalist div:empty {
             display: none; }
+          .main .search-bar div.text-container .datalist div.selected {
+            font-weight: bold; }
           .main .search-bar div.text-container .datalist div img {
             border: 1px solid #808080;
             border-right-color: #555;

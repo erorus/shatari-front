@@ -234,6 +234,8 @@ body {
             display: none;
           }
 
+          &.selected {font-weight: bold}
+
           img {
             border: $iconBorderSize solid #808080;
             border-right-color: #555;
