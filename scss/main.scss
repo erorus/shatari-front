@@ -210,9 +210,10 @@ body {
         box-sizing: border-box;
         display: none;
         font: $fontSizeFriz * 0.8 $fontFriz;
-        max-height: calc((1.25em + #{$marginStep}) * 4 + (#{$tooltipBorderSize} + #{$tooltipPadding}) * 2);
+        max-height: calc((1.333em + #{$marginStep}) * 4 + #{$tooltipBorderSize} * 2);
         left: $textLeftPadding;
         overflow-y: auto;
+        padding: 0;
         position: absolute;
         top: calc(100% + 2px);
         width: calc(100% - #{$textLeftPadding});
@@ -224,9 +225,9 @@ body {
 
           cursor: pointer;
           overflow: hidden;
-          padding: $marginStep * 0.5;
+          padding: $marginStep * 0.5 $tooltipPadding;
+          padding-left: $marginStep * 0.5 + $iconSize + 2 * $iconBorderSize + $iconMargin + $tooltipPadding;
           position: relative;
-          padding-left: $marginStep * 0.5 + $iconSize + 2 * $iconBorderSize + $iconMargin;
           text-overflow: ellipsis;
           white-space: nowrap;
 
@@ -234,7 +235,10 @@ body {
             display: none;
           }
 
-          &.selected {font-weight: bold}
+          &.selected {
+            background-color: $background30;
+            font-weight: bold;
+          }
 
           img {
             border: $iconBorderSize solid #808080;
@@ -242,7 +246,7 @@ body {
             border-bottom-color: #555;
             border-radius: 4px;
             height: $iconSize;
-            left: $marginStep * 0.5;
+            left: $marginStep * 0.5 + $tooltipPadding;
             position: absolute;
             top: 3px;
             width: $iconSize;
