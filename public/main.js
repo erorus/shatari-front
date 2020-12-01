@@ -1014,6 +1014,7 @@ new function () {
         this.search = async function (forSuggestions) {
             const result = [];
 
+            const seenNames = {};
             const classId = Categories.getClassId();
             const subClassIds = Categories.getSubClassIds();
             const invTypes = Categories.getInvTypes();
@@ -1142,6 +1143,13 @@ new function () {
                     }
                     if (!foundAllWords) {
                         return;
+                    }
+
+                    if (forSuggestions) {
+                        if (seenNames[name]) {
+                            return;
+                        }
+                        seenNames[name] = true;
                     }
 
                     /** @type {Item} newItem */
@@ -1681,19 +1689,36 @@ new function () {
         const textContainer = searchBox.parentNode;
         const datalist = qs('.main .search-bar datalist');
 
+        const MIN_SEARCH_LENGTH = 2;
         const MAX_SUGGESTIONS = 10;
+        const SEARCH_DELAY = 150;
+
+        let searchTimer;
+        let lastSearch;
 
         function init() {
+            queueUpdate = function (typedLetter) {
+                if (searchTimer !== undefined) {
+                    clearTimeout(searchTimer);
+                }
+                searchTimer = setTimeout(update.bind(null, typedLetter), SEARCH_DELAY);
+            };
+
             searchBox.addEventListener('keyup', event => {
-                if (event.key === 'Backspace' || event.key.length === 1) {
-                    update();
+                let typedLetter = event.key.length === 1;
+                if (event.key === 'Backspace' || typedLetter || searchBox.value.length < MIN_SEARCH_LENGTH) {
+                    queueUpdate(typedLetter);
+                } else if (event.key === 'Enter') {
+                    searchBox.selectionStart = searchBox.selectionEnd = searchBox.value.length;
+                    searchBox.blur();
                 }
             });
             searchBox.addEventListener('blur', event => {
                 delete textContainer.dataset.withFocus;
             });
             searchBox.addEventListener('focus', async function (event) {
-                await update();
+                queueUpdate();
+                delete datalist.dataset.withItems;
                 textContainer.dataset.withFocus = 1;
             });
 
@@ -1704,19 +1729,25 @@ new function () {
 
         /**
          * Updates the search suggestions datalist element.
+         *
+         * @param {boolean} includeSelection
          */
-        async function update() {
+        async function update(includeSelection) {
             const options = datalist.querySelectorAll('option');
 
             const typed = searchBox.value.toLowerCase().replace(/^\s+|\s+$/, '');
-            if (typed.length < 2) {
+            if (typed.length < MIN_SEARCH_LENGTH) {
                 options.forEach(option => ee(option));
                 delete datalist.dataset.withItems;
 
                 return;
             }
 
+            lastSearch = typed;
             const items = await Auctions.hydrateList(await Items.search(true));
+            if (lastSearch !== typed) {
+                return;
+            }
             items.sort((a, b) => {
                 let aFullName = a.name + (a.bonusSuffix ? ' ' + Items.getSuffix(a.bonusSuffix).name : '');
                 let bFullName = b.name + (b.bonusSuffix ? ' ' + Items.getSuffix(b.bonusSuffix).name : '');
@@ -1740,6 +1771,16 @@ new function () {
             }
             if (options[0].firstChild) {
                 datalist.dataset.withItems = 1;
+
+                if (includeSelection && searchBox.selectionStart === searchBox.value.length) {
+                    let fullName = options[0].textContent;
+                    // We use currentSearch here instead of re-using typed in case it was updated between then and now.
+                    let currentSearch = searchBox.value.toLowerCase().replace(/^\s+|\s+$/, '');
+                    if (fullName.toLowerCase().startsWith(currentSearch)) {
+                        let remaining = fullName.substr(currentSearch.length);
+                        searchBox.setRangeText(remaining, searchBox.value.length, searchBox.value.length + remaining.length, 'select');
+                    }
+                }
             } else {
                 delete datalist.dataset.withItems;
             }
