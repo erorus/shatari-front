@@ -199,6 +199,29 @@ body {
 
         &:placeholder-shown + .text-reset {display: none}
       }
+
+      datalist {
+        @include tooltip();
+        background-color: $background20;
+        font: $fontSizeFriz * 0.8 $fontFriz;
+        max-height: calc((1.25em + #{$marginStep}) * 4);
+        left: 2em;
+        overflow-y: auto;
+        position: absolute;
+
+        option {
+          cursor: pointer;
+          padding: $marginStep * 0.5;
+
+          &:empty {
+            display: none;
+          }
+        }
+      }
+
+      &[data-with-focus] datalist[data-with-items] {
+        display: block;
+      }
     }
     button, > div.filter {
       @include button();

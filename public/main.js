@@ -1008,9 +1008,10 @@ new function () {
         /**
          * Performs a search depending on the UI state, and returns item objects that match.
          *
+         * @param {boolean} forSuggestions
          * @return {Promise<Item[]>}
          */
-        this.search = async function () {
+        this.search = async function (forSuggestions) {
             const result = [];
 
             const classId = Categories.getClassId();
@@ -1090,11 +1091,33 @@ new function () {
                 }
 
                 /** @type {Array.<ItemKeyString>} variants */
-                let variants = (useVariants && realmState.variants[id]) || [Items.stringifyKey({
-                    itemId: parseInt(id),
-                    itemLevel: (useVariants && self.CLASSES_EQUIPMENT.includes(item['class'])) ? item.itemLevel : 0,
-                    itemSuffix: 0,
-                })];
+                let variants;
+                if (!useVariants) {
+                    // Not using any variants, just bare item IDs.
+                    variants = [Items.stringifyKey({itemId: parseInt(id), itemLevel: 0, itemSuffix: 0})];
+                } else {
+                    variants = realmState.variants[id] || [Items.stringifyKey({
+                        itemId: parseInt(id),
+                        itemLevel: self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
+                        itemSuffix: 0,
+                    })];
+
+                    if (forSuggestions && variants.length > 1) {
+                        // Strip out item levels. We won't be looking up these key strings anyway.
+                        for (let index = 0; index < variants.length; index++) {
+                            let itemKey = Items.parseKey(variants[index]);
+                            itemKey.itemLevel = 0;
+                            variants[index] = Items.stringifyKey(itemKey);
+                        }
+                        // Now get a unique list.
+                        variants.sort();
+                        for (let index = 1; index < variants.length; index++) {
+                            if (variants[index] === variants[index - 1]) {
+                                variants.splice(index--, 1);
+                            }
+                        }
+                    }
+                }
 
                 variants.forEach(keyString => {
                     const itemKey = Items.parseKey(keyString);
@@ -1652,6 +1675,79 @@ new function () {
         }
     }
 
+    /** Manages the search suggestions list. */
+    const Suggestions = new function () {
+        const searchBox = qs('.main .search-bar input[type="text"]');
+        const textContainer = searchBox.parentNode;
+        const datalist = qs('.main .search-bar datalist');
+
+        const MAX_SUGGESTIONS = 10;
+
+        function init() {
+            searchBox.addEventListener('keyup', event => {
+                if (event.key === 'Backspace' || event.key.length === 1) {
+                    update();
+                }
+            });
+            searchBox.addEventListener('blur', event => {
+                delete textContainer.dataset.withFocus;
+            });
+            searchBox.addEventListener('focus', async function (event) {
+                await update();
+                textContainer.dataset.withFocus = 1;
+            });
+
+            for (let x = 0; x < MAX_SUGGESTIONS; x++) {
+                datalist.appendChild(ce('option'));
+            }
+        }
+
+        /**
+         * Updates the search suggestions datalist element.
+         */
+        async function update() {
+            const options = datalist.querySelectorAll('option');
+
+            const typed = searchBox.value.toLowerCase().replace(/^\s+|\s+$/, '');
+            if (typed.length < 2) {
+                options.forEach(option => ee(option));
+                delete datalist.dataset.withItems;
+
+                return;
+            }
+
+            const items = await Auctions.hydrateList(await Items.search(true));
+            items.sort((a, b) => {
+                let aFullName = a.name + (a.bonusSuffix ? ' ' + Items.getSuffix(a.bonusSuffix).name : '');
+                let bFullName = b.name + (b.bonusSuffix ? ' ' + Items.getSuffix(b.bonusSuffix).name : '');
+                let aFirst = aFullName.toLowerCase().startsWith(typed) ? 0 : 1;
+                let bFirst = bFullName.toLowerCase().startsWith(typed) ? 0 : 1;
+
+                return (aFirst - bFirst) || (b.quantity - a.quantity) || aFullName.localeCompare(bFullName);
+            });
+            items.splice(MAX_SUGGESTIONS);
+
+            let index = 0;
+            for (let item; item = items[index]; index++) {
+                let name = item.name + (item.bonusSuffix ? ' ' + Items.getSuffix(item.bonusSuffix).name : '');
+                let option = options[index];
+                ee(option);
+                option.value = name;
+                option.appendChild(document.createTextNode(name));
+            }
+            while (index < MAX_SUGGESTIONS) {
+                ee(options[index++]);
+            }
+            if (options[0].firstChild) {
+                datalist.dataset.withItems = 1;
+            } else {
+                delete datalist.dataset.withItems;
+            }
+        }
+
+        init();
+    };
+
     //                           //
     // Generic Utility Functions //
     //                           //
@@ -1780,6 +1876,7 @@ new function () {
         });
         qs('.main .search-bar .text-reset').addEventListener('click', event => {
             searchBox.value = '';
+            searchBox.focus();
         });
     }
 

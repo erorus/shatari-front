@@ -83,6 +83,27 @@ body {
         width: 100%; }
         .main .search-bar div.text-container input[type="text"]:placeholder-shown + .text-reset {
           display: none; }
+      .main .search-bar div.text-container datalist {
+        background-color: rgba(1, 7, 33, 0.8);
+        border: 1px solid;
+        border-color: #cfcfcf #777 #7f7f7f;
+        border-radius: 4px;
+        box-shadow: 0 0 1px 1px black;
+        padding: 8px;
+        z-index: 10;
+        background-color: #282322;
+        font: 12.8px "Friz Quadrata TT", sans-serif;
+        max-height: calc((1.25em + 8px) * 4);
+        left: 2em;
+        overflow-y: auto;
+        position: absolute; }
+        .main .search-bar div.text-container datalist option {
+          cursor: pointer;
+          padding: 4px; }
+          .main .search-bar div.text-container datalist option:empty {
+            display: none; }
+      .main .search-bar div.text-container[data-with-focus] datalist[data-with-items] {
+        display: block; }
     .main .search-bar button, .main .search-bar > div.filter {
       background-color: #282322;
       border: 2px solid;
