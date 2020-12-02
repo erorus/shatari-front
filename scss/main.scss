@@ -44,7 +44,7 @@ $pageMaxWidth: 1050px;
 $categoryMinWidth: 150px;
 $categoryMaxWidth: 200px;
 $priceWidth: 175px;
-$silverWidth: 35px;
+$silverWidth: 30px;
 
 $tooltipBorderSize: 1px;
 $tooltipPadding: 8px;
@@ -633,16 +633,31 @@ body {
                 &[data-quality="5"]:after {background-image: url("../images/ring-5.png")}
               }
             }
+            .model-container {
+              margin: $marginStep;
+              text-align: center;
+              img {
+                background-color: $background15;
+                border: $bevel solid;
+                border-color: $background00 $background10 $background40;
+                border-radius: $borderRadius;
+
+                max-width: 300px;
+                width: 100%;
+              }
+            }
           }
           &.auctions {
             background-color: $background10;
-            background: linear-gradient(180deg, $background10 0%, $background15 100%);
 
             flex: 6 1;
             margin-left: $marginStep;
 
             table {
               width: 100%;
+              tr {
+                background: linear-gradient(180deg, $background10 0%, $background15 100%);
+              }
               td {
                 text-align: right;
                 width: 50%;
@@ -686,6 +701,6 @@ body {
   .copper {background-image: url("../images/coin-copper.png");}
 }
 
-.wowhead-tooltip {max-width: 320px !important; width: auto !important;
-  &-powered {display: none !important}
+body > .wowhead-tooltip {max-width: 320px !important; width: auto !important;
+  .wowhead-tooltip-powered {display: none !important}
 }

@@ -91,6 +91,7 @@ new function () {
     /**
      * @typedef {object} UnnamedItem
      * @property {number} class
+     * @property {number} [display]
      * @property {number[]} [extraFilters]
      * @property {string} icon
      * @property {InventoryType} [inventoryType]
@@ -893,6 +894,22 @@ new function () {
                 }
             }
 
+            if (item.display) {
+                const modelContainer = ce('div', {className: 'model-container'});
+                scroller.appendChild(modelContainer);
+
+                let url = 'https://wow.zamimg.com/modelviewer/live/webthumbs/item/' + (item.display & 0xFF) + '/' + item.display;
+                const pic = ce('picture');
+                pic.appendChild(ce('source', {
+                    srcset: url + '.webp',
+                    type: 'image/webp',
+                }));
+                pic.appendChild(ce('img', {
+                    src: url + '.png',
+                }));
+                modelContainer.appendChild(pic);
+            }
+
             scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
     };
@@ -1428,7 +1445,7 @@ new function () {
             Detail.hide();
             emptyItemList();
 
-            const itemsList = await Auctions.hydrateList(await Items.search());
+            const itemsList = await Auctions.hydrateList(await Items.search(false));
 
             requestAnimationFrame(function () {
                 requestAnimationFrame(

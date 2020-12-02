@@ -355,7 +355,7 @@ body {
             width: 175px; }
             .main .main-result .search-result table tbody td.price .silver {
               display: inline-block;
-              width: 35px; }
+              width: 30px; }
           .main .main-result .search-result table tbody td.name {
             max-width: 0;
             overflow: hidden;
@@ -472,19 +472,30 @@ body {
                   background-image: url("../images/ring-4.png"); }
                 .main .main-result .item .panels > div.details .title .icon[data-quality="5"]:after {
                   background-image: url("../images/ring-5.png"); }
+            .main .main-result .item .panels > div.details .model-container {
+              margin: 8px;
+              text-align: center; }
+              .main .main-result .item .panels > div.details .model-container img {
+                background-color: #201b1a;
+                border: 2px solid;
+                border-color: #060100 #161211 #4a4644;
+                border-radius: 8px;
+                max-width: 300px;
+                width: 100%; }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
-            background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
             flex: 6 1;
             margin-left: 8px; }
             .main .main-result .item .panels > div.auctions table {
               width: 100%; }
+              .main .main-result .item .panels > div.auctions table tr {
+                background: linear-gradient(180deg, #161211 0%, #201b1a 100%); }
               .main .main-result .item .panels > div.auctions table td {
                 text-align: right;
                 width: 50%; }
                 .main .main-result .item .panels > div.auctions table td .silver {
                   display: inline-block;
-                  width: 35px; }
+                  width: 30px; }
                 .main .main-result .item .panels > div.auctions table td a {
                   display: block; }
     .main .main-result[data-detail-mode] .item {
@@ -511,10 +522,10 @@ body {
   .main .copper {
     background-image: url("../images/coin-copper.png"); }
 
-.wowhead-tooltip {
+body > .wowhead-tooltip {
   max-width: 320px !important;
   width: auto !important; }
-  .wowhead-tooltip-powered {
+  body > .wowhead-tooltip .wowhead-tooltip-powered {
     display: none !important; }
 
 /*# sourceMappingURL=main.css.map */
