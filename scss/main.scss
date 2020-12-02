@@ -21,8 +21,9 @@ $rowHoverEnd: transparentize($columnHeaderHoverBackground, 0.4);
 
 $subsubCategoryHoverStart: transparentize($columnHeaderHoverBackground, 0.9);
 $subsubCategoryHoverEnd: $rowHoverEnd;
-$subsubCategoryBackgroundStart: transparentize(#e6b335, 0.9);
-$subsubCategoryBackgroundEnd: transparentize(#e6b335, 0.4);
+$rowHighlightColor: #e6b335;
+$subsubCategoryBackgroundStart: transparentize($rowHighlightColor, 0.9);
+$subsubCategoryBackgroundEnd: transparentize($rowHighlightColor, 0.4);
 
 $buttonRed: #640000;
 $buttonText: #ffd100;
@@ -118,6 +119,14 @@ $scrollbarTrack: $background10;
       border-left: 6px solid $scrollbarTrack;
     }
   }
+}
+
+input[type="number"] {
+  &::-webkit-outer-spin-button, &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
 }
 
 body {
@@ -308,12 +317,6 @@ body {
             padding: 0 0.5em;
             text-align: right;
             width: 3em;
-
-            &::-webkit-outer-spin-button, &::-webkit-inner-spin-button {
-              -webkit-appearance: none;
-              margin: 0;
-            }
-            -moz-appearance: textfield;
           }
         }
       }
@@ -646,6 +649,37 @@ body {
                 width: 100%;
               }
             }
+            .quantity-calc {
+              table {
+                margin: 0 auto;
+                td:first-child {
+                  color: $qColor;
+                  font: $fontSizeFriz $fontFriz;
+                  padding: 0.5em 1em 0.5em 0;
+                  text-align: right;
+                  vertical-align: middle;
+                }
+                td:last-child {
+                  text-align: right;
+                  width: 8em;
+                }
+              }
+
+              input {
+                background-color: $background10;
+                border: $bevel * 2 + 1px double;
+                border-color: $background40;
+                border-radius: $borderRadius;
+                box-sizing: border-box;
+                color: $text10;
+                font: $fontSizeArial $fontArial;
+                padding: $marginStep / 2 $marginStep;
+                width: 100%;
+              }
+
+              .price {display: inline-block; text-align: right}
+              .silver {display: inline-block; width: $silverWidth}
+            }
           }
           &.auctions {
             background-color: $background10;
@@ -654,9 +688,31 @@ body {
             margin-left: $marginStep;
 
             table {
+              border-collapse: collapse;
               width: 100%;
               tr {
                 background: linear-gradient(180deg, $background10 0%, $background15 100%);
+
+                &[data-selected] {
+                  background: linear-gradient(90deg,
+                    transparentize($rowHighlightColor, 0.9) 0%,
+                    transparentize($rowHighlightColor, 0.4) 40%,
+                    transparentize($rowHighlightColor, 0.4) 60%,
+                    transparentize($rowHighlightColor, 0.9) 100%
+                  );
+                }
+                &[data-selected="part"] {
+                  background: linear-gradient(90deg,
+                    transparentize($rowHighlightColor, 0.9) 0%,
+                    transparentize($rowHighlightColor, 0.66) 40%,
+                    transparentize($rowHighlightColor, 0.66) 60%,
+                    transparentize($rowHighlightColor, 0.9) 100%
+                  );
+                }
+
+                &:hover {
+                  background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
+                }
               }
               td {
                 text-align: right;
