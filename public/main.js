@@ -1058,7 +1058,80 @@ new function () {
                 validateAndRun();
             }
 
-            console.log(itemState.snapshots);
+            // Price chart
+            (() => {
+                if (itemState.snapshots.length < 6) {
+                    return;
+                }
+
+                let maxPrice = 0;
+                let lastTimestamp = 0;
+                {
+                    let prices = [];
+                    itemState.snapshots.forEach(snapshot => {
+                        maxPrice = Math.max(maxPrice, snapshot.price);
+                        lastTimestamp = Math.max(lastTimestamp, snapshot.snapshot);
+                        if (snapshot.price > 0) {
+                            prices.push(snapshot.price);
+                        }
+                    });
+                    if (maxPrice === 0) {
+                        return;
+                    }
+
+                    prices.sort((a, b) => a - b);
+                    let q1 = prices[Math.floor(prices.length * 0.25)];
+                    let q3 = prices[Math.floor(prices.length * 0.75)];
+                    let iqr = q3 - q1;
+
+                    maxPrice = Math.min(maxPrice, q3 + iqr * 1.5) * 1.15;
+                }
+
+                const xMax = 1000;
+                const yMax = 333;
+
+                const firstTimestamp = itemState.snapshots[0].snapshot;
+                const timestampRange = lastTimestamp - firstTimestamp;
+
+                const points = [];
+                let gotFirstPrice = false;
+                itemState.snapshots.forEach(snapshot => {
+                    if (!snapshot.price && !gotFirstPrice) {
+                        return;
+                    }
+                    gotFirstPrice = true;
+
+                    const x = Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xMax);
+                    const y = Math.round((maxPrice - snapshot.price) / maxPrice * yMax);
+                    points.push([x, y].join(','));
+                });
+                // Loop us back around to fill the shape.
+                points.push([xMax * 2, yMax * 2].join(','));
+                points.push([xMax * -1, yMax * 2].join(','));
+
+                const chartContainer = ce('div', {
+                    className: 'charts-container',
+                });
+                scroller.appendChild(chartContainer);
+
+                const chartWrapper = ce('div', {
+                    className: 'chart-wrapper price',
+                    style: {
+                        paddingBottom: (yMax / xMax * 100) + '%',
+                    }
+                });
+                chartContainer.appendChild(chartWrapper);
+
+                const priceChart = svge('svg', {
+                    'viewBox': [0, 0, xMax, yMax].join(' '),
+                });
+                chartWrapper.appendChild(priceChart);
+
+                const line = svge('polyline', {
+                    points: points.join(' '),
+                });
+                priceChart.appendChild(line);
+            })();
 
             scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
@@ -2037,6 +2110,32 @@ new function () {
         const result = document.createElement(tag);
 
         co(result, props || {});
+
+        if (child) {
+            result.appendChild(child);
+        }
+
+        return result;
+    }
+
+    /**
+     * Create SVG Element.
+     *
+     * @param {string} tag
+     * @param {object} [attributes]
+     * @param {Node} [child]
+     * @return {Node}
+     */
+    function svge(tag, attributes, child) {
+        const result = document.createElementNS('http://www.w3.org/2000/svg', tag);
+
+        if (attributes) {
+            for (let key in attributes) {
+                if (attributes.hasOwnProperty(key)) {
+                    result.setAttribute(key, attributes[key]);
+                }
+            }
+        }
 
         if (child) {
             result.appendChild(child);

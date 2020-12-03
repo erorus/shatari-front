@@ -511,6 +511,25 @@ body {
             .main .main-result .item .panels > div.details .quantity-calc .silver {
               display: inline-block;
               width: 30px; }
+            .main .main-result .item .panels > div.details .charts-container {
+              margin: 8px; }
+              .main .main-result .item .panels > div.details .charts-container .chart-wrapper {
+                background-color: #201b1a;
+                border: 2px solid;
+                border-color: #060100 #161211 #4a4644;
+                border-radius: 8px;
+                box-sizing: border-box;
+                overflow: hidden;
+                position: relative; }
+                .main .main-result .item .panels > div.details .charts-container .chart-wrapper svg {
+                  height: 100%;
+                  position: absolute;
+                  top: 2px;
+                  width: 100%; }
+                .main .main-result .item .panels > div.details .charts-container .chart-wrapper.price polyline {
+                  fill: rgba(204, 170, 68, 0.5);
+                  stroke: #CA4;
+                  stroke-width: 4px; }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
             flex: 6 1;

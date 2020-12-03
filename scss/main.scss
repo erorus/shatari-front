@@ -680,6 +680,36 @@ body {
               .price {display: inline-block; text-align: right}
               .silver {display: inline-block; width: $silverWidth}
             }
+
+            .charts-container {
+              margin: $marginStep;
+
+              .chart-wrapper {
+                background-color: $background15;
+                border: $bevel solid;
+                border-color: $background00 $background10 $background40;
+                border-radius: $borderRadius;
+
+                box-sizing: border-box;
+                overflow: hidden;
+                position: relative;
+
+                svg {
+                  height: 100%;
+                  position: absolute;
+                  top: $bevel;
+                  width: 100%;
+                }
+
+                &.price {
+                  polyline {
+                    fill: transparentize($qColor, 0.5);
+                    stroke: $qColor;
+                    stroke-width: $bevel * 2;
+                  }
+                }
+              }
+            }
           }
           &.auctions {
             background-color: $background10;
