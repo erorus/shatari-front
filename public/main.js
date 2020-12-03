@@ -121,6 +121,8 @@ new function () {
         const COPPER_SILVER = 100;
         const MS_SEC = 1000;
 
+        const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
+
         const VERSION_ITEM_STATE = 3;
         const VERSION_REALM_STATE = 3;
 
@@ -129,7 +131,7 @@ new function () {
         // ********************* //
 
         const my = {
-            lastRealmState: undefined,
+            lastRealmState: {},
         };
 
         // ********************* //
@@ -151,7 +153,7 @@ new function () {
         }
 
         /**
-         * Return the current realm's state.
+         * Return the current realm's state. May return a cached object shared between calls.
          *
          * @return {Promise<RealmState>}
          */
@@ -285,28 +287,33 @@ new function () {
         }
 
         /**
-         * Given a realm object, return its current realm state.
+         * Given a realm object, return its current realm state. May return a cached object shared between calls.
          *
          * @param {Realm} realm
          * @return {Promise<RealmState>}
          */
         async function getRealmState(realm) {
+            if (
+                my.lastRealmState.data &&
+                my.lastRealmState.id === realm.connectedId &&
+                my.lastRealmState.checked > Date.now() - REALM_STATE_CACHE_DURATION
+            ) {
+                return my.lastRealmState.data;
+            }
+
             const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode: 'same-origin'});
             if (!response.ok) {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
 
-            if ((my.lastRealmState || {}).data &&
+            if (my.lastRealmState.data &&
                 my.lastRealmState.id === realm.connectedId &&
                 my.lastRealmState.modified === response.headers.get('last-modified')
             ) {
+                my.lastRealmState.checked = Date.now();
+
                 return my.lastRealmState.data;
             }
-
-            my.lastRealmState = {
-                id: realm.connectedId,
-                modified: response.headers.get('last-modified'),
-            };
 
             const buffer = await response.arrayBuffer();
             const view = new DataView(buffer);
@@ -336,6 +343,7 @@ new function () {
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
             }
+            Object.freeze(result.snapshots);
             result.summary = {};
             result.variants = {};
             for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
@@ -356,14 +364,29 @@ new function () {
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.summary[itemKeyString] = {
+                result.summary[itemKeyString] = Object.freeze({
                     snapshot: snapshot,
                     price: price,
                     quantity: quantity,
-                };
+                });
             }
+            for (let itemId in result.variants) {
+                if (result.variants.hasOwnProperty(itemId)) {
+                    Object.freeze(result.variants[itemId]);
+                }
+            }
+            Object.freeze(result.summary);
+            Object.freeze(result.variants);
+            Object.freeze(result);
 
-            return my.lastRealmState.data = result;
+            my.lastRealmState = {
+                id: realm.connectedId,
+                modified: response.headers.get('last-modified'),
+                checked: Date.now(),
+                data: result,
+            };
+
+            return result;
         }
     };
 
@@ -1204,11 +1227,17 @@ new function () {
                     // Not using any variants, just bare item IDs.
                     variants = [Items.stringifyKey({itemId: parseInt(id), itemLevel: 0, itemSuffix: 0})];
                 } else {
-                    variants = realmState.variants[id] || [Items.stringifyKey({
-                        itemId: parseInt(id),
-                        itemLevel: self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
-                        itemSuffix: 0,
-                    })];
+                    if (realmState.variants[id]) {
+                        variants = realmState.variants[id].slice(0);
+                    } else {
+                        variants = [
+                            Items.stringifyKey({
+                                itemId: parseInt(id),
+                                itemLevel: self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
+                                itemSuffix: 0,
+                            }),
+                        ];
+                    }
 
                     if (forSuggestions && variants.length > 1) {
                         // Strip out item levels. We won't be looking up these key strings anyway.
