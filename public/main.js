@@ -276,11 +276,46 @@ new function () {
             result.specifics.sort((a, b) => a.price - b.price);
 
             result.snapshots = [];
+            let deltas = {};
+            let prevDelta;
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.snapshots.push({snapshot: snapshot, price: price, quantity: quantity});
+                deltas[snapshot] = {snapshot: snapshot, price: price, quantity: quantity};
+                // Workaround for when data collection didn't carry over the price when quantity became zero.
+                if (deltas[snapshot].quantity === 0 && prevDelta && deltas[snapshot].price === 0) {
+                    deltas[snapshot].price = prevDelta.price;
+                }
+                if (!prevDelta) {
+                    prevDelta = deltas[snapshot];
+                }
+            }
+
+            if (prevDelta) {
+                const realmState = await getRealmState(realm);
+
+                realmState.snapshots.forEach(timestamp => {
+                    if (deltas[timestamp]) {
+                        // Something changed at this timestamp, and we have new stats.
+                        prevDelta = deltas[timestamp];
+                        result.snapshots.push(deltas[timestamp]);
+                    } else if (prevDelta.snapshot < timestamp) {
+                        // There were no changes recorded at this snapshot, assume it's the same as the prev snapshot.
+                        result.snapshots.push({
+                            snapshot: timestamp,
+                            price: prevDelta.price,
+                            quantity: prevDelta.quantity,
+                        });
+                    } else {
+                        // prevDelta.snapshot > timestamp, which means our first record of this item came after now.
+                        result.snapshots.push({
+                            snapshot: timestamp,
+                            price: 0, // We don't know its price, we haven't seen it yet.
+                            quantity: 0, // We know we saw a snapshot at this timestamp, but no item, so quantity = 0.
+                        });
+                    }
+                });
             }
 
             return result;
@@ -1022,6 +1057,8 @@ new function () {
                 input.addEventListener('change', validateAndRun);
                 validateAndRun();
             }
+
+            console.log(itemState.snapshots);
 
             scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
