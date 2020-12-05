@@ -7,9 +7,9 @@ new function () {
 
     /**
      * @typedef {Object} AuctionDetail
-     * @property {Money} price
-     * @property {number} lootedLevel
      * @property {number[]} bonuses
+     * @property {Object.<number, number>} modifiers
+     * @property {Money} price
      */
 
     /** @typedef {number} ClassID */
@@ -114,16 +114,28 @@ new function () {
      * Manages item prices and availability.
      */
     const Auctions = new function () {
+        const self = this;
+
         // ********************* //
         // ***** CONSTANTS ***** //
         // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        this.MODIFIER_TYPE_TIMEWALKER_LEVEL = 9;
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
 
         const COPPER_SILVER = 100;
         const MS_SEC = 1000;
 
         const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
-        const VERSION_ITEM_STATE = 3;
+        const VERSION_ITEM_STATE = 4;
         const VERSION_REALM_STATE = 3;
 
         // ********************* //
@@ -237,7 +249,11 @@ new function () {
             };
 
             let version = view.getUint8(read(1));
+            let fullModifiers = true;
             switch (version) {
+                case 3:
+                    fullModifiers = false;
+                    // no break
                 case VERSION_ITEM_STATE:
                     // no op
                     break;
@@ -261,7 +277,19 @@ new function () {
             result.specifics = [];
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
-                let lootedLevel = view.getUint8(read(1));
+                let modifiers = {};
+                if (fullModifiers) {
+                    for (let remainingModifiers = view.getUint8(read(1)); remainingModifiers > 0; remainingModifiers--) {
+                        let type = view.getUint16(read(2), true);
+                        let value = view.getUint32(read(4), true);
+                        modifiers[type] = value;
+                    }
+                } else {
+                    let level = view.getUint8(read(1));
+                    if (level) {
+                        modifiers[self.MODIFIER_TYPE_TIMEWALKER_LEVEL] = level;
+                    }
+                }
                 let bonuses = [];
                 for (let remainingBonuses = view.getUint8(read(1)); remainingBonuses > 0; remainingBonuses--) {
                     bonuses.push(view.getUint16(read(2), true));
@@ -269,7 +297,7 @@ new function () {
                 bonuses.sort((a, b) => a - b);
                 result.specifics.push({
                     price: price,
-                    lootedLevel: lootedLevel,
+                    modifiers: modifiers,
                     bonuses: bonuses,
                 });
             }
@@ -903,8 +931,9 @@ new function () {
                 if (specLine.bonuses.length) {
                     wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
                 }
-                if (specLine.lootedLevel) {
-                    wowheadParams.push('lvl=' + specLine.lootedLevel);
+                let lvl = specLine.modifiers[Auctions.MODIFIER_TYPE_TIMEWALKER_LEVEL];
+                if (lvl) {
+                    wowheadParams.push('lvl=' + lvl);
                 }
                 if (item.bonusLevel) {
                     wowheadParams.push('ilvl=' + item.bonusLevel);
