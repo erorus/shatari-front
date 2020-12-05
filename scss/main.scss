@@ -743,6 +743,31 @@ body {
                   stroke: $quantityChart;
                   stroke-width: 1px;
                 }
+
+                line.hover {
+                  stroke: $qColor;
+                  stroke-width: 1px;
+                }
+              }
+
+              .readout {
+                display: flex;
+                height: 1.25em;
+                justify-content: space-evenly;
+                line-height: 1.25em;
+
+                & > * {
+                  margin: 0 1em;
+                  text-align: right;
+                }
+                .price, .quantity {
+                  flex: 1 1;
+                }
+                .date {
+                  flex: 4 1;
+                  font-size: $fontSizeArial * 0.8;
+                  text-align: left;
+                }
               }
             }
           }

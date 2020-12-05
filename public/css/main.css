@@ -553,6 +553,23 @@ body {
                   fill: rgba(255, 136, 136, 0.5);
                   stroke: #F88;
                   stroke-width: 1px; }
+                .main .main-result .item .panels > div.details .charts-container .chart-wrapper line.hover {
+                  stroke: #CA4;
+                  stroke-width: 1px; }
+              .main .main-result .item .panels > div.details .charts-container .readout {
+                display: flex;
+                height: 1.25em;
+                justify-content: space-evenly;
+                line-height: 1.25em; }
+                .main .main-result .item .panels > div.details .charts-container .readout > * {
+                  margin: 0 1em;
+                  text-align: right; }
+                .main .main-result .item .panels > div.details .charts-container .readout .price, .main .main-result .item .panels > div.details .charts-container .readout .quantity {
+                  flex: 1 1; }
+                .main .main-result .item .panels > div.details .charts-container .readout .date {
+                  flex: 4 1;
+                  font-size: 15.2px;
+                  text-align: left; }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
             flex: 6 1;

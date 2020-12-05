@@ -1152,6 +1152,7 @@ new function () {
                 // Set point arrays.
                 const pricePoints = [];
                 const quantityPoints = [];
+                const hoverData = [];
                 let gotFirstPrice = false;
                 itemState.snapshots.forEach(snapshot => {
                     if (!snapshot.price && !gotFirstPrice) {
@@ -1165,6 +1166,8 @@ new function () {
 
                     const quantityY = Math.round((maxQuantity - snapshot.quantity) / maxQuantity * yMaxQuantity) + yMaxPrice + yGap;
                     quantityPoints.push([x, quantityY].join(','));
+
+                    hoverData.push(snapshot);
                 });
 
                 // line + fill
@@ -1187,6 +1190,50 @@ new function () {
 
                     priceChart.appendChild(fill);
                     priceChart.appendChild(line);
+                });
+
+                const hoverLine = svge('line', {x1: -1000, x2: -1000, y1: 0, y2: yMax});
+                hoverLine.classList.add('hover');
+                priceChart.appendChild(hoverLine);
+
+                const readout = ce('div', {className: 'readout'});
+                chartContainer.appendChild(readout);
+
+                const dateDisplay = ce('div', {className: 'date'});
+                readout.appendChild(dateDisplay);
+                const priceDisplay = ce('div', {className: 'price'});
+                readout.appendChild(priceDisplay);
+                const quantityDisplay = ce('div', {className: 'quantity'});
+                readout.appendChild(quantityDisplay);
+
+                const formatter = new Intl.DateTimeFormat([], {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    timeZoneName: 'short',
+                });
+
+                priceChart.addEventListener('mousemove', event => {
+                    let leftOffset = priceChart.getBoundingClientRect().left;
+                    let xPos = Math.min(0.9999, (event.clientX - leftOffset) / priceChart.clientWidth);
+
+                    hoverLine.x1.baseVal.value = hoverLine.x2.baseVal.value = xPos * xMax;
+
+                    /** @var {SummaryLine} snapshot */
+                    let snapshot = hoverData[Math.round((hoverData.length + 1) * xPos)];
+                    ee(dateDisplay);
+                    dateDisplay.appendChild(ct(formatter.format(new Date(snapshot.snapshot))));
+                    ee(priceDisplay);
+                    priceDisplay.appendChild(priceElement(snapshot.price));
+                    ee(quantityDisplay);
+                    quantityDisplay.appendChild(ct(snapshot.quantity.toLocaleString()));
+                });
+                priceChart.addEventListener('mouseout', () => {
+                    ee(dateDisplay);
+                    ee(priceDisplay);
+                    ee(quantityDisplay);
                 });
             })();
         }
