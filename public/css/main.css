@@ -541,13 +541,17 @@ body {
                   width: 100%; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polyline.price {
                   fill: none;
-                  stroke: #CA4;
+                  stroke: #88F;
                   stroke-width: 3px; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polygon.price {
-                  fill: rgba(204, 170, 68, 0.5); }
+                  fill: rgba(136, 136, 255, 0.5); }
+                .main .main-result .item .panels > div.details .charts-container .chart-wrapper polyline.quantity {
+                  fill: none;
+                  stroke: #F88;
+                  stroke-width: 3px; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polygon.quantity {
-                  fill: rgba(204, 170, 68, 0.5);
-                  stroke: #CA4;
+                  fill: rgba(255, 136, 136, 0.5);
+                  stroke: #F88;
                   stroke-width: 1px; }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;

@@ -1100,14 +1100,14 @@ new function () {
                     className: 'charts-container framed',
                 });
                 scroller.appendChild(chartContainer);
-                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-day History')));
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-Day History')));
 
                 // Chart wrapper and parent SVG
                 const xMax = 1000;
                 const yMaxPrice = 333;
                 const yGap = 10;
-                const yMaxQty = 500 - yMaxPrice - yGap;
-                const yMax = yMaxPrice + yMaxQty;
+                const yMaxQuantity = 500 - yMaxPrice - yGap;
+                const yMax = yMaxPrice + yMaxQuantity;
 
                 const chartWrapper = ce('div', {
                     className: 'chart-wrapper',
@@ -1125,7 +1125,6 @@ new function () {
                 let maxPrice = 0;
                 let maxQuantity = 0;
                 let lastTimestamp = 0;
-                let pointCount = 0;
                 {
                     let prices = [];
                     itemState.snapshots.forEach(snapshot => {
@@ -1146,17 +1145,13 @@ new function () {
                     let iqr = q3 - q1;
 
                     maxPrice = Math.min(maxPrice, q3 + iqr * 1.5) * 1.15;
-                    pointCount = prices.length;
                 }
                 const firstTimestamp = itemState.snapshots[0].snapshot;
                 const timestampRange = lastTimestamp - firstTimestamp;
 
-                const barWidth = Math.floor(xMax / pointCount * 2 / 3);
-                const barMargin = (xMax - (barWidth * pointCount)) / pointCount;
-
                 // Set point arrays.
                 const pricePoints = [];
-                const quantityBars = [];
+                const quantityPoints = [];
                 let gotFirstPrice = false;
                 itemState.snapshots.forEach(snapshot => {
                     if (!snapshot.price && !gotFirstPrice) {
@@ -1165,53 +1160,35 @@ new function () {
                     gotFirstPrice = true;
 
                     const x = Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xMax);
-                    const y = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
-                    pricePoints.push([x, y].join(','));
+                    const priceY = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
+                    pricePoints.push([x, priceY].join(','));
 
-                    const barLeft = Math.floor(quantityBars.length * (barWidth + barMargin) + barMargin / 2);
-                    const barTop = (snapshot.quantity === 0) ? yMax :
-                        (maxQuantity - snapshot.quantity) / maxQuantity * yMaxQty + yMaxPrice + yGap;
-                    const barRight = barLeft + barWidth;
-                    const barBottom = yMax;
-                    quantityBars.push([
-                        [barLeft, barTop].join(','),
-                        [barRight, barTop].join(','),
-                        [barRight, barBottom].join(','),
-                        [barLeft, barBottom].join(','),
-                    ].join(' '));
+                    const quantityY = Math.round((maxQuantity - snapshot.quantity) / maxQuantity * yMaxQuantity) + yMaxPrice + yGap;
+                    quantityPoints.push([x, quantityY].join(','));
                 });
 
-                // Price line + fill
-                {
+                // line + fill
+                [
+                    {data: pricePoints, max: yMaxPrice, name: 'price'},
+                    {data: quantityPoints, max: yMaxQuantity + yMaxPrice + yGap, name: 'quantity'},
+                ].forEach(dataset => {
                     const line = svge('polyline', {
-                        points: pricePoints.join(' '),
+                        points: dataset.data.join(' '),
                     });
-                    line.classList.add('price');
+                    line.classList.add(dataset.name);
 
                     // Loop us back around to fill the shape.
-                    pricePoints.push([xMax, yMaxPrice].join(','));
-                    pricePoints.push([0, yMaxPrice].join(','));
+                    dataset.data.push([xMax, dataset.max].join(','));
+                    dataset.data.push([0, dataset.max].join(','));
                     const fill = svge('polygon', {
-                        points: pricePoints.join(' '),
+                        points: dataset.data.join(' '),
                     });
-                    fill.classList.add('price');
+                    fill.classList.add(dataset.name);
 
                     priceChart.appendChild(fill);
                     priceChart.appendChild(line);
-                }
-
-                // Quantity bars.
-                quantityBars.forEach(pointsList => {
-                    const bar = svge('polygon', {
-                        points: pointsList
-                    });
-                    bar.classList.add('quantity');
-
-                    priceChart.appendChild(bar);
                 });
             })();
-
-            scroller.appendChild(ct('TODO: more charts and stuff goes here'));
         }
     };
 

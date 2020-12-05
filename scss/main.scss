@@ -28,6 +28,9 @@ $subsubCategoryBackgroundEnd: transparentize($rowHighlightColor, 0.4);
 $buttonRed: #640000;
 $buttonText: #ffd100;
 
+$priceChart: #88F;
+$quantityChart: #F88;
+
 $fontArial: "Arial Narrow", sans-serif;
 $fontSizeArial: 19px;
 $fontFriz: "Friz Quadrata TT", sans-serif;
@@ -723,15 +726,21 @@ body {
 
                 polyline.price {
                   fill: none;
-                  stroke: $qColor;
+                  stroke: $priceChart;
                   stroke-width: 3px;
                 }
                 polygon.price {
-                  fill: transparentize($qColor, 0.5);
+                  fill: transparentize($priceChart, 0.5);
+                }
+
+                polyline.quantity {
+                  fill: none;
+                  stroke: $quantityChart;
+                  stroke-width: 3px;
                 }
                 polygon.quantity {
-                  fill: transparentize($qColor, 0.5);
-                  stroke: $qColor;
+                  fill: transparentize($quantityChart, 0.5);
+                  stroke: $quantityChart;
                   stroke-width: 1px;
                 }
               }
