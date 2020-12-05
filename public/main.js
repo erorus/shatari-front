@@ -1095,12 +1095,42 @@ new function () {
                     return;
                 }
 
+                // Chart container
+                const chartContainer = ce('div', {
+                    className: 'charts-container framed',
+                });
+                scroller.appendChild(chartContainer);
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-day History')));
+
+                // Chart wrapper and parent SVG
+                const xMax = 1000;
+                const yMaxPrice = 333;
+                const yGap = 10;
+                const yMaxQty = 500 - yMaxPrice - yGap;
+                const yMax = yMaxPrice + yMaxQty;
+
+                const chartWrapper = ce('div', {
+                    className: 'chart-wrapper',
+                    style: {
+                        paddingBottom: (yMax / xMax * 100) + '%',
+                    }
+                });
+                chartContainer.appendChild(chartWrapper);
+                const priceChart = svge('svg', {
+                    'viewBox': [0, 0, xMax, yMax].join(' '),
+                });
+                chartWrapper.appendChild(priceChart);
+
+                // Determine scaling
                 let maxPrice = 0;
+                let maxQuantity = 0;
                 let lastTimestamp = 0;
+                let pointCount = 0;
                 {
                     let prices = [];
                     itemState.snapshots.forEach(snapshot => {
                         maxPrice = Math.max(maxPrice, snapshot.price);
+                        maxQuantity = Math.max(maxQuantity, snapshot.quantity);
                         lastTimestamp = Math.max(lastTimestamp, snapshot.snapshot);
                         if (snapshot.price > 0) {
                             prices.push(snapshot.price);
@@ -1116,15 +1146,17 @@ new function () {
                     let iqr = q3 - q1;
 
                     maxPrice = Math.min(maxPrice, q3 + iqr * 1.5) * 1.15;
+                    pointCount = prices.length;
                 }
-
-                const xMax = 1000;
-                const yMax = 333;
-
                 const firstTimestamp = itemState.snapshots[0].snapshot;
                 const timestampRange = lastTimestamp - firstTimestamp;
 
-                const points = [];
+                const barWidth = Math.floor(xMax / pointCount * 2 / 3);
+                const barMargin = (xMax - (barWidth * pointCount)) / pointCount;
+
+                // Set point arrays.
+                const pricePoints = [];
+                const quantityBars = [];
                 let gotFirstPrice = false;
                 itemState.snapshots.forEach(snapshot => {
                     if (!snapshot.price && !gotFirstPrice) {
@@ -1133,37 +1165,50 @@ new function () {
                     gotFirstPrice = true;
 
                     const x = Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xMax);
-                    const y = Math.round((maxPrice - snapshot.price) / maxPrice * yMax);
-                    points.push([x, y].join(','));
-                });
-                // Loop us back around to fill the shape.
-                points.push([xMax * 2, yMax * 2].join(','));
-                points.push([xMax * -1, yMax * 2].join(','));
+                    const y = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
+                    pricePoints.push([x, y].join(','));
 
-                const chartContainer = ce('div', {
-                    className: 'charts-container framed',
+                    const barLeft = Math.floor(quantityBars.length * (barWidth + barMargin) + barMargin / 2);
+                    const barTop = (snapshot.quantity === 0) ? yMax :
+                        (maxQuantity - snapshot.quantity) / maxQuantity * yMaxQty + yMaxPrice + yGap;
+                    const barRight = barLeft + barWidth;
+                    const barBottom = yMax;
+                    quantityBars.push([
+                        [barLeft, barTop].join(','),
+                        [barRight, barTop].join(','),
+                        [barRight, barBottom].join(','),
+                        [barLeft, barBottom].join(','),
+                    ].join(' '));
                 });
-                scroller.appendChild(chartContainer);
 
-                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-day Price History')));
+                // Price line + fill
+                {
+                    const line = svge('polyline', {
+                        points: pricePoints.join(' '),
+                    });
+                    line.classList.add('price');
 
-                const chartWrapper = ce('div', {
-                    className: 'chart-wrapper price',
-                    style: {
-                        paddingBottom: (yMax / xMax * 100) + '%',
-                    }
+                    // Loop us back around to fill the shape.
+                    pricePoints.push([xMax, yMaxPrice].join(','));
+                    pricePoints.push([0, yMaxPrice].join(','));
+                    const fill = svge('polygon', {
+                        points: pricePoints.join(' '),
+                    });
+                    fill.classList.add('price');
+
+                    priceChart.appendChild(fill);
+                    priceChart.appendChild(line);
+                }
+
+                // Quantity bars.
+                quantityBars.forEach(pointsList => {
+                    const bar = svge('polygon', {
+                        points: pointsList
+                    });
+                    bar.classList.add('quantity');
+
+                    priceChart.appendChild(bar);
                 });
-                chartContainer.appendChild(chartWrapper);
-
-                const priceChart = svge('svg', {
-                    'viewBox': [0, 0, xMax, yMax].join(' '),
-                });
-                chartWrapper.appendChild(priceChart);
-
-                const line = svge('polyline', {
-                    points: points.join(' '),
-                });
-                priceChart.appendChild(line);
             })();
 
             scroller.appendChild(ct('TODO: more charts and stuff goes here'));

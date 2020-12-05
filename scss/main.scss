@@ -721,12 +721,18 @@ body {
                   width: 100%;
                 }
 
-                &.price {
-                  polyline {
-                    fill: transparentize($qColor, 0.5);
-                    stroke: $qColor;
-                    stroke-width: $bevel * 2;
-                  }
+                polyline.price {
+                  fill: none;
+                  stroke: $qColor;
+                  stroke-width: 3px;
+                }
+                polygon.price {
+                  fill: transparentize($qColor, 0.5);
+                }
+                polygon.quantity {
+                  fill: transparentize($qColor, 0.5);
+                  stroke: $qColor;
+                  stroke-width: 1px;
                 }
               }
             }
