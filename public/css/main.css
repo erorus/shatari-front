@@ -429,8 +429,7 @@ body {
             right: 4px;
             top: 4px; }
           .main .main-result .item .panels > div.details {
-            background-color: #312c2a;
-            background: linear-gradient(180deg, #282322 0%, #201b1a 100%);
+            background-color: #282322;
             flex: 14 1; }
             .main .main-result .item .panels > div.details .title {
               align-items: center;
@@ -484,6 +483,20 @@ body {
                 border-radius: 8px;
                 max-width: 300px;
                 width: 100%; }
+            .main .main-result .item .panels > div.details .framed {
+              border-top: 2px solid #393433;
+              margin: 32px 8px;
+              padding: 16px 4px 4px;
+              position: relative; }
+              .main .main-result .item .panels > div.details .framed .frame-title {
+                background-color: #282322;
+                color: #DDD;
+                font: 15.2px "Arial Narrow", sans-serif;
+                left: 8px;
+                line-height: 1.25em;
+                padding: 0 8px;
+                position: absolute;
+                top: -0.625em; }
             .main .main-result .item .panels > div.details .quantity-calc table {
               margin: 0 auto; }
               .main .main-result .item .panels > div.details .quantity-calc table td:first-child {

@@ -1012,8 +1012,10 @@ new function () {
 
             // Quantity calc
             if (itemState.auctions.length) {
-                const quantityPanel = ce('div', {className: 'quantity-calc'});
+                const quantityPanel = ce('div', {className: 'quantity-calc framed'});
                 scroller.appendChild(quantityPanel);
+
+                quantityPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Bulk Pricing')));
 
                 const table = ce('table');
                 quantityPanel.appendChild(table);
@@ -1139,9 +1141,11 @@ new function () {
                 points.push([xMax * -1, yMax * 2].join(','));
 
                 const chartContainer = ce('div', {
-                    className: 'charts-container',
+                    className: 'charts-container framed',
                 });
                 scroller.appendChild(chartContainer);
+
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-day Price History')));
 
                 const chartWrapper = ce('div', {
                     className: 'chart-wrapper price',

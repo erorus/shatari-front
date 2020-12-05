@@ -589,8 +589,8 @@ body {
           }
 
           &.details {
-            background-color: $background25;
-            background: linear-gradient(180deg, $background20 0%, $background15 100%);
+            $panelBackground: $background20;
+            background-color: $panelBackground;
 
             flex: 14 1;
 
@@ -636,6 +636,7 @@ body {
                 &[data-quality="5"]:after {background-image: url("../images/ring-5.png")}
               }
             }
+
             .model-container {
               margin: $marginStep;
               text-align: center;
@@ -649,6 +650,25 @@ body {
                 width: 100%;
               }
             }
+
+            .framed {
+              border-top: $bevel solid $background30;
+              margin: $marginStep * 4 $marginStep;
+              padding: $marginStep * 2 $marginStep * 0.5 $marginStep * 0.5;
+              position: relative;
+
+              .frame-title {
+                background-color: $panelBackground;
+                color: $text20;
+                font: $fontSizeArial * 0.8 $fontArial;
+                left: $marginStep;
+                line-height: 1.25em;
+                padding: 0 $marginStep;
+                position: absolute;
+                top: -0.625em;
+              }
+            }
+
             .quantity-calc {
               table {
                 margin: 0 auto;
