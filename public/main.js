@@ -146,6 +146,7 @@ new function () {
 
         const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
+        const VERSION_GLOBAL_STATE = 2;
         const VERSION_ITEM_STATE = 4;
         const VERSION_REALM_STATE = 3;
 
@@ -155,6 +156,8 @@ new function () {
 
         const my = {
             lastRealmState: {},
+
+            lastSnapshotList: {},
         };
 
         // ********************* //
@@ -223,6 +226,80 @@ new function () {
         // ------- //
         // PRIVATE //
         // ------- //
+
+
+        /**
+         * Return the list of snapshot timestamps, keyed by connected realm ID.
+         *
+         * @return {Promise<Object.<ConnectedRealmID, Timestamp[]>>}
+         */
+        async function fetchSnapshotList() {
+            if (
+                my.lastSnapshotList.data &&
+                my.lastSnapshotList.checked > Date.now() - REALM_STATE_CACHE_DURATION
+            ) {
+                return my.lastSnapshotList.data;
+            }
+
+            const response = await fetch('data/global/state.bin', {mode: 'same-origin'});
+            if (!response.ok) {
+                throw "Unable to get global state";
+            }
+
+            if (my.lastSnapshotList.data &&
+                my.lastSnapshotList.modified === response.headers.get('last-modified')
+            ) {
+                my.lastSnapshotList.checked = Date.now();
+
+                return my.lastSnapshotList.data;
+            }
+
+            const buffer = await response.arrayBuffer();
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const read = function (byteCount) {
+                let result = offset;
+                offset += byteCount;
+
+                return result;
+            };
+
+            let version = view.getUint8(read(1));
+            switch (version) {
+                case VERSION_GLOBAL_STATE:
+                    // no op
+                    break;
+                default:
+                    throw "Unknown data version for global state.";
+            }
+
+            /** @type {Object.<ConnectedRealmID, Timestamp[]>} result */
+            const result = {};
+
+            // Skip the first timestamp list.
+            const firstListLength = view.getUint16(read(2), true);
+            offset += firstListLength * (2 + 4);
+
+            // Load the snapshot lists.
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                let realmId = view.getUint16(read(2), true);
+                result[realmId] = [];
+                for (let realmRemaining = view.getUint16(read(2), true); realmRemaining > 0; realmRemaining--) {
+                    result[realmId].push(view.getUint32(read(4), true) * MS_SEC);
+                }
+                Object.freeze(result[realmId]);
+            }
+            Object.freeze(result);
+
+            my.lastSnapshotList = {
+                modified: response.headers.get('last-modified'),
+                checked: Date.now(),
+                data: result,
+            };
+
+            return result;
+        }
 
         /**
          * Given realm and item objects, return its item state.
@@ -339,9 +416,7 @@ new function () {
             }
 
             if (prevDelta) {
-                const realmState = await getRealmState(realm);
-
-                realmState.snapshots.forEach(timestamp => {
+                (await getSnapshotList(realm)).forEach(timestamp => {
                     if (deltas[timestamp]) {
                         // Something changed at this timestamp, and we have new stats.
                         prevDelta = deltas[timestamp];
@@ -471,6 +546,16 @@ new function () {
             };
 
             return result;
+        }
+
+        /**
+         * Returns an array of snapshot timestamps for the given realm.
+         *
+         * @param {Realm} realm
+         * @return {Promise<Timestamp[]>}
+         */
+        async function getSnapshotList(realm) {
+            return (await fetchSnapshotList())[realm.connectedId] || [];
         }
     };
 
