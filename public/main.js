@@ -1098,12 +1098,17 @@ new function () {
                     return;
                 }
 
+                const days = Math.round(
+                    (itemState.snapshots[itemState.snapshots.length - 1].snapshot - itemState.snapshots[0].snapshot) /
+                    (24 * 60 * 60 * 1000)
+                );
+
                 // Chart container
                 const chartContainer = ce('div', {
                     className: 'charts-container framed',
                 });
                 scroller.appendChild(chartContainer);
-                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-Day History')));
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(days + '-Day History')));
 
                 // Chart wrapper and parent SVG
                 const constScale = 5;
@@ -1216,16 +1221,6 @@ new function () {
                 hoverLine.classList.add('hover');
                 priceChart.appendChild(hoverLine);
 
-                const readout = ce('div', {className: 'readout'});
-                chartContainer.appendChild(readout);
-
-                const dateDisplay = ce('div', {className: 'date'});
-                readout.appendChild(dateDisplay);
-                const priceDisplay = ce('div', {className: 'price'});
-                readout.appendChild(priceDisplay);
-                const quantityDisplay = ce('div', {className: 'quantity'});
-                readout.appendChild(quantityDisplay);
-
                 const formatter = new Intl.DateTimeFormat([], {
                     weekday: 'short',
                     month: 'short',
@@ -1235,7 +1230,7 @@ new function () {
                     timeZoneName: 'short',
                 });
 
-                priceChart.addEventListener('mousemove', event => {
+                priceChart.addEventListener('mousemove', (event) => {
                     let leftOffset = priceChart.getBoundingClientRect().left;
                     let xPos = Math.min(0.9999, (event.clientX - leftOffset) / priceChart.clientWidth);
 
@@ -1256,18 +1251,23 @@ new function () {
                     }
 
                     let snapshot = hoverData[mid];
-                    ee(dateDisplay);
-                    dateDisplay.appendChild(ct(formatter.format(new Date(snapshot.snapshot))));
-                    ee(priceDisplay);
-                    priceDisplay.appendChild(priceElement(snapshot.price));
-                    ee(quantityDisplay);
-                    quantityDisplay.appendChild(ct(snapshot.quantity.toLocaleString()));
+
+                    const result = ce('table', {className: 'shatari-tooltip'});
+                    result.appendChild(ce('tr', {}, ce('td', {className: 'date', colSpan: 2}, ct(formatter.format(new Date(snapshot.snapshot))))));
+
+                    const priceLine = ce('tr');
+                    priceLine.appendChild(ce('td', {className: 'price'}, ct('Lowest Price')));
+                    priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
+                    result.appendChild(priceLine);
+
+                    const quantityLine = ce('tr');
+                    quantityLine.appendChild(ce('td', {className: 'quantity'}, ct('Total Quantity')));
+                    quantityLine.appendChild(ce('td', {}, ct(snapshot.quantity.toLocaleString())));
+                    result.appendChild(quantityLine);
+
+                    WH.Tooltip.showAtCursor(event, result.outerHTML);
                 });
-                priceChart.addEventListener('mouseout', () => {
-                    ee(dateDisplay);
-                    ee(priceDisplay);
-                    ee(quantityDisplay);
-                });
+                priceChart.addEventListener('mouseout', WH.Tooltip.hide);
             })();
         }
     };

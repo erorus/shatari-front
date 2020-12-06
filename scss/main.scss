@@ -832,7 +832,9 @@ body {
       margin: 0 $marginStep;
     }
   }
+}
 
+.main, .shatari-tooltip {
   .gold, .silver, .copper {
     background-position: right top;
     background-repeat: no-repeat;
@@ -842,6 +844,24 @@ body {
   .gold {background-image: url("../images/coin-gold.png");}
   .silver {background-image: url("../images/coin-silver.png");}
   .copper {background-image: url("../images/coin-copper.png");}
+}
+
+.shatari-tooltip {
+  .gold, .silver, .copper {
+    background-position: right center;
+  }
+  .silver, .copper {
+    display: inline-block;
+    min-width: 1.5em;
+  }
+}
+
+.wowhead-tooltip td .shatari-tooltip {
+  min-width: 15em;
+  td.date {padding-bottom: 0.5em}
+  td.price {color: $priceChart}
+  td.quantity {color: $quantityChart}
+  td:nth-child(2) {text-align: right}
 }
 
 picture.model-thumbnail img {
