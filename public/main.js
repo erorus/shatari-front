@@ -1103,10 +1103,11 @@ new function () {
                 chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct('14-Day History')));
 
                 // Chart wrapper and parent SVG
-                const xMax = 1000;
-                const yMaxPrice = 333;
-                const yGap = 10;
-                const yMaxQuantity = 500 - yMaxPrice - yGap;
+                const constScale = 5;
+                const xMax = 1000 * constScale;
+                const yMaxPrice = 333 * constScale;
+                const yGap = 10 * constScale;
+                const yMaxQuantity = (500 * constScale) - yMaxPrice - yGap;
                 const yMax = yMaxPrice + yMaxQuantity;
 
                 const chartWrapper = ce('div', {
@@ -1124,12 +1125,14 @@ new function () {
                 // Determine scaling
                 let maxPrice = 0;
                 let maxQuantity = 0;
+                let firstTimestamp = Date.now();
                 let lastTimestamp = 0;
                 {
                     let prices = [];
                     itemState.snapshots.forEach(snapshot => {
                         maxPrice = Math.max(maxPrice, snapshot.price);
                         maxQuantity = Math.max(maxQuantity, snapshot.quantity);
+                        firstTimestamp = Math.min(firstTimestamp, snapshot.snapshot);
                         lastTimestamp = Math.max(lastTimestamp, snapshot.snapshot);
                         if (snapshot.price > 0) {
                             prices.push(snapshot.price);
@@ -1146,43 +1149,57 @@ new function () {
 
                     maxPrice = Math.min(maxPrice, q3 + iqr * 1.5) * 1.15;
                 }
-                const firstTimestamp = itemState.snapshots[0].snapshot;
                 const timestampRange = lastTimestamp - firstTimestamp;
 
                 // Set point arrays.
                 const pricePoints = [];
                 const quantityPoints = [];
                 const hoverData = [];
-                let gotFirstPrice = false;
-                itemState.snapshots.forEach(snapshot => {
-                    if (!snapshot.price && !gotFirstPrice) {
-                        return;
-                    }
-                    gotFirstPrice = true;
 
-                    const x = Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xMax);
+                const xOffset = Math.round(1 / itemState.snapshots.length * xMax / 2);
+                const xRange = xMax - 2 * xOffset;
+
+                itemState.snapshots.forEach(snapshot => {
+                    const x = xOffset + Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xRange);
                     const priceY = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
                     pricePoints.push([x, priceY].join(','));
 
                     const quantityY = Math.round((maxQuantity - snapshot.quantity) / maxQuantity * yMaxQuantity) + yMaxPrice + yGap;
                     quantityPoints.push([x, quantityY].join(','));
 
-                    hoverData.push(snapshot);
+                    const hoverPoint = {
+                        xCenter: x / xMax,
+                    };
+                    co(hoverPoint, snapshot);
+                    if (hoverData.length === 0) {
+                        hoverPoint.xMin = 0;
+                    } else {
+                        let prev = hoverData[hoverData.length - 1];
+                        hoverPoint.xMin = prev.xMax = prev.xCenter + (hoverPoint.xCenter - prev.xCenter) / 2;
+                    }
+
+                    hoverData.push(hoverPoint);
                 });
+                hoverData[hoverData.length - 1].xMax = 1;
 
                 // line + fill
                 [
                     {data: pricePoints, max: yMaxPrice, name: 'price'},
                     {data: quantityPoints, max: yMaxQuantity + yMaxPrice + yGap, name: 'quantity'},
                 ].forEach(dataset => {
+                    const firstY = dataset.data[0].split(',')[1];
+                    const lastY = dataset.data[dataset.data.length - 1].split(',')[1];
+
                     const line = svge('polyline', {
-                        points: dataset.data.join(' '),
+                        points: '0,' + firstY + ' ' + dataset.data.join(' ') + ' ' + xMax + ',' + lastY,
                     });
                     line.classList.add(dataset.name);
 
                     // Loop us back around to fill the shape.
+                    dataset.data.push([xMax, lastY].join(','));
                     dataset.data.push([xMax, dataset.max].join(','));
                     dataset.data.push([0, dataset.max].join(','));
+                    dataset.data.push([0, firstY].join(','));
                     const fill = svge('polygon', {
                         points: dataset.data.join(' '),
                     });
@@ -1221,8 +1238,21 @@ new function () {
 
                     hoverLine.x1.baseVal.value = hoverLine.x2.baseVal.value = xPos * xMax;
 
-                    /** @var {SummaryLine} snapshot */
-                    let snapshot = hoverData[Math.round((hoverData.length + 1) * xPos)];
+                    let left = 0;
+                    let right = hoverData.length - 1;
+                    let mid = 0;
+                    while (left <= right) {
+                        mid = Math.floor((left + right) / 2);
+                        if (hoverData[mid].xMax < xPos) {
+                            left = mid + 1;
+                        } else if (hoverData[mid].xMin > xPos) {
+                            right = mid - 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let snapshot = hoverData[mid];
                     ee(dateDisplay);
                     dateDisplay.appendChild(ct(formatter.format(new Date(snapshot.snapshot))));
                     ee(priceDisplay);

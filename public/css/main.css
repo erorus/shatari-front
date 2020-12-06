@@ -539,23 +539,26 @@ body {
                   position: absolute;
                   top: 2px;
                   width: 100%; }
+                  .main .main-result .item .panels > div.details .charts-container .chart-wrapper svg * {
+                    pointer-events: none; }
+                .main .main-result .item .panels > div.details .charts-container .chart-wrapper line, .main .main-result .item .panels > div.details .charts-container .chart-wrapper polyline {
+                  stroke-width: 15; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polyline.price {
                   fill: none;
-                  stroke: #88F;
-                  stroke-width: 3px; }
+                  stroke: #88F; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polygon.price {
                   fill: rgba(136, 136, 255, 0.5); }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polyline.quantity {
                   fill: none;
-                  stroke: #F88;
-                  stroke-width: 3px; }
+                  stroke: #F88; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper polygon.quantity {
                   fill: rgba(255, 136, 136, 0.5);
-                  stroke: #F88;
-                  stroke-width: 1px; }
+                  stroke: #F88; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper line.hover {
                   stroke: #CA4;
-                  stroke-width: 1px; }
+                  visibility: hidden; }
+                .main .main-result .item .panels > div.details .charts-container .chart-wrapper:hover line.hover {
+                  visibility: visible; }
               .main .main-result .item .panels > div.details .charts-container .readout {
                 display: flex;
                 height: 1.25em;

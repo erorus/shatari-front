@@ -722,12 +722,19 @@ body {
                   position: absolute;
                   top: $bevel;
                   width: 100%;
+
+                  * {
+                    pointer-events: none;
+                  }
+                }
+
+                line, polyline {
+                  stroke-width: 15;
                 }
 
                 polyline.price {
                   fill: none;
                   stroke: $priceChart;
-                  stroke-width: 3px;
                 }
                 polygon.price {
                   fill: transparentize($priceChart, 0.5);
@@ -736,17 +743,18 @@ body {
                 polyline.quantity {
                   fill: none;
                   stroke: $quantityChart;
-                  stroke-width: 3px;
                 }
                 polygon.quantity {
                   fill: transparentize($quantityChart, 0.5);
                   stroke: $quantityChart;
-                  stroke-width: 1px;
                 }
 
                 line.hover {
                   stroke: $qColor;
-                  stroke-width: 1px;
+                  visibility: hidden;
+                }
+                &:hover line.hover {
+                  visibility: visible;
                 }
               }
 
