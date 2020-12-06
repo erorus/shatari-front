@@ -1067,6 +1067,13 @@ new function () {
 
             const MIN_SNAPSHOT_COUNT = 6;
 
+            const days = Math.round(
+                (itemState.snapshots[itemState.snapshots.length - 1].snapshot - itemState.snapshots[0].snapshot) /
+                (24 * 60 * 60 * 1000)
+            );
+            const realmName = realmState.realm.name;
+            const regionName = realmState.realm.region.toUpperCase();
+
             // Name panel
             {
                 let wowheadParams = [];
@@ -1158,17 +1165,21 @@ new function () {
 
                 table.appendChild(tr = ce('tr', {className: 'header'}));
                 tr.appendChild(ce('td'));
-                tr.appendChild(ce('td', {}, ct(realmState.realm.name)));
-                tr.appendChild(ce('td', {}, ct(realmState.realm.region.toUpperCase())));
+                tr.appendChild(ce('td', {}, ct(realmName)));
+                tr.appendChild(ce('td', {}, ct(regionName)));
 
                 table.appendChild(tr = ce('tr'));
-                tr.appendChild(ce('td', {}, ct('Available Quantity')));
-                tr.appendChild(ce('td', {}, ct(item.quantity.toLocaleString())));
-                tr.appendChild(regionElements.quantity = ce('td'));
+                tr.appendChild(ce('td', {}, ct('Available')));
+                tr.appendChild(ce('td', {
+                    dataset: {simpleTooltip: 'Total quantity for sale in ' + realmName + ' right now.'}
+                }, ct(item.quantity.toLocaleString())));
+                tr.appendChild(regionElements.quantity = ce('td', {
+                    dataset: {simpleTooltip: 'Total quantity for sale in all ' + regionName + ' realms right now.'}
+                }));
 
                 if (item.price) {
                     table.appendChild(tr = ce('tr'));
-                    tr.appendChild(ce('td', {}, ct('Current Price')));
+                    tr.appendChild(ce('td', {}, ct('Current')));
                     tr.appendChild(ce('td', {}, priceElement(item.price)));
                     tr.appendChild(ce('td'));
                 }
@@ -1205,11 +1216,6 @@ new function () {
                 if (itemState.snapshots.length < MIN_SNAPSHOT_COUNT) {
                     return;
                 }
-
-                const days = Math.round(
-                    (itemState.snapshots[itemState.snapshots.length - 1].snapshot - itemState.snapshots[0].snapshot) /
-                    (24 * 60 * 60 * 1000)
-                );
 
                 // Chart container
                 const chartContainer = ce('div', {
