@@ -607,7 +607,10 @@ body {
               font: $fontSizeFriz * 1.75 $fontFriz;
               margin: 2 * $marginStep;
               padding: 2 * $marginStep;
-              text-decoration: none;
+
+              a {
+                text-decoration: none;
+              }
 
               .icon {
                 background-position: center center;
@@ -637,20 +640,6 @@ body {
                 &[data-quality="3"]:after {background-image: url("../images/ring-3.png")}
                 &[data-quality="4"]:after {background-image: url("../images/ring-4.png")}
                 &[data-quality="5"]:after {background-image: url("../images/ring-5.png")}
-              }
-            }
-
-            .model-container {
-              margin: $marginStep;
-              text-align: center;
-              img {
-                background-color: $background15;
-                border: $bevel solid;
-                border-color: $background00 $background10 $background40;
-                border-radius: $borderRadius;
-
-                max-width: 300px;
-                width: 100%;
               }
             }
 
@@ -853,6 +842,10 @@ body {
   .gold {background-image: url("../images/coin-gold.png");}
   .silver {background-image: url("../images/coin-silver.png");}
   .copper {background-image: url("../images/coin-copper.png");}
+}
+
+picture.model-thumbnail img {
+  background-color: $background10;
 }
 
 body > .wowhead-tooltip {max-width: 320px !important; width: auto !important;

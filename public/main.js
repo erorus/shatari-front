@@ -963,15 +963,32 @@ new function () {
             {
                 let wowheadParams = [];
 
-                const namePanel = ce('a', {
+                const namePanel = ce('span', {
                     className: 'title q' + item.quality,
-                    href: 'https://www.wowhead.com/item=' + item.id
                 });
                 scroller.appendChild(namePanel);
 
                 const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
                 icon.style.backgroundImage = 'url("' + Items.getIconUrl(item.icon, Items.ICON_SIZE.LARGE) + '")';
                 namePanel.appendChild(icon);
+
+                // Model
+                if (item.display) {
+                    let url = 'https://wow.zamimg.com/modelviewer/live/webthumbs/item/' + (item.display & 0xFF) + '/' + item.display;
+                    const pic = ce('picture', {className: 'model-thumbnail'});
+                    pic.appendChild(ce('source', {
+                        srcset: url + '.webp',
+                        type: 'image/webp',
+                    }));
+                    pic.appendChild(ce('img', {
+                        src: url + '.png',
+                    }));
+
+                    icon.addEventListener('mouseover', (event) => WH.Tooltip.showAtCursor(event, pic.outerHTML));
+                    icon.addEventListener('mousemove', WH.Tooltip.cursorUpdate);
+                    icon.addEventListener('mouseout', WH.Tooltip.hide);
+                }
+
                 let itemName = item.name;
                 if (item.bonusSuffix) {
                     let suffix = Items.getSuffix(item.bonusSuffix);
@@ -986,28 +1003,14 @@ new function () {
                     itemName += ' (' + item.bonusLevel + ')';
                     wowheadParams.push('ilvl=' + item.bonusLevel);
                 }
-                namePanel.appendChild(ct(itemName));
+                const nameLink = ce('a', {
+                    href: 'https://www.wowhead.com/item=' + item.id
+                }, ct(itemName));
+                namePanel.appendChild(nameLink);
 
                 if (wowheadParams.length) {
-                    namePanel.dataset.wowhead = wowheadParams.join('&');
+                    nameLink.dataset.wowhead = wowheadParams.join('&');
                 }
-            }
-
-            // Model
-            if (item.display) {
-                const modelContainer = ce('div', {className: 'model-container'});
-                scroller.appendChild(modelContainer);
-
-                let url = 'https://wow.zamimg.com/modelviewer/live/webthumbs/item/' + (item.display & 0xFF) + '/' + item.display;
-                const pic = ce('picture');
-                pic.appendChild(ce('source', {
-                    srcset: url + '.webp',
-                    type: 'image/webp',
-                }));
-                pic.appendChild(ce('img', {
-                    src: url + '.png',
-                }));
-                modelContainer.appendChild(pic);
             }
 
             // Quantity calc

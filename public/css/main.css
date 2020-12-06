@@ -440,8 +440,9 @@ body {
               display: flex;
               font: 28px "Friz Quadrata TT", sans-serif;
               margin: 16px;
-              padding: 16px;
-              text-decoration: none; }
+              padding: 16px; }
+              .main .main-result .item .panels > div.details .title a {
+                text-decoration: none; }
               .main .main-result .item .panels > div.details .title .icon {
                 background-position: center center;
                 background-repeat: no-repeat;
@@ -473,16 +474,6 @@ body {
                   background-image: url("../images/ring-4.png"); }
                 .main .main-result .item .panels > div.details .title .icon[data-quality="5"]:after {
                   background-image: url("../images/ring-5.png"); }
-            .main .main-result .item .panels > div.details .model-container {
-              margin: 8px;
-              text-align: center; }
-              .main .main-result .item .panels > div.details .model-container img {
-                background-color: #201b1a;
-                border: 2px solid;
-                border-color: #060100 #161211 #4a4644;
-                border-radius: 8px;
-                max-width: 300px;
-                width: 100%; }
             .main .main-result .item .panels > div.details .framed {
               border-top: 2px solid #393433;
               margin: 32px 8px;
@@ -619,6 +610,9 @@ body {
     background-image: url("../images/coin-silver.png"); }
   .main .copper {
     background-image: url("../images/coin-copper.png"); }
+
+picture.model-thumbnail img {
+  background-color: #161211; }
 
 body > .wowhead-tooltip {
   max-width: 320px !important;
