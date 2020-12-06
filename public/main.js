@@ -1013,85 +1013,6 @@ new function () {
                 }
             }
 
-            // Quantity calc
-            if (itemState.auctions.length) {
-                const quantityPanel = ce('div', {className: 'quantity-calc framed'});
-                scroller.appendChild(quantityPanel);
-
-                quantityPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Bulk Pricing')));
-
-                const table = ce('table');
-                quantityPanel.appendChild(table);
-
-                let tr, td;
-
-                table.appendChild(tr = ce('tr'));
-                tr.appendChild(td = ce('td'));
-                td.appendChild(ct('Quantity'));
-                tr.appendChild(td = ce('td'));
-                const input = ce('input', {type: 'text', value: 1});
-                td.appendChild(input);
-
-                table.appendChild(tr = ce('tr'));
-                tr.appendChild(td = ce('td'));
-                td.appendChild(ct('Unit Price'));
-                const unitPriceTarget = ce('td');
-                tr.appendChild(unitPriceTarget);
-
-                table.appendChild(tr = ce('tr'));
-                tr.appendChild(td = ce('td'));
-                td.appendChild(ct('Total Price'));
-                const totalPriceTarget = ce('td');
-                tr.appendChild(totalPriceTarget);
-
-                const validateAndRun = () => {
-                    let quantity = 0;
-                    let price = 0;
-                    if (input.value !== '') {
-                        if (/\D/.test(input.value)) {
-                            input.value = input.value.replace(/\D+/g, '');
-                        }
-                        quantity = parseInt(input.value);
-                        if (quantity > itemState.quantity) {
-                            input.value = quantity = itemState.quantity;
-                        }
-                    }
-
-                    const auctionsTable = qs('.main .main-result .item .auctions table');
-                    auctionsTable.querySelectorAll('tr[data-selected]').forEach(tr => {
-                        delete tr.dataset.selected;
-                    });
-
-                    let qtyRemaining = quantity;
-                    const rows = auctionsTable.querySelectorAll('tr');
-                    for (let row, index = 0; (qtyRemaining > 0) && (row = rows[index]); index++) {
-                        let aucPrice = parseInt(row.dataset.price);
-                        let aucQty = parseInt(row.dataset.quantity);
-                        if (aucQty <= qtyRemaining) {
-                            price += aucPrice * aucQty;
-                            qtyRemaining -= aucQty;
-                            row.dataset.selected = 'full';
-                        } else {
-                            price += aucPrice * qtyRemaining;
-                            qtyRemaining = 0;
-                            row.dataset.selected = 'part';
-                        }
-                    }
-
-                    ee(totalPriceTarget);
-                    ee(unitPriceTarget);
-                    if (!price) {
-                        return;
-                    }
-
-                    totalPriceTarget.appendChild(priceElement(price));
-                    unitPriceTarget.appendChild(priceElement(Math.round(price / quantity / 100) * 100));
-                };
-                input.addEventListener('keyup', validateAndRun);
-                input.addEventListener('change', validateAndRun);
-                validateAndRun();
-            }
-
             // Price chart
             (() => {
                 if (itemState.snapshots.length < 6) {
@@ -1269,6 +1190,85 @@ new function () {
                 });
                 priceChart.addEventListener('mouseout', WH.Tooltip.hide);
             })();
+
+            // Quantity calc
+            if (itemState.auctions.length) {
+                const quantityPanel = ce('div', {className: 'quantity-calc framed'});
+                scroller.appendChild(quantityPanel);
+
+                quantityPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Bulk Pricing')));
+
+                const table = ce('table');
+                quantityPanel.appendChild(table);
+
+                let tr, td;
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(td = ce('td'));
+                td.appendChild(ct('Quantity'));
+                tr.appendChild(td = ce('td'));
+                const input = ce('input', {type: 'text', value: 1});
+                td.appendChild(input);
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(td = ce('td'));
+                td.appendChild(ct('Unit Price'));
+                const unitPriceTarget = ce('td');
+                tr.appendChild(unitPriceTarget);
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(td = ce('td'));
+                td.appendChild(ct('Total Price'));
+                const totalPriceTarget = ce('td');
+                tr.appendChild(totalPriceTarget);
+
+                const validateAndRun = () => {
+                    let quantity = 0;
+                    let price = 0;
+                    if (input.value !== '') {
+                        if (/\D/.test(input.value)) {
+                            input.value = input.value.replace(/\D+/g, '');
+                        }
+                        quantity = parseInt(input.value);
+                        if (quantity > itemState.quantity) {
+                            input.value = quantity = itemState.quantity;
+                        }
+                    }
+
+                    const auctionsTable = qs('.main .main-result .item .auctions table');
+                    auctionsTable.querySelectorAll('tr[data-selected]').forEach(tr => {
+                        delete tr.dataset.selected;
+                    });
+
+                    let qtyRemaining = quantity;
+                    const rows = auctionsTable.querySelectorAll('tr');
+                    for (let row, index = 0; (qtyRemaining > 0) && (row = rows[index]); index++) {
+                        let aucPrice = parseInt(row.dataset.price);
+                        let aucQty = parseInt(row.dataset.quantity);
+                        if (aucQty <= qtyRemaining) {
+                            price += aucPrice * aucQty;
+                            qtyRemaining -= aucQty;
+                            row.dataset.selected = 'full';
+                        } else {
+                            price += aucPrice * qtyRemaining;
+                            qtyRemaining = 0;
+                            row.dataset.selected = 'part';
+                        }
+                    }
+
+                    ee(totalPriceTarget);
+                    ee(unitPriceTarget);
+                    if (!price) {
+                        return;
+                    }
+
+                    totalPriceTarget.appendChild(priceElement(price));
+                    unitPriceTarget.appendChild(priceElement(Math.round(price / quantity / 100) * 100));
+                };
+                input.addEventListener('keyup', validateAndRun);
+                input.addEventListener('change', validateAndRun);
+                validateAndRun();
+            }
         }
     };
 
