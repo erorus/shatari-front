@@ -664,16 +664,19 @@ body {
             .quantity-calc, .base-stats {
               table {
                 margin: 0 auto;
-                td:first-child {
-                  color: $qColor;
-                  font: $fontSizeFriz $fontFriz;
-                  padding: 0.25em 1em 0.25em 0;
-                  text-align: right;
-                  vertical-align: middle;
-                }
-                td:last-child {
+                td {
                   text-align: right;
                   width: 7em;
+
+                  &:first-child {
+                    padding: 0.25em 1em 0.25em 0;
+                  }
+                }
+                tr.header td, td:first-child {
+                  color: $qColor;
+                  font: $fontSizeFriz $fontFriz;
+                  vertical-align: middle;
+                  width: auto;
                 }
               }
 

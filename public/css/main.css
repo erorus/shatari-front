@@ -490,15 +490,16 @@ body {
                 top: -0.625em; }
             .main .main-result .item .panels > div.details .quantity-calc table, .main .main-result .item .panels > div.details .base-stats table {
               margin: 0 auto; }
-              .main .main-result .item .panels > div.details .quantity-calc table td:first-child, .main .main-result .item .panels > div.details .base-stats table td:first-child {
-                color: #CA4;
-                font: 16px "Friz Quadrata TT", sans-serif;
-                padding: 0.25em 1em 0.25em 0;
-                text-align: right;
-                vertical-align: middle; }
-              .main .main-result .item .panels > div.details .quantity-calc table td:last-child, .main .main-result .item .panels > div.details .base-stats table td:last-child {
+              .main .main-result .item .panels > div.details .quantity-calc table td, .main .main-result .item .panels > div.details .base-stats table td {
                 text-align: right;
                 width: 7em; }
+                .main .main-result .item .panels > div.details .quantity-calc table td:first-child, .main .main-result .item .panels > div.details .base-stats table td:first-child {
+                  padding: 0.25em 1em 0.25em 0; }
+              .main .main-result .item .panels > div.details .quantity-calc table tr.header td, .main .main-result .item .panels > div.details .quantity-calc table td:first-child, .main .main-result .item .panels > div.details .base-stats table tr.header td, .main .main-result .item .panels > div.details .base-stats table td:first-child {
+                color: #CA4;
+                font: 16px "Friz Quadrata TT", sans-serif;
+                vertical-align: middle;
+                width: auto; }
             .main .main-result .item .panels > div.details .quantity-calc input, .main .main-result .item .panels > div.details .base-stats input {
               background-color: #161211;
               border: 5px double;

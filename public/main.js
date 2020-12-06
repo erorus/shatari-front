@@ -51,6 +51,8 @@ new function () {
 
     /**
      * @typedef {object} ItemState
+     * @property {Realm}           realm
+     * @property {PricedItem}      item
      * @property {Timestamp}       snapshot   The last snapshot when this item was seen
      * @property {Money}           price      The cheapest price when this item was last seen
      * @property {number}          quantity   How many were available when this was last seen
@@ -164,13 +166,14 @@ new function () {
         // ------ //
 
         /**
-         * Given an item object, return its item state for the current realm.
+         * Given an item object, return its item state for the current/given realm.
          *
          * @param {PricedItem} item
+         * @param {Realm|null} realm
          * @return {Promise<ItemState>}
          */
-        this.getItem = async function (item) {
-            return getItemState(Realms.getCurrentRealm(), item);
+        this.getItem = async function (item, realm) {
+            return getItemState(realm || Realms.getCurrentRealm(), item);
         }
 
         /**
@@ -238,6 +241,8 @@ new function () {
             const response = await fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return {
+                    realm: realm,
+                    item: item,
                     snapshot: 0,
                     price: 0,
                     quantity: 0,
@@ -271,7 +276,10 @@ new function () {
                     throw "Unknown data version for item state.";
             }
 
-            const result = {};
+            const result = {
+                realm: realm,
+                item: item,
+            };
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.price = view.getUint32(read(4), true) * COPPER_SILVER;
             result.quantity = view.getUint32(read(4), true);
@@ -885,7 +893,7 @@ new function () {
 
             await Promise.all([
                 Auctions.getRealmState().then(result => realmState = result),
-                Auctions.getItem(item).then(result => itemState = result),
+                Auctions.getItem(item, null).then(result => itemState = result),
             ]);
 
             populateAuctions(item, realmState, itemState);
@@ -1028,6 +1036,29 @@ new function () {
                 }
             }
 
+            getStatistics = (values) => {
+                let median;
+                if (values.length % 2 === 1) {
+                    median = values[Math.floor(values.length / 2)];
+                } else {
+                    let value1 = values[values.length / 2 - 1];
+                    let value2 = values[values.length / 2];
+                    median = Math.round((value1 + value2) / 2);
+                }
+
+                let mean;
+                let sum = 0;
+                values.forEach(value => sum += value);
+                mean = Math.round(sum / values.length);
+
+                return {
+                    median: median,
+                    mean: mean,
+                };
+            }
+
+            let regionElements = {};
+
             // Stats
             (() => {
                 const statsPanel = ce('div', {className: 'base-stats framed'});
@@ -1038,16 +1069,23 @@ new function () {
                 const table = ce('table');
                 statsPanel.appendChild(table);
 
-                let tr, td;
+                let tr;
+
+                table.appendChild(tr = ce('tr', {className: 'header'}));
+                tr.appendChild(ce('td'));
+                tr.appendChild(ce('td', {}, ct(realmState.realm.name)));
+                tr.appendChild(ce('td', {}, ct(realmState.realm.region.toUpperCase())));
 
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Available Quantity')));
                 tr.appendChild(ce('td', {}, ct(item.quantity.toLocaleString())));
+                tr.appendChild(regionElements.quantity = ce('td'));
 
                 if (item.price) {
                     table.appendChild(tr = ce('tr'));
                     tr.appendChild(ce('td', {}, ct('Current Price')));
                     tr.appendChild(ce('td', {}, priceElement(item.price)));
+                    tr.appendChild(ce('td'));
                 }
 
                 let prices = [];
@@ -1058,28 +1096,22 @@ new function () {
                 });
                 prices.sort((a, b) => a - b);
 
+                let realmElements = {};
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Median')));
+                tr.appendChild(realmElements.median = ce('td'));
+                tr.appendChild(regionElements.median = ce('td'));
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Mean')));
+                tr.appendChild(realmElements.mean = ce('td'));
+                tr.appendChild(regionElements.mean = ce('td'));
+
                 if (prices.length >= MIN_SNAPSHOT_COUNT) {
-                    let median;
-                    if (prices.length % 2 === 1) {
-                        median = prices[Math.floor(prices.length / 2)];
-                    } else {
-                        let price1 = prices[prices.length / 2 - 1];
-                        let price2 = prices[prices.length / 2];
-                        median = Math.round((price1 + price2) / 2);
-                    }
-
-                    table.appendChild(tr = ce('tr'));
-                    tr.appendChild(ce('td', {}, ct('Median')));
-                    tr.appendChild(ce('td', {}, priceElement(median)));
-
-                    let mean;
-                    let sum = 0;
-                    prices.forEach(price => sum += price);
-                    mean = Math.round(sum / prices.length);
-
-                    table.appendChild(tr = ce('tr'));
-                    tr.appendChild(ce('td', {}, ct('Mean')));
-                    tr.appendChild(ce('td', {}, priceElement(mean)));
+                    let statistics = getStatistics(prices);
+                    realmElements.median.appendChild(priceElement(statistics.median));
+                    realmElements.mean.appendChild(priceElement(statistics.mean));
                 }
             })();
 
@@ -1341,6 +1373,43 @@ new function () {
                 input.addEventListener('change', validateAndRun);
                 validateAndRun();
             }
+
+            // Other realms
+            fetchOtherRealms(item, realmState.realm.region).then(otherRealms => {
+                let quantitySum = 0;
+                let prices = [];
+                otherRealms.forEach(itemState => {
+                    quantitySum += itemState.quantity;
+                    if (itemState.price) {
+                        prices.push(itemState.price);
+                    }
+                });
+
+                regionElements.quantity.appendChild(ct(quantitySum.toLocaleString()));
+                if (prices.length >= 5) {
+                    let statistics = getStatistics(prices);
+                    regionElements.median.appendChild(priceElement(statistics.median));
+                    regionElements.mean.appendChild(priceElement(statistics.mean));
+                }
+            });
+        }
+
+        /**
+         * Returns an array of item states for the given item for all realms in the given region.
+         *
+         * @param {PricedItem} item
+         * @param {string} region
+         * @return {Promise<ItemState[]>}
+         */
+        async function fetchOtherRealms(item, region) {
+            const connectedRealms = Realms.getRegionConnectedRealms(region);
+
+            const toFetch = [];
+            connectedRealms.forEach(realm => {
+                toFetch.push(Auctions.getItem(item, realm.canonical));
+            });
+
+            return await Promise.all(toFetch);
         }
     };
 
@@ -1713,7 +1782,11 @@ new function () {
         // ***** VARIABLES ***** //
         // ********************* //
 
-        /** @type {{connectedRealms: Object.<string, ConnectedRealm[]>, realms: Object.<RealmID, Realm>}} */
+        /** @type {{
+         *      connectedRealms: Object.<string, Object.<ConnectedRealmID, ConnectedRealm>>,
+         *      realms: Object.<RealmID, Realm>
+         * }}
+         */
         const my = {
             connectedRealms: {},
 
@@ -1729,58 +1802,13 @@ new function () {
         // ------ //
 
         /**
-         * Returns a sorted array of connected realms for the given region.
+         * Returns the connected realm object for a given realm.
          *
-         * @param {string} region
-         * @return {ConnectedRealm[]}
+         * @param {Realm} realm
+         * @return {ConnectedRealm}
          */
-        this.getConnectedRealms = function (region) {
-            if (my.connectedRealms.hasOwnProperty(region)) {
-                return my.connectedRealms[region];
-            }
-
-            /** @type {Object.<ConnectedRealmID, ConnectedRealm>} keyed */
-            const keyed = {};
-            for (let realmId in my.realms) {
-                if (!my.realms.hasOwnProperty(realmId)) {
-                    continue;
-                }
-
-                let realm = my.realms[realmId];
-                if (realm.region !== region) {
-                    continue;
-                }
-
-                if (!keyed.hasOwnProperty(realm.connectedId)) {
-                    keyed[realm.connectedId] = {
-                        region: realm.region,
-                        id: realm.connectedId,
-                        secondary: [],
-                    };
-                }
-                if (realm.id === realm.connectedId) {
-                    keyed[realm.connectedId].canonical = realm;
-                } else {
-                    keyed[realm.connectedId].secondary.push(realm);
-                }
-            }
-
-            const result = [];
-            for (let connectedId in keyed) {
-                if (!keyed.hasOwnProperty(connectedId)) {
-                    continue;
-                }
-
-                let connectedRealm = keyed[connectedId];
-                connectedRealm.secondary.sort((a, b) => a.name.localeCompare(b.name));
-                if (!connectedRealm.canonical) {
-                    connectedRealm.canonical = connectedRealm.secondary.shift();
-                }
-                result.push(connectedRealm);
-            }
-            result.sort((a, b) => a.canonical.name.localeCompare(b.canonical.name));
-
-            return my.connectedRealms[region] = result;
+        this.getConnectedRealm = function (realm) {
+            return getConnectedRealmsForRegion(realm.region)[realm.connectedId];
         }
 
         /**
@@ -1818,6 +1846,19 @@ new function () {
 
             let result = {};
             co(result, my.realms[realmId]);
+
+            return result;
+        }
+
+        /**
+         * Returns a sorted array of connected realms for the given region.
+         *
+         * @param {string} region
+         * @return {ConnectedRealm[]}
+         */
+        this.getRegionConnectedRealms = function (region) {
+            const result = Object.values(getConnectedRealmsForRegion(region));
+            result.sort((a, b) => a.canonical.name.localeCompare(b.canonical.name));
 
             return result;
         }
@@ -1889,6 +1930,58 @@ new function () {
         // ------- //
         // PRIVATE //
         // ------- //
+
+        /**
+         * Returns the connected realms for a region, keyed by connected realm ID.
+         *
+         * @param {string} region
+         * @return {Object.<ConnectedRealmID, ConnectedRealm>}
+         */
+        function getConnectedRealmsForRegion(region) {
+            let result = my.connectedRealms[region];
+            if (result) {
+                return result;
+            }
+
+            result = {};
+            for (let realmId in my.realms) {
+                if (!my.realms.hasOwnProperty(realmId)) {
+                    continue;
+                }
+
+                let realm = my.realms[realmId];
+                if (realm.region !== region) {
+                    continue;
+                }
+
+                if (!result.hasOwnProperty(realm.connectedId)) {
+                    result[realm.connectedId] = {
+                        region: realm.region,
+                        id: realm.connectedId,
+                        secondary: [],
+                    };
+                }
+                if (realm.id === realm.connectedId) {
+                    result[realm.connectedId].canonical = realm;
+                } else {
+                    result[realm.connectedId].secondary.push(realm);
+                }
+            }
+
+            for (let connectedId in result) {
+                if (!result.hasOwnProperty(connectedId)) {
+                    continue;
+                }
+
+                let connectedRealm = result[connectedId];
+                connectedRealm.secondary.sort((a, b) => a.name.localeCompare(b.name));
+                if (!connectedRealm.canonical) {
+                    connectedRealm.canonical = connectedRealm.secondary.shift();
+                }
+            }
+
+            return my.connectedRealms[region] = result;
+        }
 
         /**
          * Fetches the realm list and stores it locally.
