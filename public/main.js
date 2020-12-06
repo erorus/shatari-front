@@ -1183,7 +1183,9 @@ new function () {
                 if (item.price) {
                     table.appendChild(tr = ce('tr'));
                     tr.appendChild(ce('td', {}, ct('Current')));
-                    tr.appendChild(ce('td', {}, priceElement(item.price)));
+                    tr.appendChild(ce('td', {
+                        dataset: {simpleTooltip: 'Lowest price in ' + realmName + ' right now.'}
+                    }, priceElement(item.price)));
                     tr.appendChild(ce('td'));
                 }
 
@@ -1199,13 +1201,21 @@ new function () {
 
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Median')));
-                tr.appendChild(realmElements.median = ce('td'));
-                tr.appendChild(regionElements.median = ce('td'));
+                tr.appendChild(realmElements.median = ce('td', {
+                    dataset: {simpleTooltip: 'Median price in ' + realmName + ' over the past ' + days + ' days.'}
+                }));
+                tr.appendChild(regionElements.median = ce('td', {
+                    dataset: {simpleTooltip: 'Median price among all ' + regionName + ' realms right now.'}
+                }));
 
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Mean')));
-                tr.appendChild(realmElements.mean = ce('td'));
-                tr.appendChild(regionElements.mean = ce('td'));
+                tr.appendChild(realmElements.mean = ce('td', {
+                    dataset: {simpleTooltip: 'Mean (average) price in ' + realmName + ' over the past ' + days + ' days.'}
+                }));
+                tr.appendChild(regionElements.mean = ce('td', {
+                    dataset: {simpleTooltip: 'Mean (average) price among all ' + regionName + ' realms right now.'}
+                }));
 
                 if (prices.length >= MIN_SNAPSHOT_COUNT) {
                     let statistics = getStatistics(prices);
