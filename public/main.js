@@ -16,6 +16,14 @@ new function () {
 
     /** @typedef {number} ConnectedRealmID */
 
+    /**
+     * @typedef {Object} ConnectedRealm
+     * @property {string} region  "us" or "eu"
+     * @property {ConnectedRealmID} id
+     * @property {Realm} canonical
+     * @property {Realm[]} secondary
+     */
+
     /** @typedef {number} InventoryType */
 
     /** @typedef {number} ItemID */
@@ -70,9 +78,10 @@ new function () {
 
     /**
      * @typedef {Object} RealmState
-     * @property {Timestamp}                    snapshot   The timestamp of the most recent snapshot
-     * @property {Timestamp}                    lastCheck  The timestamp when we last checked for a new snapshot
-     * @property {Timestamp[]}                  snapshots  An array of snapshot timestamps, in ascending order
+     * @property {Realm} realm
+     * @property {Timestamp} snapshot   The timestamp of the most recent snapshot
+     * @property {Timestamp} lastCheck  The timestamp when we last checked for a new snapshot
+     * @property {Timestamp[]} snapshots  An array of snapshot timestamps, in ascending order
      * @property {Object.<ItemKeyString, SummaryLine>} summary
      * @property {Object.<ItemID, Array<ItemKeyString>>} variants
      */
@@ -401,6 +410,9 @@ new function () {
 
             /** @type {RealmState} result */
             const result = {};
+            result.realm = {};
+            co(result.realm, realm);
+            Object.freeze(result.realm);
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
             result.snapshots = [];
@@ -1701,8 +1713,10 @@ new function () {
         // ***** VARIABLES ***** //
         // ********************* //
 
-        /** @type {{realms: Object.<RealmID, Realm>}} */
+        /** @type {{connectedRealms: Object.<string, ConnectedRealm[]>, realms: Object.<RealmID, Realm>}} */
         const my = {
+            connectedRealms: {},
+
             realms: {},
         };
 
@@ -1713,6 +1727,61 @@ new function () {
         // ------ //
         // PUBLIC //
         // ------ //
+
+        /**
+         * Returns a sorted array of connected realms for the given region.
+         *
+         * @param {string} region
+         * @return {ConnectedRealm[]}
+         */
+        this.getConnectedRealms = function (region) {
+            if (my.connectedRealms.hasOwnProperty(region)) {
+                return my.connectedRealms[region];
+            }
+
+            /** @type {Object.<ConnectedRealmID, ConnectedRealm>} keyed */
+            const keyed = {};
+            for (let realmId in my.realms) {
+                if (!my.realms.hasOwnProperty(realmId)) {
+                    continue;
+                }
+
+                let realm = my.realms[realmId];
+                if (realm.region !== region) {
+                    continue;
+                }
+
+                if (!keyed.hasOwnProperty(realm.connectedId)) {
+                    keyed[realm.connectedId] = {
+                        region: realm.region,
+                        id: realm.connectedId,
+                        secondary: [],
+                    };
+                }
+                if (realm.id === realm.connectedId) {
+                    keyed[realm.connectedId].canonical = realm;
+                } else {
+                    keyed[realm.connectedId].secondary.push(realm);
+                }
+            }
+
+            const result = [];
+            for (let connectedId in keyed) {
+                if (!keyed.hasOwnProperty(connectedId)) {
+                    continue;
+                }
+
+                let connectedRealm = keyed[connectedId];
+                connectedRealm.secondary.sort((a, b) => a.name.localeCompare(b.name));
+                if (!connectedRealm.canonical) {
+                    connectedRealm.canonical = connectedRealm.secondary.shift();
+                }
+                result.push(connectedRealm);
+            }
+            result.sort((a, b) => a.canonical.name.localeCompare(b.canonical.name));
+
+            return my.connectedRealms[region] = result;
+        }
 
         /**
          * Get a copy of the realm object for the currently-selected realm, or undefined if not found.
