@@ -1,3 +1,5 @@
+"use strict";
+
 new function () {
     /**
      * @typedef {Object} Auction
@@ -1128,7 +1130,7 @@ new function () {
                 }
             }
 
-            getStatistics = (values) => {
+            const getStatistics = (values) => {
                 let median;
                 if (values.length % 2 === 1) {
                     median = values[Math.floor(values.length / 2)];
@@ -2607,7 +2609,7 @@ new function () {
                 if (Array.isArray(source[k])) {
                     dest[k] = source[k].slice(0);
                 } else {
-                    if (!dest.hasOwnProperty(k)) {
+                    if (!(k in dest)) {
                         dest[k] = {};
                     }
                     co(dest[k], source[k]);
