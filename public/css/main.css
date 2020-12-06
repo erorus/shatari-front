@@ -488,18 +488,18 @@ body {
                 padding: 0 8px;
                 position: absolute;
                 top: -0.625em; }
-            .main .main-result .item .panels > div.details .quantity-calc table {
+            .main .main-result .item .panels > div.details .quantity-calc table, .main .main-result .item .panels > div.details .base-stats table {
               margin: 0 auto; }
-              .main .main-result .item .panels > div.details .quantity-calc table td:first-child {
+              .main .main-result .item .panels > div.details .quantity-calc table td:first-child, .main .main-result .item .panels > div.details .base-stats table td:first-child {
                 color: #CA4;
                 font: 16px "Friz Quadrata TT", sans-serif;
-                padding: 0.5em 1em 0.5em 0;
+                padding: 0.25em 1em 0.25em 0;
                 text-align: right;
                 vertical-align: middle; }
-              .main .main-result .item .panels > div.details .quantity-calc table td:last-child {
+              .main .main-result .item .panels > div.details .quantity-calc table td:last-child, .main .main-result .item .panels > div.details .base-stats table td:last-child {
                 text-align: right;
-                width: 8em; }
-            .main .main-result .item .panels > div.details .quantity-calc input {
+                width: 7em; }
+            .main .main-result .item .panels > div.details .quantity-calc input, .main .main-result .item .panels > div.details .base-stats input {
               background-color: #161211;
               border: 5px double;
               border-color: #4a4644;
@@ -509,10 +509,10 @@ body {
               font: 19px "Arial Narrow", sans-serif;
               padding: 4px 8px;
               width: 100%; }
-            .main .main-result .item .panels > div.details .quantity-calc .price {
+            .main .main-result .item .panels > div.details .quantity-calc .price, .main .main-result .item .panels > div.details .base-stats .price {
               display: inline-block;
               text-align: right; }
-            .main .main-result .item .panels > div.details .quantity-calc .silver {
+            .main .main-result .item .panels > div.details .quantity-calc .silver, .main .main-result .item .panels > div.details .base-stats .silver {
               display: inline-block;
               width: 30px; }
             .main .main-result .item .panels > div.details .charts-container {

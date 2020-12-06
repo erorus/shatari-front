@@ -234,6 +234,7 @@ new function () {
                     quantity: 0,
                     auctions: [],
                     snapshots: [],
+                    specifics: [],
                 };
             }
 
@@ -959,6 +960,8 @@ new function () {
             const scroller = ce('div', {className: 'scroller'});
             parent.appendChild(scroller);
 
+            const MIN_SNAPSHOT_COUNT = 6;
+
             // Name panel
             {
                 let wowheadParams = [];
@@ -1013,9 +1016,64 @@ new function () {
                 }
             }
 
+            // Stats
+            (() => {
+                const statsPanel = ce('div', {className: 'base-stats framed'});
+                scroller.appendChild(statsPanel);
+
+                statsPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Base Stats')));
+
+                const table = ce('table');
+                statsPanel.appendChild(table);
+
+                let tr, td;
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Available Quantity')));
+                tr.appendChild(ce('td', {}, ct(item.quantity.toLocaleString())));
+
+                if (item.price) {
+                    table.appendChild(tr = ce('tr'));
+                    tr.appendChild(ce('td', {}, ct('Current Price')));
+                    tr.appendChild(ce('td', {}, priceElement(item.price)));
+                }
+
+                let prices = [];
+                itemState.snapshots.forEach(snapshot => {
+                    if (snapshot.price > 0) {
+                        prices.push(snapshot.price);
+                    }
+                });
+                prices.sort((a, b) => a - b);
+
+                if (prices.length >= MIN_SNAPSHOT_COUNT) {
+                    let median;
+                    if (prices.length % 2 === 1) {
+                        median = prices[Math.floor(prices.length / 2)];
+                    } else {
+                        let price1 = prices[prices.length / 2 - 1];
+                        let price2 = prices[prices.length / 2];
+                        median = Math.round((price1 + price2) / 2);
+                    }
+
+                    table.appendChild(tr = ce('tr'));
+                    tr.appendChild(ce('td', {}, ct('Median')));
+                    tr.appendChild(ce('td', {}, priceElement(median)));
+
+                    let mean;
+                    let sum = 0;
+                    prices.forEach(price => sum += price);
+                    mean = Math.round(sum / prices.length);
+
+                    table.appendChild(tr = ce('tr'));
+                    tr.appendChild(ce('td', {}, ct('Mean')));
+                    tr.appendChild(ce('td', {}, priceElement(mean)));
+                }
+            })();
+
             // Price chart
             (() => {
-                if (itemState.snapshots.length < 6) {
+                if (itemState.snapshots.length < MIN_SNAPSHOT_COUNT) {
                     return;
                 }
 
@@ -1176,10 +1234,12 @@ new function () {
                     const result = ce('table', {className: 'shatari-tooltip'});
                     result.appendChild(ce('tr', {}, ce('td', {className: 'date', colSpan: 2}, ct(formatter.format(new Date(snapshot.snapshot))))));
 
-                    const priceLine = ce('tr');
-                    priceLine.appendChild(ce('td', {className: 'price'}, ct('Lowest Price')));
-                    priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
-                    result.appendChild(priceLine);
+                    if (snapshot.price) {
+                        const priceLine = ce('tr');
+                        priceLine.appendChild(ce('td', {className: 'price'}, ct('Lowest Price')));
+                        priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
+                        result.appendChild(priceLine);
+                    }
 
                     const quantityLine = ce('tr');
                     quantityLine.appendChild(ce('td', {className: 'quantity'}, ct('Total Quantity')));

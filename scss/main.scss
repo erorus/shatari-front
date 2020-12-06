@@ -661,19 +661,19 @@ body {
               }
             }
 
-            .quantity-calc {
+            .quantity-calc, .base-stats {
               table {
                 margin: 0 auto;
                 td:first-child {
                   color: $qColor;
                   font: $fontSizeFriz $fontFriz;
-                  padding: 0.5em 1em 0.5em 0;
+                  padding: 0.25em 1em 0.25em 0;
                   text-align: right;
                   vertical-align: middle;
                 }
                 td:last-child {
                   text-align: right;
-                  width: 8em;
+                  width: 7em;
                 }
               }
 
