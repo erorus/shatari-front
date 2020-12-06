@@ -178,7 +178,7 @@ new function () {
          * @return {Promise<ItemState>}
          */
         this.getItem = async function (item, realm) {
-            return getItemState(realm || Realms.getCurrentRealm(), item);
+            return getItemState(realm || Realms.getCurrentRealm(), item, !!realm);
         }
 
         /**
@@ -308,15 +308,16 @@ new function () {
          *
          * @param {Realm} realm
          * @param {PricedItem} item
+         * @param {boolean} useCached
          * @return {Promise<ItemState>}
          */
-        async function getItemState(realm, item) {
+        async function getItemState(realm, item, useCached) {
             let basename = Items.stringifyKey({
                 itemId: item.id,
                 itemLevel: item.bonusLevel,
                 itemSuffix: item.bonusSuffix,
             });
-            const url = 'data/' + realm.connectedId + '/' + (item.id & 0xFF) + '/' + basename + '.bin';
+            const url = 'data/' + (useCached ? 'cached/' : '') + realm.connectedId + '/' + (item.id & 0xFF) + '/' + basename + '.bin';
             const response = await fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return {
