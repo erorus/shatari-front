@@ -408,6 +408,10 @@ body {
         display: flex;
         justify-content: space-between;
         margin: 8px; }
+        .main .main-result .item .back-bar .alt-realm {
+          flex: 1 1;
+          margin: 0 8px;
+          text-shadow: 1px 1px 1px #000; }
         .main .main-result .item .back-bar .available {
           color: #CA4;
           font: 14.4px "Friz Quadrata TT", sans-serif;

@@ -564,6 +564,12 @@ body {
         justify-content: space-between;
         margin: $marginStep;
 
+        .alt-realm {
+          flex: 1 1;
+          margin: 0 $marginStep;
+          text-shadow: $thin $thin $thin #000;
+        }
+
         .available {
           color: $qColor;
           font: $fontSizeFriz * 0.9 $fontFriz;

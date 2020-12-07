@@ -950,8 +950,9 @@ new function () {
          * Enters detail mode to show the given item's details.
          *
          * @param {PricedItem} item
+         * @param {Realm|null} realm
          */
-        this.show = async function (item) {
+        this.show = async function (item, realm) {
             qs('.main .main-result').dataset.detailMode = 1;
 
             const itemDiv = qs('.main .main-result .item');
@@ -965,6 +966,10 @@ new function () {
                 backBar.appendChild(backButton);
                 backButton.addEventListener('click', self.hide);
 
+                if (realm) {
+                    backBar.appendChild(ce('span', {className: 'alt-realm'}, ct('Viewing Realm ' + realm.name)));
+                }
+
                 backBar.appendChild(ce('span', {className: 'available'}));
             }
 
@@ -976,7 +981,7 @@ new function () {
             const auctions = ce('div', {className: 'auctions'});
             panels.appendChild(auctions);
 
-            const itemState = await Auctions.getItem(item, null);
+            const itemState = await Auctions.getItem(item, realm);
 
             populateAuctions(item, itemState);
             populateDetails(item, itemState);
@@ -1597,7 +1602,12 @@ new function () {
                     }
 
                     const tr = ce('tr');
-                    tr.appendChild(ce('td', {dataset: {sortValue: itemState.realm.name}}, ct(itemState.realm.name)));
+                    let td, a;
+                    tr.appendChild(td = ce('td', {dataset: {sortValue: itemState.realm.name}}, ct(itemState.realm.name)));
+                    td.appendChild(a = ce('a', {
+                        href: 'javascript:',
+                    }));
+                    a.addEventListener('click', self.show.bind(self, item, itemState.realm));
                     tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
                     tr.appendChild(ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
 
@@ -2427,7 +2437,7 @@ new function () {
                     if (suffix && suffix.bonus) {
                         rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
                     }
-                    rowLink.addEventListener('click', Detail.show.bind(null, item));
+                    rowLink.addEventListener('click', Detail.show.bind(null, item, null));
                     td.appendChild(rowLink);
                 }
 
