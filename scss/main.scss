@@ -758,8 +758,10 @@ body {
             }
 
             .other-realms-container {
-              display: flex;
-              justify-content: center;
+              .check-container {
+                text-align: right;
+              }
+
               .list {
                 background-color: $background15;
                 border: $bevel solid;
@@ -835,6 +837,10 @@ body {
                       padding-right: $marginStep;
                     }
                   }
+                }
+
+                &:not([data-with-connected-realms]) tr[data-connected-realm] {
+                  display: none;
                 }
               }
             }

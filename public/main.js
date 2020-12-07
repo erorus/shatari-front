@@ -1485,6 +1485,13 @@ new function () {
                 scroller.appendChild(topContainer);
                 topContainer.appendChild(ce('span', {className: 'frame-title'}, ct('Current Regional Prices')));
 
+                const otherRealmsContainer = ce('div', {className: 'check-container'});
+                topContainer.appendChild(otherRealmsContainer);
+                const otherRealmsLabel = ce('label', {}, ct('Include Connected Realms'));
+                otherRealmsContainer.appendChild(otherRealmsLabel);
+                const otherRealmsControl = ce('input', {type: 'checkbox'});
+                otherRealmsLabel.appendChild(otherRealmsControl);
+
                 const list = ce('div', {
                     className: 'list',
                 });
@@ -1546,8 +1553,8 @@ new function () {
                         }
 
                         if (columnPos !== COL_NAME) {
-                            const aName = a.querySelector('td:nth-child(2)').dataset.sortValue;
-                            const bName = b.querySelector('td:nth-child(2)').dataset.sortValue;
+                            const aName = a.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
+                            const bName = b.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
 
                             const valDiff = aName.localeCompare(bName);
                             if (valDiff) {
@@ -1589,6 +1596,14 @@ new function () {
                 regionElements.afterList = () => {
                     columnSort(firstSortTd, true);
                 }
+
+                otherRealmsControl.addEventListener('click', () => {
+                    if (otherRealmsControl.checked) {
+                        table.dataset.withConnectedRealms = 1;
+                    } else {
+                        delete table.dataset.withConnectedRealms;
+                    }
+                });
             })();
 
             // Fetch other realms
@@ -1601,17 +1616,23 @@ new function () {
                         prices.push(itemState.price);
                     }
 
-                    const tr = ce('tr');
-                    let td, a;
-                    tr.appendChild(td = ce('td', {dataset: {sortValue: itemState.realm.name}}, ct(itemState.realm.name)));
-                    td.appendChild(a = ce('a', {
-                        href: 'javascript:',
-                    }));
-                    a.addEventListener('click', self.show.bind(self, item, itemState.realm));
-                    tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
-                    tr.appendChild(ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
+                    const ourRealms = [itemState.realm].concat(Realms.getConnectedRealm(itemState.realm).secondary);
+                    for (let realm, index = 0; realm = ourRealms[index]; index++) {
+                        const tr = ce('tr');
+                        let td, a;
+                        tr.appendChild(td = ce('td', {dataset: {sortValue: realm.name}}, ct(realm.name)));
+                        td.appendChild(a = ce('a', {
+                            href: 'javascript:',
+                        }));
+                        if (index > 0) {
+                            tr.dataset.connectedRealm = 1;
+                        }
+                        a.addEventListener('click', self.show.bind(self, item, realm));
+                        tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
+                        tr.appendChild(ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
 
-                    regionElements.listTable.appendChild(tr);
+                        regionElements.listTable.appendChild(tr);
+                    }
                 });
 
                 regionElements.afterList();
@@ -2328,8 +2349,8 @@ new function () {
                 }
 
                 if (columnPos !== COL_NAME) {
-                    const aName = a.querySelector('td:nth-child(2)').dataset.sortValue;
-                    const bName = b.querySelector('td:nth-child(2)').dataset.sortValue;
+                    const aName = a.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
+                    const bName = b.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
 
                     const valDiff = aName.localeCompare(bName);
                     if (valDiff) {
