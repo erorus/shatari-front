@@ -976,26 +976,19 @@ new function () {
             const auctions = ce('div', {className: 'auctions'});
             panels.appendChild(auctions);
 
-            let realmState;
-            let itemState;
+            const itemState = await Auctions.getItem(item, null);
 
-            await Promise.all([
-                Auctions.getRealmState().then(result => realmState = result),
-                Auctions.getItem(item, null).then(result => itemState = result),
-            ]);
-
-            populateAuctions(item, realmState, itemState);
-            populateDetails(item, realmState, itemState);
+            populateAuctions(item, itemState);
+            populateDetails(item, itemState);
         }
 
         /**
          * Populate the auctions list in the rightmost panel.
          *
          * @param {PricedItem} item
-         * @param {RealmState} realmState
          * @param {ItemState} itemState
          */
-        function populateAuctions(item, realmState, itemState) {
+        function populateAuctions(item, itemState) {
             const availableSpan = qs('.main .main-result .item .back-bar .available');
 
             availableSpan.appendChild(ct(itemState.quantity.toLocaleString() + ' Available'));
@@ -1061,10 +1054,9 @@ new function () {
          * Populate the empty details panel for the given item.
          *
          * @param {PricedItem} item
-         * @param {RealmState} realmState
          * @param {ItemState} itemState
          */
-        function populateDetails(item, realmState, itemState) {
+        function populateDetails(item, itemState) {
             const parent = qs('.main .main-result .item .details');
             const scroller = ce('div', {className: 'scroller'});
             parent.appendChild(scroller);
@@ -1076,8 +1068,8 @@ new function () {
                 (itemState.snapshots[itemState.snapshots.length - 1].snapshot - itemState.snapshots[0].snapshot) /
                 (24 * 60 * 60 * 1000)
             );
-            const realmName = realmState.realm.name;
-            const regionName = realmState.realm.region.toUpperCase();
+            const realmName = itemState.realm.name;
+            const regionName = itemState.realm.region.toUpperCase();
 
             // Name panel
             {
@@ -1595,7 +1587,7 @@ new function () {
             })();
 
             // Fetch other realms
-            fetchOtherRealms(item, realmState.realm.region).then(otherRealms => {
+            fetchOtherRealms(item, itemState.realm.region).then(otherRealms => {
                 let quantitySum = 0;
                 let prices = [];
                 otherRealms.forEach(itemState => {
