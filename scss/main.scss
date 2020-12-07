@@ -857,6 +857,10 @@ body {
                   display: none;
                 }
               }
+
+              .silver {
+                display: inline-block; width: $silverWidth;
+              }
             }
           }
           &.auctions {
