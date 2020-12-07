@@ -510,6 +510,20 @@ body {
             &:hover {
               background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
             }
+
+            &:not(.message):nth-child(n+500) {
+              display: none;
+            }
+
+            &.message {
+              td {
+                padding: $marginStep * 2;
+                text-align: center;
+              }
+              &:hover {
+                background: unset;
+              }
+            }
           }
           td {
             padding: $marginStep / 4 $marginStep;

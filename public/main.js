@@ -2261,6 +2261,8 @@ new function () {
         const COL_PRICE = 1;
         const COL_NAME = 2;
 
+        const MAX_RESULTS_SHOWN = 500;
+
         // ********************* //
         // ***** FUNCTIONS ***** //
         // ********************* //
@@ -2325,6 +2327,13 @@ new function () {
             }
             let rows = Array.from(table.querySelectorAll('tbody tr'));
             rows.sort(function (a, b) {
+                if (a.classList.contains('message')) {
+                    return dir === 'asc' ? -1 : 1;
+                }
+                if (b.classList.contains('message')) {
+                    return dir === 'asc' ? 1 : -1;
+                }
+
                 const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
                 const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
 
@@ -2532,7 +2541,16 @@ new function () {
                 }, ct((item.quantity || 0).toLocaleString())));
             });
 
-            columnSort(thead.querySelector('td'), false);
+            if (tbody.childNodes.length === 0) {
+                tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct('No results found.'))));
+            } else {
+                if (tbody.childNodes.length > MAX_RESULTS_SHOWN) {
+                    tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
+                        tbody.childNodes.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
+                    ))));
+                }
+                columnSort(thead.querySelector('td'), false);
+            }
 
             parent.scrollTop = 0;
         }
