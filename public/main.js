@@ -1003,6 +1003,7 @@ new function () {
             const auctionsPanel = qs('.main .main-result .item .auctions');
             const scroller = ce('div', {className: 'scroller'});
             auctionsPanel.appendChild(scroller);
+            scroller.scrollTop = 0;
 
             const table = ce('table');
             scroller.appendChild(table);
@@ -1067,6 +1068,7 @@ new function () {
             const parent = qs('.main .main-result .item .details');
             const scroller = ce('div', {className: 'scroller'});
             parent.appendChild(scroller);
+            scroller.scrollTop = 0;
 
             const MIN_SNAPSHOT_COUNT = 6;
 
@@ -1479,6 +1481,120 @@ new function () {
             }
 
             // Other realms
+            (() => {
+                const topContainer = ce('div', {
+                    className: 'other-realms-container framed',
+                });
+                scroller.appendChild(topContainer);
+                topContainer.appendChild(ce('span', {className: 'frame-title'}, ct('Current Regional Prices')));
+
+                const list = ce('div', {
+                    className: 'list',
+                });
+                topContainer.appendChild(list);
+
+                const COL_NAME = 1;
+                const COL_PRICE = 2;
+
+                /**
+                 * Sorts the result table by the given column.
+                 *
+                 * @param {HTMLTableCellElement} headerTd The header table cell for the column to sort.
+                 * @param {boolean} isString True when this column has string values.
+                 */
+                const columnSort = function (headerTd, isString) {
+                    let dir = 'asc';
+                    if (headerTd.dataset.sort === 'asc') {
+                        dir = 'desc';
+                    }
+
+                    const headerTr = headerTd.parentNode;
+                    const headerTds = headerTr.querySelectorAll('td');
+                    let columnPos = 0;
+                    for (let x = 0; x < headerTds.length; x++) {
+                        delete headerTds[x].dataset.sort;
+                        if (headerTds[x] === headerTd) {
+                            columnPos = x + 1;
+                        }
+                    }
+
+                    headerTd.dataset.sort = dir;
+                    let table = headerTr;
+                    while (table.tagName !== 'TABLE') {
+                        table = table.parentNode;
+                    }
+                    let rows = Array.from(table.querySelectorAll('tbody tr'));
+                    rows.sort(function (a, b) {
+                        const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+                        const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+
+                        if (isString) {
+                            return aVal.localeCompare(bVal);
+                        }
+
+                        const valDiff = parseInt(aVal) - parseInt(bVal);
+                        if (valDiff) {
+                            return valDiff;
+                        }
+
+                        // Fallbacks.
+                        if (columnPos !== COL_PRICE) {
+                            const aPrice = a.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
+                            const bPrice = b.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
+
+                            const valDiff = parseInt(aPrice) - parseInt(bPrice);
+                            if (valDiff) {
+                                return valDiff;
+                            }
+                        }
+
+                        if (columnPos !== COL_NAME) {
+                            const aName = a.querySelector('td:nth-child(2)').dataset.sortValue;
+                            const bName = b.querySelector('td:nth-child(2)').dataset.sortValue;
+
+                            const valDiff = aName.localeCompare(bName);
+                            if (valDiff) {
+                                return valDiff;
+                            }
+                        }
+
+                        return 0;
+                    });
+
+                    if (dir === 'desc') {
+                        rows.reverse();
+                    }
+                    rows.forEach(function (row) {
+                        row.parentNode.appendChild(row);
+                    });
+                }
+
+                const table = ce('table');
+                list.appendChild(table);
+                const thead = ce('thead');
+                table.appendChild(thead);
+                const tbody = ce('tbody');
+                table.appendChild(tbody);
+
+                const tr = ce('tr');
+                thead.appendChild(tr);
+
+                let td;
+                let firstSortTd;
+                tr.appendChild(firstSortTd = td = ce('td', {}, ct('Realm')));
+                td.addEventListener('click', columnSort.bind(null, td, true));
+                tr.appendChild(td = ce('td', {}, ct('Price')));
+                td.addEventListener('click', columnSort.bind(null, td, false));
+                tr.appendChild(td = ce('td', {}, ct('Quantity')));
+                td.addEventListener('click', columnSort.bind(null, td, false));
+
+                regionElements.listTable = tbody;
+                regionElements.afterList = () => {
+                    columnSort(firstSortTd, true);
+                }
+            })();
+
+            // Fetch other realms
             fetchOtherRealms(item, realmState.realm.region).then(otherRealms => {
                 let quantitySum = 0;
                 let prices = [];
@@ -1487,7 +1603,16 @@ new function () {
                     if (itemState.price) {
                         prices.push(itemState.price);
                     }
+
+                    const tr = ce('tr');
+                    tr.appendChild(ce('td', {dataset: {sortValue: itemState.realm.name}}, ct(itemState.realm.name)));
+                    tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
+                    tr.appendChild(ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
+
+                    regionElements.listTable.appendChild(tr);
                 });
+
+                regionElements.afterList();
 
                 regionElements.quantity.appendChild(ct(quantitySum.toLocaleString()));
                 if (prices.length >= 5) {

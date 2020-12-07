@@ -551,20 +551,71 @@ body {
                   visibility: hidden; }
                 .main .main-result .item .panels > div.details .charts-container .chart-wrapper:hover line.hover {
                   visibility: visible; }
-              .main .main-result .item .panels > div.details .charts-container .readout {
-                display: flex;
-                height: 1.25em;
-                justify-content: space-evenly;
-                line-height: 1.25em; }
-                .main .main-result .item .panels > div.details .charts-container .readout > * {
-                  margin: 0 1em;
-                  text-align: right; }
-                .main .main-result .item .panels > div.details .charts-container .readout .price, .main .main-result .item .panels > div.details .charts-container .readout .quantity {
-                  flex: 1 1; }
-                .main .main-result .item .panels > div.details .charts-container .readout .date {
-                  flex: 4 1;
-                  font-size: 15.2px;
-                  text-align: left; }
+            .main .main-result .item .panels > div.details .other-realms-container {
+              display: flex;
+              justify-content: center; }
+              .main .main-result .item .panels > div.details .other-realms-container .list {
+                background-color: #201b1a;
+                border: 2px solid;
+                border-color: #060100 #161211 #4a4644;
+                border-radius: 8px;
+                max-height: 18em;
+                overflow: auto;
+                width: 100%; }
+              .main .main-result .item .panels > div.details .other-realms-container table {
+                border-collapse: collapse;
+                width: 100%; }
+                .main .main-result .item .panels > div.details .other-realms-container table thead {
+                  background-color: #282322;
+                  border-radius: 8px 8px 0 0;
+                  font: 12.8px "Friz Quadrata TT", sans-serif; }
+                  .main .main-result .item .panels > div.details .other-realms-container table thead td {
+                    border: 1px solid #4a4644;
+                    border-bottom-color: #393433;
+                    border-radius: 4px 4px 0 0;
+                    cursor: pointer;
+                    padding: 4px 0 4px 4px; }
+                    .main .main-result .item .panels > div.details .other-realms-container table thead td:first-child {
+                      border-left: 0; }
+                    .main .main-result .item .panels > div.details .other-realms-container table thead td:last-child {
+                      border-right: 0; }
+                    .main .main-result .item .panels > div.details .other-realms-container table thead td[data-sort]::after {
+                      background-image: url("../images/sort-arrow.png");
+                      background-repeat: no-repeat;
+                      background-size: contain;
+                      content: "";
+                      display: inline-block;
+                      height: 1em;
+                      margin-left: 0.25em;
+                      position: relative;
+                      top: 2px;
+                      width: 1em; }
+                    .main .main-result .item .panels > div.details .other-realms-container table thead td[data-sort="asc"]::after {
+                      transform: scaleY(-1); }
+                    .main .main-result .item .panels > div.details .other-realms-container table thead td:hover {
+                      background-color: #8080ff;
+                      box-shadow: inset 0 0 10px 10px #282322; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody tr {
+                  transform: translateY(0); }
+                  .main .main-result .item .panels > div.details .other-realms-container table tbody tr a {
+                    bottom: 0;
+                    left: 0;
+                    position: absolute;
+                    right: 0;
+                    top: 0; }
+                  .main .main-result .item .panels > div.details .other-realms-container table tbody tr:hover {
+                    background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td {
+                  overflow: hidden;
+                  padding-left: 8px;
+                  text-align: right;
+                  text-overflow: ellipsis;
+                  white-space: nowrap; }
+                  .main .main-result .item .panels > div.details .other-realms-container table tbody td:first-child {
+                    font: 16px "Friz Quadrata TT", sans-serif;
+                    text-align: left; }
+                  .main .main-result .item .panels > div.details .other-realms-container table tbody td:last-child {
+                    padding-right: 8px; }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
             flex: 6 1;

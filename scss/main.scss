@@ -749,24 +749,86 @@ body {
                   visibility: visible;
                 }
               }
+            }
 
-              .readout {
-                display: flex;
-                height: 1.25em;
-                justify-content: space-evenly;
-                line-height: 1.25em;
+            .other-realms-container {
+              display: flex;
+              justify-content: center;
+              .list {
+                background-color: $background15;
+                border: $bevel solid;
+                border-color: $background00 $background10 $background40;
+                border-radius: $borderRadius;
+                max-height: 18em;
+                overflow: auto;
+                width: 100%;
+              }
 
-                & > * {
-                  margin: 0 1em;
-                  text-align: right;
+              table {
+                border-collapse: collapse;
+                width: 100%;
+
+                thead {
+                  background-color: $background20;
+                  border-radius: $borderRadius $borderRadius 0 0;
+                  font: $fontSizeFriz * 0.8 $fontFriz;
+
+                  td {
+                    border: $thin solid $background40;
+                    border-bottom-color: $background30;
+                    border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
+                    cursor: pointer;
+                    padding: $marginStep / 2 0 $marginStep / 2 $marginStep / 2;
+                    &:first-child {border-left: 0}
+                    &:last-child {border-right: 0}
+
+                    &[data-sort]::after {
+                      background-image: url("../images/sort-arrow.png");
+                      background-repeat: no-repeat;
+                      background-size: contain;
+                      content: "";
+                      display:inline-block;
+                      height: 1em;
+                      margin-left: 0.25em;
+                      position: relative;
+                      top: 2px;
+                      width: 1em;
+                    }
+                    &[data-sort="asc"]::after {
+                      transform:scaleY(-1);
+                    }
+
+                    &:hover {
+                      background-color: $columnHeaderHoverBackground;
+                      box-shadow: inset 0 0 10px 10px $background20;
+                    }
+                  }
                 }
-                .price, .quantity {
-                  flex: 1 1;
-                }
-                .date {
-                  flex: 4 1;
-                  font-size: $fontSizeArial * 0.8;
-                  text-align: left;
+
+                tbody {
+                  tr {
+                    transform: translateY(0);
+                    a {bottom:0; left:0; position:absolute; right:0; top:0;}
+                    &:hover {
+                      background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
+                    }
+                  }
+
+                  td {
+                    overflow: hidden;
+                    padding-left: $marginStep;
+                    text-align: right;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+
+                    &:first-child {
+                      font: $fontSizeFriz $fontFriz;
+                      text-align: left;
+                    }
+                    &:last-child {
+                      padding-right: $marginStep;
+                    }
+                  }
                 }
               }
             }
