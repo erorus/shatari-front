@@ -1821,7 +1821,7 @@ new function () {
         this.getSuffix = function (itemId, suffixId) {
             if (itemId === ITEM_PET_CAGE) {
                 return {
-                    name: '(' + (BREEDS[suffixId] || ('Breed ' + suffixId)) + ')',
+                    name: BREEDS[suffixId] || ('Breed ' + suffixId),
                     bonus: null
                 };
             }
@@ -1913,7 +1913,11 @@ new function () {
                     ) {
                         // Pet items are special, and pretend to be another class.
                         if (classId === Items.CLASS_BATTLE_PET) {
-                            // We want pet items when selecting for battle pet item class.
+                            // We want pet items when selecting for battle pet item class
+                            if (subClassIds !== undefined && !subClassIds.includes(0)) {
+                                // But not if we picked any battle pet types.
+                                continue;
+                            }
                         } else {
                             // Skip pet items for all other selected classes (namely, miscellaneous where it belongs).
                             continue;
