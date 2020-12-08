@@ -14,6 +14,14 @@ new function () {
      * @property {Money} price
      */
 
+    /** @typedef {number} BattlePetSpeciesID */
+
+    /**
+     * @typedef {UnnamedBattlePetSpecies} BattlePetSpecies
+     * @property {BattlePetSpeciesID} id
+     * @property {string} name
+     */
+
     /** @typedef {number} ClassID */
 
     /** @typedef {number} ConnectedRealmID */
@@ -100,6 +108,15 @@ new function () {
      */
 
     /** @typedef {number} Timestamp  A UNIX timestamp, in milliseconds. */
+
+    /**
+     * @typedef {Object} UnnamedBattlePetSpecies
+     * @property {number} npc
+     * @property {string} icon
+     * @property {number} type
+     * @property {number} display
+     * @property {number} [side]
+     */
 
     /**
      * @typedef {object} UnnamedItem
@@ -1709,13 +1726,17 @@ new function () {
          * @type {{
          * items: Object.<ItemID, UnnamedItem>,
          * names: Object.<ItemID, string>,
-         * suffixes: Object.<SuffixID, Suffix>
+         * suffixes: Object.<SuffixID, Suffix>,
+         * battlePets: Object.<BattlePetSpeciesID, UnnamedBattlePetSpecies>,
+         * battlePetNames: Object.<BattlePetSpeciesID, string>
          * }}
          */
         const my = {
             items: {},
             names: {},
             suffixes: {},
+            battlePets: {},
+            battlePetNames: {},
         };
 
         // ********************* //
@@ -1750,11 +1771,13 @@ new function () {
          * Fetches the item list data.
          */
         this.init = async function () {
-            const idTask = fetchItemIds();
-            const nameTask = fetchItemNames();
-            const suffixTask = fetchItemSuffixes();
-
-            await Promise.all([idTask, nameTask, suffixTask]);
+            await Promise.all([
+                fetchItemIds(),
+                fetchItemNames(),
+                fetchItemSuffixes(),
+                fetchBattlePets(),
+                fetchBattlePetNames(),
+            ]);
         };
 
         /**
@@ -1970,6 +1993,36 @@ new function () {
          */
         function escapeRegExp(string) {
             return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+        }
+
+        /**
+         * Fetches the list of battle pet names and stores it locally.
+         */
+        async function fetchBattlePetNames() {
+            const response = await fetch('json/battlepets.enus.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of battle pet names!';
+            }
+
+            my.battlePetNames = await response.json();
+        }
+
+        /**
+         * Fetches the list of battle pets and stores it locally.
+         */
+        async function fetchBattlePets() {
+            const response = await fetch('json/battlepets.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get list of battle pets!';
+            }
+
+            my.battlePets = await response.json();
+
+            for (let id in my.battlePets) {
+                if (my.battlePets.hasOwnProperty(id) && !my.battlePets[id].icon) {
+                    my.battlePets[id].icon = 'inv_misc_questionmark';
+                }
+            }
         }
 
         /**
