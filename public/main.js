@@ -334,7 +334,14 @@ new function () {
                 itemLevel: item.bonusLevel,
                 itemSuffix: item.bonusSuffix,
             });
-            const url = 'data/' + (useCached ? 'cached/' : '') + realm.connectedId + '/' + (item.id & 0xFF) + '/' + basename + '.bin';
+            const url = [
+                'data',
+                useCached ? 'cached' : '',
+                realm.connectedId,
+                item.id === ITEM_PET_CAGE ? 'pet' : '',
+                item.id === ITEM_PET_CAGE ? (item.bonusLevel & 0xFF) : (item.id & 0xFF),
+                basename + '.bin'
+            ].filter(v => v !== '').join('/');
             const response = await fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return {
@@ -1064,18 +1071,21 @@ new function () {
                 const td = ce('td');
                 tr.appendChild(td);
 
-                const wowheadParams = [
-                    'item=' + item.id,
-                ];
-                if (specLine.bonuses.length) {
-                    wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
-                }
-                let lvl = specLine.modifiers[Auctions.MODIFIER_TYPE_TIMEWALKER_LEVEL];
-                if (lvl) {
-                    wowheadParams.push('lvl=' + lvl);
-                }
-                if (item.bonusLevel) {
-                    wowheadParams.push('ilvl=' + item.bonusLevel);
+                const wowheadParams = [];
+                if (item.id === ITEM_PET_CAGE) {
+                    wowheadParams.push('npc=' + item.npc);
+                } else {
+                    wowheadParams.push('item=' + item.id);
+                    if (specLine.bonuses.length) {
+                        wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
+                    }
+                    let lvl = specLine.modifiers[Auctions.MODIFIER_TYPE_TIMEWALKER_LEVEL];
+                    if (lvl) {
+                        wowheadParams.push('lvl=' + lvl);
+                    }
+                    if (item.bonusLevel) {
+                        wowheadParams.push('ilvl=' + item.bonusLevel);
+                    }
                 }
 
                 const a = ce('a',
@@ -1100,10 +1110,10 @@ new function () {
 
             const MIN_SNAPSHOT_COUNT = 6;
 
-            const days = Math.round(
+            const days = itemState.snapshots.length ? Math.round(
                 (itemState.snapshots[itemState.snapshots.length - 1].snapshot - itemState.snapshots[0].snapshot) /
                 (24 * 60 * 60 * 1000)
-            );
+            ) : 0;
             const realmName = itemState.realm.name;
             const regionName = itemState.realm.region.toUpperCase();
 
@@ -1122,7 +1132,9 @@ new function () {
 
                 // Model
                 if (item.display) {
-                    let url = 'https://wow.zamimg.com/modelviewer/live/webthumbs/item/' + (item.display & 0xFF) + '/' + item.display;
+                    let url = 'https://wow.zamimg.com/modelviewer/live/webthumbs/' +
+                        (item.id === ITEM_PET_CAGE ? 'npc' : 'item') + '/' +
+                        (item.display & 0xFF) + '/' + item.display;
                     const pic = ce('picture', {className: 'model-thumbnail'});
                     pic.appendChild(ce('source', {
                         srcset: url + '.webp',
@@ -1139,7 +1151,7 @@ new function () {
 
                 let itemName = item.name;
                 if (item.bonusSuffix) {
-                    let suffix = Items.getSuffix(item.bonusSuffix);
+                    let suffix = Items.getSuffix(item.id, item.bonusSuffix);
                     if (suffix) {
                         itemName += ' ' + suffix.name;
                         if (suffix.bonus) {
@@ -1147,15 +1159,18 @@ new function () {
                         }
                     }
                 }
-                if (item.bonusLevel) {
+                if (item.id !== ITEM_PET_CAGE && item.bonusLevel) {
                     itemName += ' (' + item.bonusLevel + ')';
                     wowheadParams.push('ilvl=' + item.bonusLevel);
                 }
-                const nameLink = ce('a', {
-                    href: 'https://www.wowhead.com/item=' + item.id
-                }, ct(itemName));
+                const nameLink = ce('a', {}, ct(itemName));
                 namePanel.appendChild(nameLink);
 
+                if (item.id === ITEM_PET_CAGE) {
+                    nameLink.href = 'https://www.wowhead.com/npc=' + item.npc;
+                } else {
+                    nameLink.href = 'https://www.wowhead.com/item=' + item.id;
+                }
                 if (wowheadParams.length) {
                     nameLink.dataset.wowhead = wowheadParams.join('&');
                 }
@@ -1706,6 +1721,10 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
         /** @typedef {string} IconSize */
 
         /**
@@ -1732,6 +1751,23 @@ new function () {
             LARGE: 'large',
             MEDIUM: 'medium',
             // SMALL: 'small',
+        };
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        const BREEDS = {
+            "3": "B/B",
+            "4": "P/P",
+            "5": "S/S",
+            "6": "H/H",
+            "7": "H/P",
+            "8": "P/S",
+            "9": "H/S",
+            "10": "P/B",
+            "11": "S/B",
+            "12": "H/B",
         };
 
         // ********************* //
@@ -1783,7 +1819,7 @@ new function () {
         this.getSuffix = function (itemId, suffixId) {
             if (itemId === ITEM_PET_CAGE) {
                 return {
-                    name: ' (breed ' + suffixId + ')',
+                    name: '(' + (BREEDS[suffixId] || ('Breed ' + suffixId)) + ')',
                     bonus: null
                 };
             }
