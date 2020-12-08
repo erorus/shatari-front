@@ -2062,7 +2062,7 @@ new function () {
                     }
 
                     let variants;
-                    if (!useVariants) {
+                    if (!useVariants || forSuggestions) {
                         // Not selecting by breed, just species.
                         variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
                     } else {
@@ -2070,22 +2070,6 @@ new function () {
                             variants = realmState.speciesVariants[speciesId].slice(0);
                         } else {
                             variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
-                        }
-                    }
-
-                    if (forSuggestions && variants.length > 1) {
-                        // Strip out breeds. We won't be looking up these key strings anyway.
-                        for (let index = 0; index < variants.length; index++) {
-                            let itemKey = Items.parseKey(variants[index]);
-                            itemKey.itemSuffix = 0;
-                            variants[index] = Items.stringifyKey(itemKey);
-                        }
-                        // Now get a unique list.
-                        variants.sort();
-                        for (let index = 1; index < variants.length; index++) {
-                            if (variants[index] === variants[index - 1]) {
-                                variants.splice(index--, 1);
-                            }
                         }
                     }
 
