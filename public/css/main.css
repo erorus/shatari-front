@@ -612,7 +612,8 @@ body {
                   left: 0;
                   position: absolute;
                   right: 0;
-                  top: 0; }
+                  top: 0;
+                  z-index: 5; }
                 .main .main-result .item .panels > div.details .other-realms-container table tbody tr:hover {
                   background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
               .main .main-result .item .panels > div.details .other-realms-container table tbody td {
