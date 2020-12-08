@@ -17,9 +17,12 @@ new function () {
     /** @typedef {number} BattlePetSpeciesID */
 
     /**
-     * @typedef {UnnamedBattlePetSpecies} BattlePetSpecies
-     * @property {BattlePetSpeciesID} id
-     * @property {string} name
+     * @typedef {Object} BattlePetSpecies
+     * @property {number} npc
+     * @property {string} icon
+     * @property {number} type
+     * @property {number} display
+     * @property {number} [side]
      */
 
     /** @typedef {number} ClassID */
@@ -53,10 +56,12 @@ new function () {
 
     /**
      * @typedef {UnnamedItem} Item
-     * @property {ItemID} id
-     * @property {string} name
+     * @property {number} [battlePetType]
      * @property {number} bonusLevel
      * @property {SuffixID} bonusSuffix
+     * @property {ItemID} id
+     * @property {string} name
+     * @property {number} [npc]
      */
 
     /**
@@ -96,6 +101,7 @@ new function () {
      * @property {Timestamp[]} snapshots  An array of snapshot timestamps, in ascending order
      * @property {Object.<ItemKeyString, SummaryLine>} summary
      * @property {Object.<ItemID, Array<ItemKeyString>>} variants
+     * @property {Object.<BattlePetSpeciesID, Array<ItemKeyString>>} speciesVariants
      */
 
     /** @typedef {number} SubclassID */
@@ -108,15 +114,6 @@ new function () {
      */
 
     /** @typedef {number} Timestamp  A UNIX timestamp, in milliseconds. */
-
-    /**
-     * @typedef {Object} UnnamedBattlePetSpecies
-     * @property {number} npc
-     * @property {string} icon
-     * @property {number} type
-     * @property {number} display
-     * @property {number} [side]
-     */
 
     /**
      * @typedef {object} UnnamedItem
@@ -132,6 +129,9 @@ new function () {
      * @property {number} [slots]
      * @property {number} subclass
      */
+
+    /** @type {ItemID} ITEM_PET_CAGE */
+    const ITEM_PET_CAGE = 82800;
 
     const SIDE_ALLIANCE = 1;
     const SIDE_HORDE = 2;
@@ -525,6 +525,7 @@ new function () {
             Object.freeze(result.snapshots);
             result.summary = {};
             result.variants = {};
+            result.speciesVariants = {};
             for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
                 let itemId = view.getUint32(read(4), true);
                 let itemLevel = view.getUint16(read(2), true);
@@ -535,9 +536,16 @@ new function () {
                     itemSuffix: itemSuffix,
                 };
                 let itemKeyString = Items.stringifyKey(itemKey);
-                if (itemKey.itemLevel) {
-                    result.variants[itemId] = result.variants[itemId] || [];
-                    result.variants[itemId].push(itemKeyString);
+                if (itemId === ITEM_PET_CAGE) {
+                    if (itemKey.itemSuffix) {
+                        result.speciesVariants[itemKey.itemLevel] = result.speciesVariants[itemKey.itemLevel] || [];
+                        result.speciesVariants[itemKey.itemLevel].push(itemKeyString);
+                    }
+                } else {
+                    if (itemKey.itemLevel) {
+                        result.variants[itemId] = result.variants[itemId] || [];
+                        result.variants[itemId].push(itemKeyString);
+                    }
                 }
 
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
@@ -554,8 +562,14 @@ new function () {
                     Object.freeze(result.variants[itemId]);
                 }
             }
+            for (let speciesId in result.speciesVariants) {
+                if (result.speciesVariants.hasOwnProperty(speciesId)) {
+                    Object.freeze(result.speciesVariants[speciesId]);
+                }
+            }
             Object.freeze(result.summary);
             Object.freeze(result.variants);
+            Object.freeze(result.speciesVariants);
             Object.freeze(result);
 
             my.lastRealmState = {
@@ -1704,7 +1718,9 @@ new function () {
         this.CLASS_WEAPON = 2;
         this.CLASS_GEM = 3;
         this.CLASS_ARMOR = 4;
+        this.CLASS_BATTLE_PET = 17;
         this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON];
+        this.CLASSES_WITH_SPECIFICS = [this.CLASS_WEAPON, this.CLASS_ARMOR, this.CLASS_BATTLE_PET];
 
         /**
          * Icon sizes.
@@ -1727,7 +1743,7 @@ new function () {
          * items: Object.<ItemID, UnnamedItem>,
          * names: Object.<ItemID, string>,
          * suffixes: Object.<SuffixID, Suffix>,
-         * battlePets: Object.<BattlePetSpeciesID, UnnamedBattlePetSpecies>,
+         * battlePets: Object.<BattlePetSpeciesID, BattlePetSpecies>,
          * battlePetNames: Object.<BattlePetSpeciesID, string>
          * }}
          */
@@ -1760,10 +1776,18 @@ new function () {
         /**
          * Returns the localized name suffix for the given suffix ID.
          *
+         * @param {ItemID} itemId
          * @param {SuffixID} suffixId
          * @return {Suffix|undefined}
          */
-        this.getSuffix = function (suffixId) {
+        this.getSuffix = function (itemId, suffixId) {
+            if (itemId === ITEM_PET_CAGE) {
+                return {
+                    name: ' (breed ' + suffixId + ')',
+                    bonus: null
+                };
+            }
+
             return my.suffixes[suffixId];
         };
 
@@ -1835,6 +1859,8 @@ new function () {
                 maxLevel = parseInt(maxLevel);
             }
 
+            let usePetCage = false;
+
             for (let id in my.items) {
                 if (!my.items.hasOwnProperty(id)) {
                     continue;
@@ -1842,6 +1868,11 @@ new function () {
 
                 let item = my.items[id];
                 if (classId !== undefined && item['class'] !== classId) {
+                    continue;
+                }
+                if (item['class'] === Items.CLASS_BATTLE_PET) {
+                    // Handle that later.
+                    usePetCage = true;
                     continue;
                 }
                 if (subClassIds !== undefined && !subClassIds.includes(item.subclass)) {
@@ -1931,7 +1962,7 @@ new function () {
 
                     let name = my.names[itemKey.itemId];
                     if (itemKey.itemSuffix) {
-                        name += ' ' + Items.getSuffix(itemKey.itemSuffix).name;
+                        name += ' ' + Items.getSuffix(itemKey.itemId, itemKey.itemSuffix).name;
                     }
 
                     let foundAllWords = true;
@@ -1958,6 +1989,90 @@ new function () {
                     newItem.bonusSuffix = itemKey.itemSuffix;
                     result.push(newItem);
                 });
+            }
+
+            if (usePetCage) {
+                let item = my.items[ITEM_PET_CAGE];
+                for (let speciesId in my.battlePets) {
+                    if (!my.battlePets.hasOwnProperty(speciesId)) {
+                        continue;
+                    }
+                    let species = my.battlePets[speciesId];
+
+                    if (subClassIds !== undefined && !subClassIds.includes(species.type)) {
+                        continue;
+                    }
+
+                    let variants;
+                    if (!useVariants) {
+                        // Not selecting by breed, just species.
+                        variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
+                    } else {
+                        if (realmState.speciesVariants[speciesId]) {
+                            variants = realmState.speciesVariants[speciesId].slice(0);
+                        } else {
+                            variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
+                        }
+                    }
+
+                    if (forSuggestions && variants.length > 1) {
+                        // Strip out breeds. We won't be looking up these key strings anyway.
+                        for (let index = 0; index < variants.length; index++) {
+                            let itemKey = Items.parseKey(variants[index]);
+                            itemKey.itemSuffix = 0;
+                            variants[index] = Items.stringifyKey(itemKey);
+                        }
+                        // Now get a unique list.
+                        variants.sort();
+                        for (let index = 1; index < variants.length; index++) {
+                            if (variants[index] === variants[index - 1]) {
+                                variants.splice(index--, 1);
+                            }
+                        }
+                    }
+
+                    variants.forEach(keyString => {
+                        const itemKey = Items.parseKey(keyString);
+
+                        let name = my.battlePetNames[itemKey.itemLevel];
+
+                        let foundAllWords = true;
+                        for (let regex, x = 0; foundAllWords && (regex = wordExpressions[x]); x++) {
+                            foundAllWords = regex.test(name);
+                        }
+                        if (!foundAllWords) {
+                            return;
+                        }
+
+                        if (forSuggestions) {
+                            if (seenNames[name]) {
+                                return;
+                            }
+                            seenNames[name] = true;
+                        }
+
+                        /** @type {Item} newItem */
+                        let newItem = {};
+                        co(newItem, item);
+
+                        // Set the regular Item properties (added on top of UnnamedItem)
+                        newItem.id = ITEM_PET_CAGE;
+                        newItem.name = my.battlePetNames[speciesId];
+                        newItem.bonusLevel = itemKey.itemLevel;
+                        newItem.bonusSuffix = itemKey.itemSuffix;
+
+                        // Overwrite the pet cage UnnamedItem vars
+                        newItem.display = species.display;
+                        newItem.icon = species.icon;
+                        newItem.side = species.side || 0;
+
+                        // Add our own pet-specific properties to the Item
+                        newItem.npc = species.npc;
+                        newItem.battlePetType = species.type;
+
+                        result.push(newItem);
+                    });
+                }
             }
 
             return result;
@@ -2492,7 +2607,7 @@ new function () {
 
                 let suffix;
                 if (item.bonusSuffix) {
-                    suffix = Items.getSuffix(item.bonusSuffix);
+                    suffix = Items.getSuffix(item.id, item.bonusSuffix);
                 }
 
                 let tr, td;
@@ -2511,14 +2626,17 @@ new function () {
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
                     }
-                    const rowLink = ce('a', {
-                        dataset: {wowhead: 'item=' + item.id},
-                    });
-                    if (item.bonusLevel) {
-                        rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
-                    }
-                    if (suffix && suffix.bonus) {
-                        rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                    const rowLink = ce('a');
+                    if (item.id === ITEM_PET_CAGE) {
+                        rowLink.dataset.wowhead = 'npc=' + item.npc;
+                    } else {
+                        rowLink.dataset.wowhead = 'item=' + item.id;
+                        if (item.bonusLevel) {
+                            rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
+                        }
+                        if (suffix && suffix.bonus) {
+                            rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                        }
                     }
                     rowLink.addEventListener('click', Detail.show.bind(null, item, null));
                     td.appendChild(rowLink);
@@ -2532,7 +2650,7 @@ new function () {
                     if (suffix) {
                         itemName += ' ' + suffix.name;
                     }
-                    if (item.bonusLevel && !(detailColumn && detailColumn.prop === 'itemLevel')) {
+                    if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
                     tr.appendChild(td = ce('td', {
@@ -2740,8 +2858,8 @@ new function () {
                 return;
             }
             items.sort((a, b) => {
-                let aFullName = a.name + (a.bonusSuffix ? ' ' + Items.getSuffix(a.bonusSuffix).name : '');
-                let bFullName = b.name + (b.bonusSuffix ? ' ' + Items.getSuffix(b.bonusSuffix).name : '');
+                let aFullName = a.name + (a.bonusSuffix ? ' ' + Items.getSuffix(a.id, a.bonusSuffix).name : '');
+                let bFullName = b.name + (b.bonusSuffix ? ' ' + Items.getSuffix(b.id, b.bonusSuffix).name : '');
                 let aFirst = aFullName.toLowerCase().startsWith(typed) ? 0 : 1;
                 let bFirst = bFullName.toLowerCase().startsWith(typed) ? 0 : 1;
 
@@ -2751,7 +2869,7 @@ new function () {
 
             let index = 0;
             for (let item; item = items[index]; index++) {
-                let name = item.name + (item.bonusSuffix ? ' ' + Items.getSuffix(item.bonusSuffix).name : '');
+                let name = item.name + (item.bonusSuffix ? ' ' + Items.getSuffix(item.id, item.bonusSuffix).name : '');
                 let option = options[index];
                 ee(option);
                 option.dataset.value = name;
