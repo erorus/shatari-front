@@ -1737,9 +1737,9 @@ new function () {
         this.CLASS_WEAPON = 2;
         this.CLASS_GEM = 3;
         this.CLASS_ARMOR = 4;
+        this.CLASS_MISCELLANEOUS = 15;
         this.CLASS_BATTLE_PET = 17;
         this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON];
-        this.CLASSES_WITH_SPECIFICS = [this.CLASS_WEAPON, this.CLASS_ARMOR, this.CLASS_BATTLE_PET];
 
         /**
          * Icon sizes.
@@ -1752,6 +1752,8 @@ new function () {
             MEDIUM: 'medium',
             // SMALL: 'small',
         };
+
+        this.SUBCLASS_MISCELLANEOUS_PET = 2;
 
         // ------- //
         // PRIVATE //
@@ -1903,15 +1905,31 @@ new function () {
                 }
 
                 let item = my.items[id];
-                if (classId !== undefined && item['class'] !== classId) {
-                    continue;
+                if (classId !== undefined) {
+                    // We're selecting a specific class.
+                    if (
+                        item['class'] === Items.CLASS_MISCELLANEOUS &&
+                        item.subclass === Items.SUBCLASS_MISCELLANEOUS_PET
+                    ) {
+                        // Pet items are special, and pretend to be another class.
+                        if (classId === Items.CLASS_BATTLE_PET) {
+                            // We want pet items when selecting for battle pet item class.
+                        } else {
+                            // Skip pet items for all other selected classes (namely, miscellaneous where it belongs).
+                            continue;
+                        }
+                    } else if (item['class'] !== classId) {
+                        // Normal behavior, there's a class mismatch, so skip this item.
+                        continue;
+                    }
                 }
                 if (item['class'] === Items.CLASS_BATTLE_PET) {
                     // Handle that later.
                     usePetCage = true;
                     continue;
                 }
-                if (subClassIds !== undefined && !subClassIds.includes(item.subclass)) {
+                // The extra class check is because we use the subclass filter as battle pet type for battle pets.
+                if (subClassIds !== undefined && !subClassIds.includes(item.subclass) && classId !== Items.CLASS_BATTLE_PET) {
                     continue;
                 }
                 if (invTypes !== undefined && !invTypes.includes(item.inventoryType)) {
