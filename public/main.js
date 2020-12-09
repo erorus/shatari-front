@@ -1836,7 +1836,7 @@ new function () {
                         if (index > 0) {
                             tr.dataset.connectedRealm = 1;
                         }
-                        a.addEventListener('click', self.show.bind(self, item, realm));
+                        a.addEventListener('click', showOtherRealmItem.bind(self, item, itemState, realm));
                         tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
                         tr.appendChild(ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
 
@@ -1872,6 +1872,23 @@ new function () {
             }
 
             return Math.floor(value + 0.5);
+        }
+
+        /**
+         * Shows the item detail for a given item on an alternate realm.
+         *
+         * @param {PricedItem} item
+         * @param {ItemState} itemState
+         * @param {Realm} realm
+         */
+        function showOtherRealmItem(item, itemState, realm) {
+            /** @var {PricedItem} repricedItem */
+            const repricedItem = {};
+            co(repricedItem, item);
+            repricedItem.quantity = itemState.quantity;
+            repricedItem.price = itemState.price;
+
+            self.show(repricedItem, realm);
         }
     };
 
