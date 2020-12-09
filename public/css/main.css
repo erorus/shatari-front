@@ -697,7 +697,8 @@ body {
   .wowhead-tooltip td .shatari-tooltip td:nth-child(2) {
     text-align: right; }
 .wowhead-tooltip td .battle-pet-tooltip {
-  display: flex; }
+  display: flex;
+  justify-content: space-between; }
   .wowhead-tooltip td .battle-pet-tooltip > div:first-child {
     margin-right: 30px; }
     .wowhead-tooltip td .battle-pet-tooltip > div:first-child img {

@@ -962,6 +962,7 @@ body {
 
   .battle-pet-tooltip {
     display: flex;
+    justify-content: space-between;
     > div:first-child {margin-right: 30px;
       img {
         height: 16px;
