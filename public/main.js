@@ -25,6 +25,13 @@ new function () {
      * @property {number} [side]
      */
 
+    /**
+     * @typedef {Object} BattlePetStats
+     * @property {number} power
+     * @property {number} stamina
+     * @property {number} speed
+     */
+
     /** @typedef {number} ClassID */
 
     /** @typedef {number} ConnectedRealmID */
@@ -56,6 +63,7 @@ new function () {
 
     /**
      * @typedef {UnnamedItem} Item
+     * @property {BattlePetStats} [battlePetStats]
      * @property {number} [battlePetType]
      * @property {number} bonusLevel
      * @property {SuffixID} bonusSuffix
@@ -144,21 +152,9 @@ new function () {
      * Manages item prices and availability.
      */
     const Auctions = new function () {
-        const self = this;
-
         // ********************* //
         // ***** CONSTANTS ***** //
         // ********************* //
-
-        // ------ //
-        // PUBLIC //
-        // ------ //
-
-        this.MODIFIER_TYPE_TIMEWALKER_LEVEL = 9;
-
-        // ------- //
-        // PRIVATE //
-        // ------- //
 
         const COPPER_SILVER = 100;
         const MS_SEC = 1000;
@@ -409,7 +405,7 @@ new function () {
                 } else {
                     let level = view.getUint8(read(1));
                     if (level) {
-                        modifiers[self.MODIFIER_TYPE_TIMEWALKER_LEVEL] = level;
+                        modifiers[Items.MODIFIER_TYPE_TIMEWALKER_LEVEL] = level;
                     }
                 }
                 let bonuses = [];
@@ -977,6 +973,32 @@ new function () {
     const Detail = new function () {
         const self = this;
 
+        // ********************* //
+        // ***** CONSTANTS ***** //
+        // ********************* //
+
+        /** @var {Object.<number, BattlePetStats>} */
+        const BREED_STATS = {
+            3:  {stamina: 0.5, power: 0.5, speed: 0.5},
+            4:  {stamina: 0.0, power: 2.0, speed: 0.0},
+            5:  {stamina: 0.0, power: 0.0, speed: 2.0},
+            6:  {stamina: 2.0, power: 0.0, speed: 0.0},
+            7:  {stamina: 0.9, power: 0.9, speed: 0.0},
+            8:  {stamina: 0.0, power: 0.9, speed: 0.9},
+            9:  {stamina: 0.9, power: 0.0, speed: 0.9},
+            10: {stamina: 0.4, power: 0.9, speed: 0.4},
+            11: {stamina: 0.4, power: 0.4, speed: 0.9},
+            12: {stamina: 0.9, power: 0.4, speed: 0.4},
+        }
+
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
         /**
          * Hide detail mode to revert to search result mode.
          */
@@ -1023,6 +1045,65 @@ new function () {
 
             populateAuctions(item, itemState);
             populateDetails(item, itemState);
+        }
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Given a pet's base stats and an auction's modifiers, return the actual stats of the pet.
+         *
+         * @param {BattlePetStats} baseStats
+         * @param {Object.<number, number>} modifiers
+         * @return {BattlePetStats}
+         */
+        function getBattlePetStats(baseStats, modifiers) {
+            const quality = modifiers[Items.MODIFIER_BATTLE_PET_QUALITY];
+            const rawBreed = modifiers[Items.MODIFIER_BATTLE_PET_BREED];
+            const level = modifiers[Items.MODIFIER_BATTLE_PET_LEVEL];
+
+            if (quality === undefined) {
+                throw "Missing pet quality";
+            }
+            if (rawBreed === undefined) {
+                throw "Missing pet breed";
+            }
+            if (level === undefined) {
+                throw "Missing pet level";
+            }
+
+            // Squash gender
+            const breed = ((rawBreed - 3) % 10) + 3;
+
+            let breedStats = BREED_STATS[breed];
+            if (breedStats === undefined) {
+                throw "Invalid breed";
+            }
+
+            return {
+                stamina: roundToOdd((baseStats.stamina + breedStats.stamina) * 5 * level * (1 + quality / 10) + 100),
+                power: roundToOdd((baseStats.power + breedStats.power) * level * (1 + quality / 10)),
+                speed: roundToOdd((baseStats.speed + breedStats.speed) * level * (1 + quality / 10)),
+            };
+        }
+
+        /**
+         * Returns an array of item states for the given item for all realms in the given region.
+         *
+         * @param {PricedItem} item
+         * @param {string} region
+         * @return {Promise<ItemState[]>}
+         */
+        async function fetchOtherRealms(item, region) {
+            const connectedRealms = Realms.getRegionConnectedRealms(region);
+
+            const toFetch = [];
+            connectedRealms.forEach(realm => {
+                toFetch.push(Auctions.getItem(item, realm.canonical));
+            });
+
+            return await Promise.all(toFetch);
         }
 
         /**
@@ -1074,12 +1155,13 @@ new function () {
                 const wowheadParams = [];
                 if (item.id === ITEM_PET_CAGE) {
                     wowheadParams.push('npc=' + item.npc);
+                    console.log(getBattlePetStats(item.battlePetStats, specLine.modifiers));
                 } else {
                     wowheadParams.push('item=' + item.id);
                     if (specLine.bonuses.length) {
                         wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
                     }
-                    let lvl = specLine.modifiers[Auctions.MODIFIER_TYPE_TIMEWALKER_LEVEL];
+                    let lvl = specLine.modifiers[Items.MODIFIER_TYPE_TIMEWALKER_LEVEL];
                     if (lvl) {
                         wowheadParams.push('lvl=' + lvl);
                     }
@@ -1693,21 +1775,22 @@ new function () {
         }
 
         /**
-         * Returns an array of item states for the given item for all realms in the given region.
+         * Rounds a value, but halves always round towards the odd number.
          *
-         * @param {PricedItem} item
-         * @param {string} region
-         * @return {Promise<ItemState[]>}
+         * @param {number} value
+         * @return {number}
          */
-        async function fetchOtherRealms(item, region) {
-            const connectedRealms = Realms.getRegionConnectedRealms(region);
+        function roundToOdd(value) {
+            let floored = Math.floor(value);
+            if (Math.floor((value - floored) * 1000000) === 500000) {
+                if (floored % 2 === 0) {
+                    return floored + 1;
+                }
 
-            const toFetch = [];
-            connectedRealms.forEach(realm => {
-                toFetch.push(Auctions.getItem(item, realm.canonical));
-            });
+                return floored;
+            }
 
-            return await Promise.all(toFetch);
+            return Math.floor(value + 0.5);
         }
     };
 
@@ -1752,6 +1835,13 @@ new function () {
             MEDIUM: 'medium',
             // SMALL: 'small',
         };
+
+        this.MODIFIER_BATTLE_PET_QUALITY = 2; // This totally isn't what modifier 2 means, but I want to store quality and they don't have a mod for that.
+        this.MODIFIER_BATTLE_PET_SPECIES = 3;
+        this.MODIFIER_BATTLE_PET_BREED = 4;
+        this.MODIFIER_BATTLE_PET_LEVEL = 5;
+        this.MODIFIER_BATTLE_PET_CREATUREDISPLAYID = 6;
+        this.MODIFIER_TYPE_TIMEWALKER_LEVEL = 9;
 
         this.SUBCLASS_MISCELLANEOUS_PET = 2;
 
@@ -2111,6 +2201,11 @@ new function () {
                         // Add our own pet-specific properties to the Item
                         newItem.npc = species.npc;
                         newItem.battlePetType = species.type;
+                        newItem.battlePetStats = {
+                            power: species.power,
+                            stamina: species.stamina,
+                            speed: species.speed,
+                        };
 
                         result.push(newItem);
                     });
