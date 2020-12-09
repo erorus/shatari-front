@@ -951,12 +951,36 @@ body {
   }
 }
 
-.wowhead-tooltip td .shatari-tooltip {
-  min-width: 15em;
-  td.date {padding-bottom: 0.5em}
-  td.price {color: $priceChart}
-  td.quantity {color: $quantityChart}
-  td:nth-child(2) {text-align: right}
+.wowhead-tooltip td {
+  .shatari-tooltip {
+    min-width: 15em;
+    td.date {padding-bottom: 0.5em}
+    td.price {color: $priceChart}
+    td.quantity {color: $quantityChart}
+    td:nth-child(2) {text-align: right}
+  }
+
+  .battle-pet-tooltip {
+    display: flex;
+    > div:first-child {margin-right: 30px;
+      img {
+        height: 16px;
+        margin-top: 2px;
+        vertical-align: text-bottom;
+        width: 16px;
+      }
+    }
+    > div:last-child {
+      margin-left: 30px;
+      text-align: right;
+      img {
+        height: 39px;
+        margin-top: 4px;
+        width: 39px;
+      }
+    }
+
+  }
 }
 
 picture.model-thumbnail img {

@@ -638,10 +638,12 @@ new function () {
          *  subClassIds: SubclassID[]|undefined,
          *  detailColumn: DetailColumn|undefined,
          *  categories: Category[],
+         *  battlePetTypes: Object.<number, string>,
          *  }}
          */
         const my = {
             categories: undefined,
+            battlePetTypes: {},
 
             classId: undefined,
             extraFilters: undefined,
@@ -659,6 +661,16 @@ new function () {
         // ------ //
         // PUBLIC //
         // ------ //
+
+        /**
+         * Given a battle pet type ID, return its name.
+         *
+         * @param {number} typeId
+         * @return {string|undefined}
+         */
+        this.getBattlePetTypeName = function (typeId) {
+            return my.battlePetTypes[typeId];
+        };
 
         /**
          * Returns the class ID to use in search filtering, or undefined for none.
@@ -948,7 +960,18 @@ new function () {
                 throw 'Cannot get list of categories!';
             }
 
-            return my.categories = await response.json();
+            my.categories = await response.json();
+            my.categories.forEach(category => {
+                if (category['class'] === Items.CLASS_BATTLE_PET) {
+                    category.subcategories.forEach(subcategory => {
+                        if (subcategory.subClass > 0) {
+                            my.battlePetTypes[subcategory.subClass] = subcategory.name;
+                        }
+                    });
+                }
+            });
+
+            return my.categories;
         }
 
         /**
@@ -1152,11 +1175,53 @@ new function () {
                 const td = ce('td');
                 tr.appendChild(td);
 
-                const wowheadParams = [];
+                const datasetParams = {};
                 if (item.id === ITEM_PET_CAGE) {
-                    wowheadParams.push('npc=' + item.npc);
-                    console.log(getBattlePetStats(item.battlePetStats, specLine.modifiers));
+                    // Build our own damn tooltip, with stats.
+                    let finalStats;
+                    try {
+                        finalStats = getBattlePetStats(item.battlePetStats, specLine.modifiers);
+                    } catch (e) {
+                        console.debug("Could not get battle pet stats", item.battlePetStats, specLine.modifiers);
+                    }
+
+                    if (finalStats) {
+                        const quality = specLine.modifiers[Items.MODIFIER_BATTLE_PET_QUALITY];
+                        const level = specLine.modifiers[Items.MODIFIER_BATTLE_PET_LEVEL];
+
+                        let tooltip = ce('div');
+                        tooltip.appendChild(ce('b', {className: 'q' + quality}, ct(item.name)));
+                        tooltip.appendChild(ce('br'));
+                        let flexParent = ce('div', {className: 'battle-pet-tooltip'});
+                        tooltip.appendChild(flexParent);
+                        let flexLeft = ce('div');
+                        flexParent.appendChild(flexLeft);
+                        let flexRight = ce('div');
+                        flexParent.appendChild(flexRight);
+
+                        flexLeft.appendChild(ct('Battle Pet'));
+                        flexLeft.appendChild(ce('br'));
+                        flexLeft.appendChild(ct('Level ' + level));
+                        flexLeft.appendChild(ce('br'));
+                        flexLeft.appendChild(ce('img', {src: 'images/bpet-stamina.png'}));
+                        flexLeft.appendChild(ct(finalStats.stamina));
+                        flexLeft.appendChild(ce('br'));
+                        flexLeft.appendChild(ce('img', {src: 'images/bpet-power.png'}));
+                        flexLeft.appendChild(ct(finalStats.power));
+                        flexLeft.appendChild(ce('br'));
+                        flexLeft.appendChild(ce('img', {src: 'images/bpet-speed.png'}));
+                        flexLeft.appendChild(ct(finalStats.speed));
+
+                        flexRight.appendChild(ct(Categories.getBattlePetTypeName(item.battlePetType)));
+                        flexRight.appendChild(ce('br'));
+                        flexRight.appendChild(ce('img', {
+                            src: 'https://wow.zamimg.com/images/pets/types-circle/original/' + item.battlePetType + '.png',
+                        }));
+
+                        datasetParams.simpleTooltip = tooltip.innerHTML;
+                    }
                 } else {
+                    const wowheadParams = [];
                     wowheadParams.push('item=' + item.id);
                     if (specLine.bonuses.length) {
                         wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
@@ -1168,10 +1233,12 @@ new function () {
                     if (item.bonusLevel) {
                         wowheadParams.push('ilvl=' + item.bonusLevel);
                     }
+
+                    datasetParams.wowhead = wowheadParams.join('&');
                 }
 
                 const a = ce('a',
-                    {dataset: {wowhead: wowheadParams.join('&')}},
+                    {dataset: datasetParams},
                     priceElement(specLine.price)
                 );
                 td.appendChild(a);

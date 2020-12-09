@@ -696,6 +696,22 @@ body {
     color: #F88; }
   .wowhead-tooltip td .shatari-tooltip td:nth-child(2) {
     text-align: right; }
+.wowhead-tooltip td .battle-pet-tooltip {
+  display: flex; }
+  .wowhead-tooltip td .battle-pet-tooltip > div:first-child {
+    margin-right: 30px; }
+    .wowhead-tooltip td .battle-pet-tooltip > div:first-child img {
+      height: 16px;
+      margin-top: 2px;
+      vertical-align: text-bottom;
+      width: 16px; }
+  .wowhead-tooltip td .battle-pet-tooltip > div:last-child {
+    margin-left: 30px;
+    text-align: right; }
+    .wowhead-tooltip td .battle-pet-tooltip > div:last-child img {
+      height: 39px;
+      margin-top: 4px;
+      width: 39px; }
 
 picture.model-thumbnail img {
   background-color: #161211; }
