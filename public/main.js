@@ -1233,6 +1233,20 @@ new function () {
                     if (item.bonusLevel) {
                         wowheadParams.push('ilvl=' + item.bonusLevel);
                     }
+                    const craftedStats = [];
+                    if (specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_1]) {
+                        craftedStats[0] = specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_1];
+                    }
+                    if (specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_2]) {
+                        let stat2 = specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_2];
+                        if (!craftedStats.length) {
+                            craftedStats.push(0);
+                        }
+                        craftedStats[1] = stat2;
+                    }
+                    if (craftedStats.length) {
+                        wowheadParams.push('crafted-stats=' + craftedStats.join(':'));
+                    }
 
                     datasetParams.wowhead = wowheadParams.join('&');
                 }
@@ -1909,6 +1923,8 @@ new function () {
         this.MODIFIER_BATTLE_PET_LEVEL = 5;
         this.MODIFIER_BATTLE_PET_CREATUREDISPLAYID = 6;
         this.MODIFIER_TYPE_TIMEWALKER_LEVEL = 9;
+        this.MODIFIER_TYPE_CRAFTING_STAT_1 = 29;
+        this.MODIFIER_TYPE_CRAFTING_STAT_2 = 30;
 
         this.SUBCLASS_MISCELLANEOUS_PET = 2;
 
