@@ -2725,6 +2725,8 @@ new function () {
                 }
             }
 
+            setPreferredSort(columnPos * (dir === 'asc' ? 1 : -1));
+
             headerTd.dataset.sort = dir;
             let table = headerTr;
             while (table.tagName !== 'TABLE') {
@@ -2794,6 +2796,54 @@ new function () {
             }
 
             ee(qs('.main .search-result-target'));
+        }
+
+        /**
+         * Returns the column we should use for the initial sort, based on the category class.
+         *
+         * @return {number|undefined}
+         */
+        function getPreferredSort() {
+            const categoryClass = Categories.getClassId();
+            if (categoryClass === undefined) {
+                return;
+            }
+
+            let categorySorts = {};
+            try {
+                categorySorts = JSON.parse(localStorage.getItem('category-sort') || '{}');
+            } catch (e) {
+                // Ignore
+            }
+
+            return categorySorts[categoryClass];
+        }
+
+        /**
+         * Saves the preferred column and order for the current category class.
+         *
+         * @param sortValue
+         */
+        function setPreferredSort(sortValue) {
+            const categoryClass = Categories.getClassId();
+            if (categoryClass === undefined) {
+                return;
+            }
+
+            let categorySorts = {};
+            try {
+                categorySorts = JSON.parse(localStorage.getItem('category-sort') || '{}');
+            } catch (e) {
+                // Ignore
+            }
+
+            categorySorts[categoryClass] = sortValue;
+
+            try {
+                localStorage.setItem('category-sort', JSON.stringify(categorySorts));
+            } catch (e) {
+                // Ignore
+            }
         }
 
         /**
@@ -2957,7 +3007,14 @@ new function () {
                         tbody.childNodes.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
                     ))));
                 }
-                columnSort(thead.querySelector('td'), false);
+
+                const prefSort = getPreferredSort() || 1;
+                const sortTd = thead.querySelectorAll('td')[Math.abs(prefSort) - 1] || thead.querySelector('td');
+                if (prefSort < 0) {
+                    // Will flip to desc when we call the next sort.
+                    sortTd.dataset.sort = 'asc';
+                }
+                sortTd.dispatchEvent(new MouseEvent('click'));
             }
 
             parent.scrollTop = 0;
