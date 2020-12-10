@@ -1943,6 +1943,10 @@ new function () {
         this.MODIFIER_TYPE_CRAFTING_STAT_1 = 29;
         this.MODIFIER_TYPE_CRAFTING_STAT_2 = 30;
 
+        this.SEARCH_MODE_NORMAL = 0;
+        this.SEARCH_MODE_SUGGESTIONS = 1;
+        this.SEARCH_MODE_FAVORITES = 2;
+
         this.SUBCLASS_MISCELLANEOUS_PET = 2;
 
         // ------- //
@@ -2051,12 +2055,15 @@ new function () {
         /**
          * Performs a search depending on the UI state, and returns item objects that match.
          *
-         * @param {boolean} forSuggestions
+         * @param {number} searchMode
          * @return {Promise<Item[]>}
          */
-        this.search = async function (forSuggestions) {
+        this.search = async function (searchMode) {
             const result = [];
 
+            const forSuggestions = searchMode === self.SEARCH_MODE_SUGGESTIONS;
+            const favoritesOnly = searchMode === self.SEARCH_MODE_FAVORITES;
+            const favorites = favoritesOnly ? Search.getFavorites() : [];
             const seenNames = {};
             const classId = Categories.getClassId();
             const subClassIds = Categories.getSubClassIds();
@@ -2196,6 +2203,10 @@ new function () {
                     }
                 }
 
+                if (favoritesOnly) {
+                    variants = variants.filter(keyString => favorites.includes(keyString));
+                }
+
                 variants.forEach(keyString => {
                     const itemKey = Items.parseKey(keyString);
 
@@ -2261,6 +2272,10 @@ new function () {
                         } else {
                             variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
                         }
+                    }
+
+                    if (favoritesOnly) {
+                        variants = variants.filter(keyString => favorites.includes(keyString));
                     }
 
                     variants.forEach(keyString => {
@@ -2666,6 +2681,8 @@ new function () {
         const COL_PRICE = 1;
         const COL_NAME = 2;
 
+        const SEARCH_FAVORITES_BUTTON = qs('.main .search-bar .favorite');
+
         const MAX_RESULTS_SHOWN = 500;
 
         // ********************* //
@@ -2677,9 +2694,27 @@ new function () {
         // ------ //
 
         /**
-         * Perform a search for items, reading the parameters from the UI.
+         * Returns the current list of favorite item keys.
+         *
+         * @return {ItemKeyString[]}
          */
-        this.perform = async function () {
+        this.getFavorites = function () {
+            let favorites;
+            try {
+                favorites = localStorage.getItem('favorites');
+            } catch (e) {
+                // Ignore
+            }
+
+            return favorites ? favorites.split(',') : [];
+        }
+
+        /**
+         * Perform a search for items, reading the parameters from the UI.
+         *
+         * @param {boolean} favoritesOnly
+         */
+        this.perform = async function (favoritesOnly) {
             if (!Realms.getCurrentRealm()) {
                 alert('Please select a realm in the top left corner.');
                 qs('.main .search-bar select').focus();
@@ -2690,7 +2725,9 @@ new function () {
             Detail.hide();
             emptyItemList();
 
-            const itemsList = await Auctions.hydrateList(await Items.search(false));
+            const itemsList = await Auctions.hydrateList(
+                await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL)
+            );
 
             requestAnimationFrame(function () {
                 requestAnimationFrame(
@@ -2820,6 +2857,25 @@ new function () {
         }
 
         /**
+         * Saves the given list of favorites.
+         *
+         * @param {ItemKeyString[]} favorites
+         */
+        function setFavorites(favorites) {
+            try {
+                if (favorites.length) {
+                    localStorage.setItem('favorites', favorites.join(','));
+                } else {
+                    localStorage.removeItem('favorites');
+                }
+                updateFavoritesButton(favorites.length > 0);
+            } catch (e) {
+                alert('Could not save favorites to your browser! ' + e);
+                updateFavoritesButton(false);
+            }
+        }
+
+        /**
          * Saves the preferred column and order for the current category class.
          *
          * @param sortValue
@@ -2855,6 +2911,7 @@ new function () {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const showNeverSeen = qs('.main .search-bar .filter [name="never-seen"]').checked;
+            const favorites = self.getFavorites();
 
             const parent = qs('.main .search-result-target');
 
@@ -2991,12 +3048,24 @@ new function () {
                 //
                 // QUANTITY
                 //
-                tr.appendChild(ce('td', {
+                tr.appendChild(td = ce('td', {
                     className: 'quantity',
                     dataset: {
                         sortValue: item.quantity || 0,
                     },
                 }, ct((item.quantity || 0).toLocaleString())));
+
+                let itemKey = Items.stringifyKey({
+                    itemId: item.id,
+                    itemLevel: item.bonusLevel,
+                    itemSuffix: item.bonusSuffix,
+                });
+                let favSpan = ce('span', {className: 'favorite'});
+                if (favorites.includes(itemKey)) {
+                    favSpan.dataset.favorite = 1;
+                }
+                favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
+                td.appendChild(favSpan);
             });
 
             if (tbody.childNodes.length === 0) {
@@ -3019,6 +3088,49 @@ new function () {
 
             parent.scrollTop = 0;
         }
+
+        /**
+         * Toggles whether the given item key string is in the favorites list.
+         *
+         * @param {ItemKeyString} itemKeyString
+         * @param {HTMLElement} favSpan
+         */
+        function toggleFavorite(itemKeyString, favSpan) {
+            const favorites = self.getFavorites();
+            const pos = favorites.indexOf(itemKeyString);
+            if (pos >= 0) {
+                favorites.splice(pos, 1);
+                if (favSpan) {
+                    delete favSpan.dataset.favorite;
+                }
+            } else {
+                favorites.push(itemKeyString);
+                if (favSpan) {
+                    favSpan.dataset.favorite = 1;
+                }
+            }
+            setFavorites(favorites);
+        }
+
+        /**
+         * Enable/disable the favorites button in the search bar.
+         *
+         * @param {boolean} isEnabled
+         */
+        function updateFavoritesButton(isEnabled) {
+            if (isEnabled) {
+                SEARCH_FAVORITES_BUTTON.dataset.enabled = 1;
+            } else {
+                delete SEARCH_FAVORITES_BUTTON.dataset.enabled;
+            }
+        }
+
+        updateFavoritesButton(self.getFavorites().length > 0);
+        SEARCH_FAVORITES_BUTTON.addEventListener('click', () => {
+            if (SEARCH_FAVORITES_BUTTON.dataset.enabled) {
+                self.perform(true);
+            }
+        });
     }
 
     /** Manages the search suggestions list. */
@@ -3147,7 +3259,7 @@ new function () {
             }
 
             lastSearch = typed;
-            const items = await Auctions.hydrateList(await Items.search(true));
+            const items = await Auctions.hydrateList(await Items.search(Items.SEARCH_MODE_SUGGESTIONS));
             if (lastSearch !== typed) {
                 return;
             }
@@ -3304,7 +3416,7 @@ new function () {
             Realms.init(),
         ]);
 
-        qs('.main .search-bar button.search').addEventListener('click', Search.perform);
+        qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false));
         qs('.main .search-bar > div.filter').addEventListener('mouseup', (event) => {
             const div = qs('.main .search-bar > div.filter div');
             if (div.style.display === 'block') {
@@ -3335,7 +3447,7 @@ new function () {
         const searchBox = qs('.main .search-bar input[type="text"]');
         searchBox.addEventListener('keyup', event => {
             if (event.key === 'Enter') {
-                Search.perform();
+                Search.perform(false);
             }
         });
         qs('.main .search-bar .text-reset').addEventListener('click', event => {

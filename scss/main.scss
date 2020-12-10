@@ -270,9 +270,26 @@ body {
         display: block;
       }
     }
-    button, > div.filter {
+    button, > div.filter, > div.favorite {
       @include button();
 
+      &.favorite {
+        background-image: url('../images/favorite-star-off.png');
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: calc(100% - 2px);
+        flex: 0 0 auto;
+        width: 2em;
+
+        &[data-enabled] {
+          background-image: url('../images/favorite-star.png');
+        }
+
+        &:hover {
+          background-color: $background20;
+          box-shadow: none;
+        }
+      }
       &.search {
         @include button-red();
       }
@@ -506,7 +523,7 @@ body {
           $iconSize: $fontSizeArial - 2 * $iconBorderSize;
 
           tr {transform: translateY(0);
-            a {bottom:0; left:0; position:absolute; right:0; top:0;}
+            a {bottom:0; left:0; position:absolute; right:0; top:0; z-index:5}
             &:hover {
               background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
             }
@@ -551,6 +568,26 @@ body {
                 position: relative;
                 top: 2px;
                 width: $iconSize;
+              }
+            }
+
+            &.quantity {
+              padding-right: $iconSize;
+              span.favorite {
+                background-image: url('../images/favorite-star-off.png');
+                background-position: center center;
+                background-repeat: no-repeat;
+                background-size: contain;
+                bottom: 0;
+                position: absolute;
+                right: 0;
+                top: 0;
+                width: $iconSize + 2 * $iconBorderSize;
+                z-index: 10;
+
+                &[data-favorite] {
+                  background-image: url('../images/favorite-star.png');
+                }
               }
             }
           }
