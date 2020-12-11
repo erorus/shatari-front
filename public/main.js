@@ -3002,10 +3002,6 @@ new function () {
                     }
                 }
                 if (vendorFlip) {
-                    if ((item.quantity || 0) === 0) {
-                        return;
-                    }
-
                     const vendorPrice = Items.getVendorSellPrice(item);
                     if (!vendorPrice || vendorPrice <= item.price) {
                         return;
