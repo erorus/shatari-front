@@ -3019,10 +3019,16 @@ new function () {
                             sortValue: item.price || 0,
                         },
                     }));
+                    const rowLink = ce('a');
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
+
+                        let vendorPrice = Items.getVendorSellPrice(item);
+                        if (vendorPrice > item.price) {
+                            tr.classList.add('vendor-flip');
+                            rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
+                        }
                     }
-                    const rowLink = ce('a');
                     if (item.id === ITEM_PET_CAGE) {
                         rowLink.dataset.wowhead = 'npc=' + item.npc;
                     } else {

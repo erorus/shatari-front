@@ -361,6 +361,8 @@ body {
             right: 0;
             top: 0;
             z-index: 5; }
+          .main .main-result .search-result table tbody tr.vendor-flip {
+            background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.6) 40%, rgba(230, 179, 53, 0.6) 60%, rgba(230, 179, 53, 0.1) 100%); }
           .main .main-result .search-result table tbody tr:hover {
             background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
           .main .main-result .search-result table tbody tr:not(.message):nth-child(n+500) {
