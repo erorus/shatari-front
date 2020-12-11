@@ -3023,12 +3023,9 @@ new function () {
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
 
-                        if (item.quantity) {
-                            let vendorPrice = Items.getVendorSellPrice(item);
-                            if (vendorPrice > item.price) {
-                                tr.classList.add('vendor-flip');
-                                rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
-                            }
+                        if (item.quantity && Items.getVendorSellPrice(item) > item.price) {
+                            tr.classList.add('vendor-flip');
+                            rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
                         }
                     }
                     if (item.id === ITEM_PET_CAGE) {
