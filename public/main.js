@@ -136,6 +136,9 @@ new function () {
      * @property {number} [side]
      * @property {number} [slots]
      * @property {number} subclass
+     * @property {number} [vendorSell]
+     * @property {number} [vendorSellBase]
+     * @property {number} [vendorSellFactor]
      */
 
     /** @type {ItemID} ITEM_PET_CAGE */
@@ -1430,6 +1433,16 @@ new function () {
                     realmElements.median.appendChild(priceElement(statistics.median));
                     realmElements.mean.appendChild(priceElement(statistics.mean));
                 }
+
+                const vendorSell = Items.getVendorSellPrice(item);
+                if (vendorSell >= 100) {
+                    table.appendChild(tr = ce('tr'));
+                    tr.appendChild(ce('td', {}, ct('Vendor')));
+                    tr.appendChild(ce('td', {
+                        dataset: {simpleTooltip: 'The amount you get when selling this item to a vendor.'}
+                    }, priceElement(vendorSell)));
+                    tr.appendChild(ce('td'));
+                }
             })();
 
             // Price chart
@@ -1976,7 +1989,12 @@ new function () {
          * names: Object.<ItemID, string>,
          * suffixes: Object.<SuffixID, Suffix>,
          * battlePets: Object.<BattlePetSpeciesID, BattlePetSpecies>,
-         * battlePetNames: Object.<BattlePetSpeciesID, string>
+         * battlePetNames: Object.<BattlePetSpeciesID, string>,
+         * vendor: {
+         *     quality: number[],
+         *     2: number[],
+         *     4: number[],
+         *   },
          * }}
          */
         const my = {
@@ -1985,6 +2003,7 @@ new function () {
             suffixes: {},
             battlePets: {},
             battlePetNames: {},
+            vendor: {},
         };
 
         // ********************* //
@@ -2024,6 +2043,26 @@ new function () {
         };
 
         /**
+         * Returns the vendor sell price of the given item in coppers.
+         *
+         * @param {Item} item
+         * @return {number}
+         */
+        this.getVendorSellPrice = function (item) {
+            if (item.hasOwnProperty('vendorSell')) {
+                return item.vendorSell;
+            }
+            if (item.hasOwnProperty('vendorSellFactor')) {
+                const baseFactor = my.vendor[item.vendorSellBase || item['class']][item.bonusLevel || item.itemLevel];
+                const qualityFactor = my.vendor.quality[item.quality];
+
+                return Math.floor(item.vendorSellFactor * baseFactor * qualityFactor);
+            }
+
+            return 0;
+        }
+
+        /**
          * Fetches the item list data.
          */
         this.init = async function () {
@@ -2033,6 +2072,7 @@ new function () {
                 fetchItemSuffixes(),
                 fetchBattlePets(),
                 fetchBattlePetNames(),
+                fetchVendor(),
             ]);
         };
 
@@ -2432,6 +2472,18 @@ new function () {
             }
 
             my.suffixes = await response.json();
+        }
+
+        /**
+         * Fetches the list of vendor sell data and stores it locally.
+         */
+        async function fetchVendor() {
+            const response = await fetch('json/vendor.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Cannot get vendor pricing data!';
+            }
+
+            my.vendor = await response.json();
         }
     };
 
