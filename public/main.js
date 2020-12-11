@@ -2963,6 +2963,7 @@ new function () {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const showNeverSeen = qs('.main .search-bar .filter [name="never-seen"]').checked;
+            const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
             const favorites = self.getFavorites();
 
             const parent = qs('.main .search-result-target');
@@ -3000,6 +3001,16 @@ new function () {
                         }
                     }
                 }
+                if (vendorFlip) {
+                    if ((item.quantity || 0) === 0) {
+                        return;
+                    }
+
+                    const vendorPrice = Items.getVendorSellPrice(item);
+                    if (!vendorPrice || vendorPrice <= item.price) {
+                        return;
+                    }
+                }
 
                 let suffix;
                 if (item.bonusSuffix) {
@@ -3023,7 +3034,7 @@ new function () {
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
 
-                        if (item.quantity && Items.getVendorSellPrice(item) > item.price) {
+                        if (!vendorFlip && item.quantity && Items.getVendorSellPrice(item) > item.price) {
                             tr.classList.add('vendor-flip');
                             rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
                         }
