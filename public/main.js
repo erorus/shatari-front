@@ -1423,7 +1423,7 @@ new function () {
                 if (!item.quantity) {
                     table.appendChild(tr = ce('tr'));
                     tr.appendChild(ce('td', {}, ct('Last Seen')));
-                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}})));
+                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: itemState.snapshot}})));
                     tr.appendChild(ce('td'));
                 }
 
