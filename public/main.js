@@ -3081,7 +3081,7 @@ new function () {
                     }
                 }
 
-                if (my.rows.length % MAX_RESULTS_SHOWN === 0) {
+                if (my.rows.length % (MAX_RESULTS_SHOWN * 4) === 0) {
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
