@@ -179,6 +179,7 @@ body {
         align-items: center;
         display: flex;
         justify-content: center;
+        line-height: 2;
         padding-right: 1em;
         position: relative; }
         .main .search-bar button.filter::after, .main .search-bar > div.filter.filter::after, .main .search-bar > div.favorite.filter::after {

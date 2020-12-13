@@ -2968,7 +2968,6 @@ new function () {
         function showItemList(itemsList) {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
-            const showNeverSeen = qs('.main .search-bar .filter [name="never-seen"]').checked;
             const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
             const favorites = self.getFavorites();
 
@@ -2998,9 +2997,7 @@ new function () {
             itemsList.forEach(function (item) {
                 if ((item.quantity || 0) === 0) {
                     if ((item.price || 0) === 0) {
-                        if (!showNeverSeen) {
-                            return;
-                        }
+                        return;
                     } else {
                         if (!showOutOfStock) {
                             return;
