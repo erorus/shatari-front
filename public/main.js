@@ -1426,14 +1426,14 @@ new function () {
                     tr.appendChild(ce('td'));
                 }
 
-                if (item.price) {
-                    table.appendChild(tr = ce('tr'));
-                    tr.appendChild(ce('td', {}, ct('Current')));
-                    tr.appendChild(ce('td', {
-                        dataset: {simpleTooltip: 'Lowest price in ' + realmName + ' right now.'}
-                    }, priceElement(item.price)));
-                    tr.appendChild(ce('td'));
-                }
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Current')));
+                tr.appendChild(ce('td', {
+                    dataset: {simpleTooltip: 'Lowest price in ' + realmName + ' right now.'}
+                }, item.price ? priceElement(item.price) : null));
+                tr.appendChild(regionElements.current = ce('td', {
+                    dataset: {simpleTooltip: 'Lowest price among all ' + regionName + ' realms right now.'}
+                }));
 
                 let prices = [];
                 itemState.snapshots.forEach(snapshot => {
@@ -1869,10 +1869,14 @@ new function () {
             fetchOtherRealms(item, itemState.realm.region).then(otherRealms => {
                 let quantitySum = 0;
                 let prices = [];
+                let lowestAvailablePrice;
                 otherRealms.forEach(itemState => {
                     quantitySum += itemState.quantity;
                     if (itemState.price) {
                         prices.push(itemState.price);
+                        if (itemState.quantity) {
+                            lowestAvailablePrice = Math.min(itemState.price, lowestAvailablePrice || itemState.price);
+                        }
                     }
 
                     const connectedRealm = Realms.getConnectedRealm(itemState.realm);
@@ -1908,6 +1912,9 @@ new function () {
                 regionElements.afterList();
 
                 regionElements.quantity.appendChild(ct(quantitySum.toLocaleString()));
+                if (lowestAvailablePrice) {
+                    regionElements.current.appendChild(priceElement(lowestAvailablePrice));
+                }
                 if (prices.length >= 5) {
                     let statistics = getStatistics(prices);
                     regionElements.median.appendChild(priceElement(statistics.median));
