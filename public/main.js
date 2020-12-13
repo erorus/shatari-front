@@ -1835,6 +1835,8 @@ new function () {
             })();
 
             // Fetch other realms
+            const detailRealmId = itemState.realm.id;
+            const stateRealmId = Realms.getCurrentRealm().id;
             fetchOtherRealms(item, itemState.realm.region).then(otherRealms => {
                 let quantitySum = 0;
                 let prices = [];
@@ -1848,7 +1850,9 @@ new function () {
                     /** @var {Realm[]} ourRealms */
                     const ourRealms = [connectedRealm.canonical].concat(connectedRealm.secondary);
                     ourRealms.sort((a, b) => {
-                        return ((a.id === itemState.realm.id ? 0 : 1) - (b.id === itemState.realm.id ? 0 : 1)) ||
+                        return ((a.id === detailRealmId ? 0 : 1) - (b.id === detailRealmId ? 0 : 1)) ||
+                            ((a.id === stateRealmId ? 0 : 1) - (b.id === stateRealmId ? 0 : 1)) ||
+                            ((a.id === connectedRealm.canonical.id ? 0 : 1) - (b.id === connectedRealm.canonical.id ? 0 : 1)) ||
                             a.name.localeCompare(b.name);
                     });
                     for (let realm, index = 0; realm = ourRealms[index]; index++) {
