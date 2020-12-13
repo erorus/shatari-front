@@ -127,6 +127,7 @@ new function () {
      * @typedef {object} UnnamedItem
      * @property {number} class
      * @property {number} [display]
+     * @property {number} expansion
      * @property {number[]} [extraFilters]
      * @property {string} icon
      * @property {InventoryType} [inventoryType]
@@ -2140,6 +2141,15 @@ new function () {
                 maxLevel = parseInt(maxLevel);
             }
 
+            let expansion;
+            {
+                const expansionSelect = qs('.main .filter select.expansion');
+                const selected = expansionSelect.options[expansionSelect.selectedIndex].value;
+                if (selected !== '') {
+                    expansion = parseInt(selected);
+                }
+            }
+
             let usePetCage = false;
 
             for (let id in my.items) {
@@ -2148,6 +2158,9 @@ new function () {
                 }
 
                 let item = my.items[id];
+                if (expansion && item.expansion !== expansion) {
+                    continue;
+                }
                 if (classId !== undefined) {
                     // We're selecting a specific class.
                     if (
