@@ -18,11 +18,12 @@ new function () {
 
     /**
      * @typedef {Object} BattlePetSpecies
-     * @property {number} npc
-     * @property {string} icon
-     * @property {number} type
      * @property {number} display
+     * @property {number} expansion
+     * @property {string} icon
+     * @property {number} npc
      * @property {number} [side]
+     * @property {number} type
      */
 
     /**
@@ -2160,15 +2161,15 @@ new function () {
                 }
 
                 let item = my.items[id];
-                if (expansion && item.expansion !== expansion) {
-                    continue;
-                }
                 if (classId !== undefined && item['class'] !== classId) {
                     continue;
                 }
                 if (parseInt(id) === ID_PET_CAGE) {
                     // Handle that later.
                     usePetCage = true;
+                    continue;
+                }
+                if (expansion && item.expansion !== expansion) {
                     continue;
                 }
                 if (subClassIds !== undefined && !subClassIds.includes(item.subclass)) {
@@ -2299,6 +2300,9 @@ new function () {
                     }
                     let species = my.battlePets[speciesId];
 
+                    if (expansion && species.expansion !== expansion) {
+                        continue;
+                    }
                     if (subClassIds !== undefined && !subClassIds.includes(species.type)) {
                         continue;
                     }
