@@ -3187,8 +3187,10 @@ new function () {
         function updateFavoritesButton(isEnabled) {
             if (isEnabled) {
                 SEARCH_FAVORITES_BUTTON.dataset.enabled = 1;
+                delete SEARCH_FAVORITES_BUTTON.dataset.simpleTooltip;
             } else {
                 delete SEARCH_FAVORITES_BUTTON.dataset.enabled;
+                SEARCH_FAVORITES_BUTTON.dataset.simpleTooltip = SEARCH_FAVORITES_BUTTON.dataset.defaultTooltip;
             }
         }
 
