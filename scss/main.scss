@@ -479,6 +479,11 @@ body {
         &:empty {display: none}
       }
 
+      &-target.processing {
+          opacity: 0.5;
+          pointer-events: none;
+      }
+
       table {
         border-radius: $borderRadius $borderRadius 0 0;
         border-spacing: 0;

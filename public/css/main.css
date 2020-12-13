@@ -321,6 +321,9 @@ body {
         top: 4px; }
         .main .main-result .search-result .search-result-border:empty {
           display: none; }
+      .main .main-result .search-result-target.processing {
+        opacity: 0.5;
+        pointer-events: none; }
       .main .main-result .search-result table {
         border-radius: 8px 8px 0 0;
         border-spacing: 0;

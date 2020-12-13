@@ -2850,11 +2850,7 @@ new function () {
                 await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL)
             );
 
-            requestAnimationFrame(function () {
-                requestAnimationFrame(
-                    showItemList.bind(self, itemsList)
-                );
-            });
+            await showItemList(itemsList);
         };
 
         // ------- //
@@ -3034,13 +3030,14 @@ new function () {
          *
          * @param {PricedItem[]} itemsList
          */
-        function showItemList(itemsList) {
+        async function showItemList(itemsList) {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
             const favorites = self.getFavorites();
 
             const parent = qs('.main .search-result-target');
+            parent.classList.add('processing');
 
             let tr, td;
 
@@ -3061,23 +3058,32 @@ new function () {
             tr.appendChild(td = ce('td', {}, ct('Available')));
             td.addEventListener('click', columnSort.bind(null, td, false));
 
+            let rowsAdded = 0;
             const tbody = ce('tbody');
             table.appendChild(tbody);
-            itemsList.forEach(function (item) {
+            console.log('loop start', performance.now());
+            for (let item, itemIndex = 0; item = itemsList[itemIndex]; itemIndex++) {
                 if ((item.quantity || 0) === 0) {
                     if ((item.price || 0) === 0) {
-                        return;
+                        continue;
                     } else {
                         if (!showOutOfStock) {
-                            return;
+                            continue;
                         }
                     }
                 }
                 if (vendorFlip) {
                     const vendorPrice = Items.getVendorSellPrice(item);
                     if (!vendorPrice || vendorPrice <= item.price) {
-                        return;
+                        continue;
                     }
+                }
+
+                if (rowsAdded++ % (MAX_RESULTS_SHOWN * 5) === 0) {
+                    await new Promise(resolve => setTimeout(() => {
+                        console.log('refresh wait', performance.now());
+                        resolve();
+                    }, 10));
                 }
 
                 let suffix;
@@ -3206,7 +3212,8 @@ new function () {
                 }
                 favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
                 td.appendChild(favSpan);
-            });
+            }
+            console.log('added all rows', performance.now());
 
             if (tbody.childNodes.length === 0) {
                 tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
@@ -3227,6 +3234,7 @@ new function () {
                 sortTd.dispatchEvent(new MouseEvent('click'));
             }
 
+            parent.classList.remove('processing');
             parent.scrollTop = 0;
             updateDeltaTimestamps();
         }
