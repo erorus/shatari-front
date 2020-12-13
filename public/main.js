@@ -87,8 +87,9 @@ new function () {
 
     /**
      * @typedef {Item} PricedItem
-     * @property {Money}  price
-     * @property {number} quantity
+     * @property {Money}     price
+     * @property {number}    quantity
+     * @property {Timestamp} snapshot
      */
 
     /**
@@ -251,9 +252,11 @@ new function () {
                 if (cur) {
                     pricedItem.price = cur.price;
                     pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
+                    pricedItem.snapshot = cur.snapshot;
                 } else {
                     pricedItem.price = 0;
                     pricedItem.quantity = 0;
+                    pricedItem.snapshot = 0;
                 }
 
                 result.push(pricedItem);
@@ -1416,6 +1419,13 @@ new function () {
                     dataset: {simpleTooltip: 'Total quantity for sale in all ' + regionName + ' realms right now.'}
                 }));
 
+                if (!item.quantity) {
+                    table.appendChild(tr = ce('tr'));
+                    tr.appendChild(ce('td', {}, ct('Last Seen')));
+                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}})));
+                    tr.appendChild(ce('td'));
+                }
+
                 if (item.price) {
                     table.appendChild(tr = ce('tr'));
                     tr.appendChild(ce('td', {}, ct('Current')));
@@ -1901,6 +1911,8 @@ new function () {
                     regionElements.mean.appendChild(priceElement(statistics.mean));
                 }
             });
+
+            updateDeltaTimestamps();
         }
 
         /**
@@ -2891,7 +2903,7 @@ new function () {
                     return aVal.localeCompare(bVal);
                 }
 
-                const valDiff = parseInt(aVal) - parseInt(bVal);
+                const valDiff = parseFloat(aVal) - parseFloat(bVal);
                 if (valDiff) {
                     return valDiff;
                 }
@@ -3169,12 +3181,16 @@ new function () {
                 //
                 // QUANTITY
                 //
+                const quantity = item.quantity || 0;
                 tr.appendChild(td = ce('td', {
-                    className: 'quantity',
+                    className: 'quantity' + (quantity === 0 ? ' q0' : ''),
                     dataset: {
-                        sortValue: item.quantity || 0,
+                        sortValue: quantity + (quantity === 0 ? item.snapshot / 10000000000000 : 0),
                     },
-                }, ct((item.quantity || 0).toLocaleString())));
+                }, ct(quantity.toLocaleString())));
+                if (quantity === 0) {
+                    td.appendChild(ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}}));
+                }
 
                 let itemKey = Items.stringifyKey({
                     itemId: item.id,
@@ -3209,6 +3225,7 @@ new function () {
             }
 
             parent.scrollTop = 0;
+            updateDeltaTimestamps();
         }
 
         /**
@@ -3533,9 +3550,25 @@ new function () {
      * Updates all delta timestamp elements on the page with values for the current time.
      */
     function updateDeltaTimestamps() {
+        const longFormatter = new Intl.DateTimeFormat([], {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            timeZoneName: 'short',
+        });
+
+        const shortFormatter = new Intl.DateTimeFormat([], {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+
         qsa('.delta-timestamp[data-timestamp]').forEach(ele => {
             const timestamp = parseInt(ele.dataset.timestamp);
-            ele.dataset.simpleTooltip = (new Date(timestamp)).toLocaleString();
+            ele.dataset.simpleTooltip = longFormatter.format(new Date(timestamp));
             ee(ele);
 
             let now = Date.now();
@@ -3552,7 +3585,7 @@ new function () {
             } else if (delta < 14 * MS_DAY) {
                 timeString = Math.round(delta / MS_DAY) + ' days ago';
             } else {
-                timeString = (new Date(timestamp)).toDateString();
+                timeString = shortFormatter.format(new Date(timestamp));
             }
 
             ele.appendChild(ct(timeString));

@@ -405,6 +405,9 @@ body {
               width: 17px; }
           .main .main-result .search-result table tbody td.quantity {
             padding-right: 17px; }
+            .main .main-result .search-result table tbody td.quantity .delta-timestamp {
+              font-size: 70%;
+              padding-left: 1em; }
             .main .main-result .search-result table tbody td.quantity span.favorite {
               background-image: url("../images/favorite-star-off.png");
               background-position: center center;

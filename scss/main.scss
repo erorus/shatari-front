@@ -588,6 +588,10 @@ body {
 
             &.quantity {
               padding-right: $iconSize;
+              .delta-timestamp {
+                font-size: 70%;
+                padding-left: 1em;
+              }
               span.favorite {
                 background-image: url('../images/favorite-star-off.png');
                 background-position: center center;
