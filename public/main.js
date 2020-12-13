@@ -1054,7 +1054,7 @@ new function () {
                 backBar.appendChild(backButton);
                 backButton.addEventListener('click', self.hide);
 
-                if (realm) {
+                if (realm && realm.id !== Realms.getCurrentRealm().id) {
                     backBar.appendChild(ce('span', {className: 'alt-realm'}, ct('Viewing Realm ' + realm.name)));
                 }
 
@@ -1124,11 +1124,15 @@ new function () {
          * @return {Promise<ItemState[]>}
          */
         async function fetchOtherRealms(item, region) {
+            const currentRealm = Realms.getCurrentRealm();
             const connectedRealms = Realms.getRegionConnectedRealms(region);
 
             const toFetch = [];
-            connectedRealms.forEach(realm => {
-                toFetch.push(Auctions.getItem(item, realm.canonical));
+            connectedRealms.forEach(connectedRealm => {
+                toFetch.push(Auctions.getItem(
+                    item,
+                    connectedRealm.id === currentRealm.connectedId ? currentRealm : connectedRealm.canonical
+                ));
             });
 
             return await Promise.all(toFetch);
