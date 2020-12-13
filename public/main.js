@@ -2895,8 +2895,8 @@ new function () {
                     return dir === 'asc' ? 1 : -1;
                 }
 
-                const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
-                const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+                const aVal = a.dataset['sortValue' + columnPos];
+                const bVal = b.dataset['sortValue' + columnPos];
 
                 if (isString) {
                     return aVal.localeCompare(bVal);
@@ -2909,8 +2909,8 @@ new function () {
 
                 // Fallbacks.
                 if (columnPos !== COL_PRICE) {
-                    const aPrice = a.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
-                    const bPrice = b.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
+                    const aPrice = a.dataset['sortValue' + COL_PRICE];
+                    const bPrice = b.dataset['sortValue' + COL_PRICE];
 
                     const valDiff = parseInt(aPrice) - parseInt(bPrice);
                     if (valDiff) {
@@ -2919,8 +2919,8 @@ new function () {
                 }
 
                 if (columnPos !== COL_NAME) {
-                    const aName = a.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
-                    const bName = b.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
+                    const aName = a.dataset['sortValue' + COL_NAME];
+                    const bName = b.dataset['sortValue' + COL_NAME];
 
                     const valDiff = aName.localeCompare(bName);
                     if (valDiff) {
@@ -2929,8 +2929,8 @@ new function () {
                 }
 
                 if (headerTds.length > 3 && columnPos !== COL_DETAIL) {
-                    const aDetail = a.querySelector('td:nth-child(' + COL_DETAIL + ')').dataset.sortValue;
-                    const bDetail = b.querySelector('td:nth-child(' + COL_DETAIL + ')').dataset.sortValue;
+                    const aDetail = a.dataset['sortValue' + COL_DETAIL];
+                    const bDetail = b.dataset['sortValue' + COL_DETAIL];
 
                     const valDiff = parseInt(aDetail) - parseInt(bDetail);
                     if (valDiff) {
@@ -3061,7 +3061,6 @@ new function () {
             let rowsAdded = 0;
             const tbody = ce('tbody');
             table.appendChild(tbody);
-            console.log('loop start', performance.now());
             for (let item, itemIndex = 0; item = itemsList[itemIndex]; itemIndex++) {
                 if ((item.quantity || 0) === 0) {
                     if ((item.price || 0) === 0) {
@@ -3079,11 +3078,8 @@ new function () {
                     }
                 }
 
-                if (rowsAdded++ % (MAX_RESULTS_SHOWN * 5) === 0) {
-                    await new Promise(resolve => setTimeout(() => {
-                        console.log('refresh wait', performance.now());
-                        resolve();
-                    }, 10));
+                if (rowsAdded++ % MAX_RESULTS_SHOWN === 0) {
+                    await new Promise(resolve => setTimeout(() => resolve, 10));
                 }
 
                 let suffix;
@@ -3098,12 +3094,8 @@ new function () {
                 // PRICE
                 //
                 {
-                    tr.appendChild(td = ce('td', {
-                        className: 'price',
-                        dataset: {
-                            sortValue: item.price || 0,
-                        },
-                    }));
+                    tr.appendChild(td = ce('td', {className: 'price'}));
+                    tr.dataset.sortValue1 = item.price || 0;
                     const rowLink = ce('a');
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
@@ -3139,12 +3131,8 @@ new function () {
                     if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
-                    tr.appendChild(td = ce('td', {
-                        className: 'name',
-                        dataset: {
-                            sortValue: itemName,
-                        },
-                    }));
+                    tr.appendChild(td = ce('td', {className: 'name'}));
+                    tr.dataset.sortValue2 = itemName;
                     if (item.side === SIDE_ALLIANCE) {
                         td.appendChild(ce('img', {
                             src: Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM),
@@ -3178,12 +3166,8 @@ new function () {
                     if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
                         value = item.bonusLevel;
                     }
-                    tr.appendChild(td = ce('td', {
-                        className: detailColumn.prop,
-                        dataset: {
-                            sortValue: value,
-                        },
-                    }));
+                    tr.appendChild(td = ce('td', {className: detailColumn.prop}));
+                    tr.dataset.sortValue3 = value;
                     td.appendChild(ct(value.toLocaleString()));
                 }
 
@@ -3193,12 +3177,13 @@ new function () {
                 const quantity = item.quantity || 0;
                 tr.appendChild(td = ce('td', {
                     className: 'quantity' + (quantity === 0 ? ' q0' : ''),
-                    dataset: {
-                        sortValue: quantity + (quantity === 0 ? item.snapshot / 10000000000000 : 0),
-                    },
                 }, ct(quantity.toLocaleString())));
+                const quantityColumnIndex = detailColumn ? 4 : 3;
                 if (quantity === 0) {
                     td.appendChild(ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}}));
+                    tr.dataset['sortValue' + quantityColumnIndex] = quantity + item.snapshot / 10000000000000;
+                } else {
+                    tr.dataset['sortValue' + quantityColumnIndex] = quantity;
                 }
 
                 let itemKey = Items.stringifyKey({
@@ -3213,7 +3198,6 @@ new function () {
                 favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
                 td.appendChild(favSpan);
             }
-            console.log('added all rows', performance.now());
 
             if (tbody.childNodes.length === 0) {
                 tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
