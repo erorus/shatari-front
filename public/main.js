@@ -1896,7 +1896,10 @@ new function () {
                         }
                         a.addEventListener('click', showOtherRealmItem.bind(self, item, itemState, realm));
                         tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
-                        tr.appendChild(ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
+                        tr.appendChild(td = ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
+                        if (itemState.quantity === 0) {
+                            td.classList.add('q0');
+                        }
 
                         regionElements.listTable.appendChild(tr);
                     }
