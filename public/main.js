@@ -2738,6 +2738,7 @@ new function () {
 
         const COL_PRICE = 1;
         const COL_NAME = 2;
+        const COL_DETAIL = 3;
 
         const SEARCH_FAVORITES_BUTTON = qs('.main .search-bar .favorite');
 
@@ -2864,6 +2865,16 @@ new function () {
                     const bName = b.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
 
                     const valDiff = aName.localeCompare(bName);
+                    if (valDiff) {
+                        return valDiff;
+                    }
+                }
+
+                if (headerTds.length > 3 && columnPos !== COL_DETAIL) {
+                    const aDetail = a.querySelector('td:nth-child(' + COL_DETAIL + ')').dataset.sortValue;
+                    const bDetail = b.querySelector('td:nth-child(' + COL_DETAIL + ')').dataset.sortValue;
+
+                    const valDiff = parseInt(aDetail) - parseInt(bDetail);
                     if (valDiff) {
                         return valDiff;
                     }
