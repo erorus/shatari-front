@@ -3160,7 +3160,8 @@ new function () {
             });
 
             if (tbody.childNodes.length === 0) {
-                tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct('No results found.'))));
+                tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
+                td.appendChild(ct('No results found. Double-check your category and filter settings.'));
             } else {
                 if (tbody.childNodes.length > MAX_RESULTS_SHOWN) {
                     tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
