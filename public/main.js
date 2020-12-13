@@ -3082,6 +3082,9 @@ new function () {
                 }
 
                 if (my.rows.length % (MAX_RESULTS_SHOWN * 4) === 0) {
+                    if (my.rows.length > 0) {
+                        parent.classList.add('spinner');
+                    }
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
@@ -3223,7 +3226,7 @@ new function () {
                 sortTd.dispatchEvent(new MouseEvent('click'));
             }
 
-            parent.classList.remove('processing');
+            parent.classList.remove('processing', 'spinner');
             parent.scrollTop = 0;
             updateDeltaTimestamps();
         }
