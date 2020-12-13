@@ -1980,6 +1980,8 @@ new function () {
             "12": "H/B",
         };
 
+        const ID_PET_CAGE = 82800;
+
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
@@ -2161,35 +2163,15 @@ new function () {
                 if (expansion && item.expansion !== expansion) {
                     continue;
                 }
-                if (classId !== undefined) {
-                    // We're selecting a specific class.
-                    if (
-                        item['class'] === Items.CLASS_MISCELLANEOUS &&
-                        item.subclass === Items.SUBCLASS_MISCELLANEOUS_PET
-                    ) {
-                        // Pet items are special, and pretend to be another class.
-                        if (classId === Items.CLASS_BATTLE_PET) {
-                            // We want pet items when selecting for battle pet item class
-                            if (subClassIds !== undefined && !subClassIds.includes(0)) {
-                                // But not if we picked any battle pet types.
-                                continue;
-                            }
-                        } else {
-                            // Skip pet items for all other selected classes (namely, miscellaneous where it belongs).
-                            continue;
-                        }
-                    } else if (item['class'] !== classId) {
-                        // Normal behavior, there's a class mismatch, so skip this item.
-                        continue;
-                    }
+                if (classId !== undefined && item['class'] !== classId) {
+                    continue;
                 }
-                if (item['class'] === Items.CLASS_BATTLE_PET) {
+                if (parseInt(id) === ID_PET_CAGE) {
                     // Handle that later.
                     usePetCage = true;
                     continue;
                 }
-                // The extra class check is because we use the subclass filter as battle pet type for battle pets.
-                if (subClassIds !== undefined && !subClassIds.includes(item.subclass) && classId !== Items.CLASS_BATTLE_PET) {
+                if (subClassIds !== undefined && !subClassIds.includes(item.subclass)) {
                     continue;
                 }
                 if (invTypes !== undefined && !invTypes.includes(item.inventoryType)) {
@@ -2463,8 +2445,16 @@ new function () {
             my.items = await response.json();
 
             for (let id in my.items) {
-                if (my.items.hasOwnProperty(id) && !my.items[id].icon) {
-                    my.items[id].icon = 'inv_misc_questionmark';
+                if (!my.items.hasOwnProperty(id)) {
+                    continue;
+                }
+                let item = my.items[id];
+                if (!item.icon) {
+                    item.icon = 'inv_misc_questionmark';
+                }
+                if (item['class'] === self.CLASS_MISCELLANEOUS && item.subclass === self.SUBCLASS_MISCELLANEOUS_PET) {
+                    item['class'] = self.CLASS_BATTLE_PET;
+                    item.subclass = 0;
                 }
             }
         }
