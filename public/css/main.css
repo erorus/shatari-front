@@ -368,6 +368,8 @@ body {
             background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.6) 40%, rgba(230, 179, 53, 0.6) 60%, rgba(230, 179, 53, 0.1) 100%); }
           .main .main-result .search-result table tbody tr:hover {
             background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
+            .main .main-result .search-result table tbody tr:hover span.favorite {
+              visibility: visible !important; }
           .main .main-result .search-result table tbody tr:not(.message):nth-child(n+500) {
             display: none; }
           .main .main-result .search-result table tbody tr.message td {
@@ -412,10 +414,12 @@ body {
               position: absolute;
               right: 0;
               top: 0;
+              visibility: hidden;
               width: 19px;
               z-index: 10; }
               .main .main-result .search-result table tbody td.quantity span.favorite[data-favorite] {
-                background-image: url("../images/favorite-star.png"); }
+                background-image: url("../images/favorite-star.png");
+                visibility: visible; }
         .main .main-result .search-result table tbody[data-side-icon] td.name img {
           margin-left: 25px; }
         .main .main-result .search-result table tbody[data-side-icon] td.name[data-side-icon] img {

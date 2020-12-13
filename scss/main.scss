@@ -538,6 +538,8 @@ body {
             }
             &:hover {
               background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
+
+              span.favorite {visibility: visible !important}
             }
 
             &:not(.message):nth-child(n+500) {
@@ -594,11 +596,13 @@ body {
                 position: absolute;
                 right: 0;
                 top: 0;
+                visibility: hidden;
                 width: $iconSize + 2 * $iconBorderSize;
                 z-index: 10;
 
                 &[data-favorite] {
                   background-image: url('../images/favorite-star.png');
+                  visibility: visible;
                 }
               }
             }
