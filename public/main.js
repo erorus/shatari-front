@@ -146,6 +146,11 @@ new function () {
     /** @type {ItemID} ITEM_PET_CAGE */
     const ITEM_PET_CAGE = 82800;
 
+    const MS_SEC = 1000;
+    const MS_MINUTE = 60 * MS_SEC;
+    const MS_HOUR = 60 * MS_MINUTE;
+    const MS_DAY = 24 * MS_HOUR;
+
     const SIDE_ALLIANCE = 1;
     const SIDE_HORDE = 2;
 
@@ -162,7 +167,6 @@ new function () {
         // ********************* //
 
         const COPPER_SILVER = 100;
-        const MS_SEC = 1000;
 
         const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
@@ -204,7 +208,22 @@ new function () {
          *
          * @return {Promise<RealmState>}
          */
-        this.getRealmState = () => getRealmState(Realms.getCurrentRealm());
+        this.getRealmState = async function () {
+            const realm = Realms.getCurrentRealm();
+            const realmState = await getRealmState(realm);
+
+            const updatedElement = qs('.main .bottom-bar .last-updated');
+            ee(updatedElement);
+            updatedElement.appendChild(ct(realm.name + ' last updated '));
+            updatedElement.appendChild(ce('span', {
+                className: 'delta-timestamp',
+                dataset: {timestamp: realmState.snapshot}
+            }));
+            updatedElement.appendChild(ct('.'));
+            updateDeltaTimestamps();
+
+            return realmState;
+        };
 
         /**
          * Hydrates a list of items with prices and quantities for the currently-selected realm.
@@ -2790,6 +2809,13 @@ new function () {
         }
 
         /**
+         * Empties the item list.
+         */
+        this.hide = function () {
+            emptyItemList();
+        }
+
+        /**
          * Perform a search for items, reading the parameters from the UI.
          *
          * @param {boolean} favoritesOnly
@@ -2917,11 +2943,7 @@ new function () {
          * while we build a new long list.
          */
         function emptyItemList() {
-            const welcome = qs('.main .welcome');
-            if (welcome) {
-                welcome.parentNode.removeChild(welcome);
-            }
-
+            qs('.main .welcome').style.display = 'none';
             ee(qs('.main .search-result-target'));
         }
 
@@ -3507,6 +3529,36 @@ new function () {
         return df;
     }
 
+    /**
+     * Updates all delta timestamp elements on the page with values for the current time.
+     */
+    function updateDeltaTimestamps() {
+        qsa('.delta-timestamp[data-timestamp]').forEach(ele => {
+            const timestamp = parseInt(ele.dataset.timestamp);
+            ele.dataset.simpleTooltip = (new Date(timestamp)).toLocaleString();
+            ee(ele);
+
+            let now = Date.now();
+            let delta = now - timestamp;
+            let timeString = '';
+            if (delta < 0) {
+                timeString = ele.dataset.simpleTooltip;
+            } else if (delta < MS_MINUTE) {
+                timeString = Math.round(delta / MS_SEC) + ' seconds ago';
+            } else if (delta < 2 * MS_HOUR) {
+                timeString = Math.round(delta / MS_MINUTE) + ' minutes ago';
+            } else if (delta < 2 * MS_DAY) {
+                timeString = Math.round(delta / MS_HOUR) + ' hours ago';
+            } else if (delta < 14 * MS_DAY) {
+                timeString = Math.round(delta / MS_DAY) + ' days ago';
+            } else {
+                timeString = (new Date(timestamp)).toDateString();
+            }
+
+            ele.appendChild(ct(timeString));
+        })
+    }
+
     //      //
     // Init //
     //      //
@@ -3580,6 +3632,15 @@ new function () {
                 rarityClassFix(rarityTo);
             });
         }
+
+        qs('.main .bottom-bar .links a.home').addEventListener('click', event => {
+            event.preventDefault();
+            Detail.hide();
+            Search.hide();
+            qs('.main .welcome').style.display = '';
+        });
+
+        setInterval(updateDeltaTimestamps, MS_MINUTE);
     }
 
     init().catch(alert);

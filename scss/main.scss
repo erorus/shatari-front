@@ -9,6 +9,7 @@ $background40: #4a4644;
 
 $text10: #EEE;
 $text20: #DDD;
+$text30: #CCC;
 
 $qColor: #CA4;
 $highlightBorderColor: #ff6;
@@ -971,13 +972,18 @@ body {
 
   .bottom-bar {
     display: flex;
-    justify-content: flex-end;
+    font-size: 75%;
+    justify-content: space-between;
     margin: $marginStep;
     margin-top: 0;
 
-    .links {
-      font-size: 75%;
-      margin: 0 $marginStep;
+    color: $text30;
+    a {
+      color: $text30;
+    }
+
+    .last-updated {
+      text-align: right;
     }
   }
 }
