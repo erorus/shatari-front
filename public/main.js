@@ -2121,9 +2121,15 @@ new function () {
             });
 
             const validRarity = [];
-            qsa('.main .search-bar input[type="checkbox"].rarity:checked').forEach(function (checkBox) {
-                validRarity.push(parseInt(checkBox.value));
-            });
+            {
+                const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]');
+                const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]');
+                const minRarity = parseInt(rarityFrom.options[rarityFrom.selectedIndex].value);
+                const maxRarity = parseInt(rarityTo.options[rarityTo.selectedIndex].value);
+                for (let rarity = minRarity; rarity <= maxRarity; rarity++) {
+                    validRarity.push(rarity);
+                }
+            }
 
             let minLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-min"]').value) || [])[0];
             let maxLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-max"]').value) || [])[0];
@@ -3519,6 +3525,29 @@ new function () {
             searchBox.focus();
             searchBox.dispatchEvent(new FocusEvent('focus'));
         });
+
+        {
+            const rarityClassFix = select =>
+                select.querySelectorAll('option').forEach(option => {
+                    if (option.selected) {
+                        select.classList.add(option.className);
+                    } else {
+                        select.classList.remove(option.className);
+                    }
+                });
+            const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]');
+            const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]');
+            rarityFrom.addEventListener('change', () => {
+                rarityTo.selectedIndex = Math.max(rarityFrom.selectedIndex, rarityTo.selectedIndex);
+                rarityClassFix(rarityFrom);
+                rarityClassFix(rarityTo);
+            });
+            rarityTo.addEventListener('change', () => {
+                rarityFrom.selectedIndex = Math.min(rarityFrom.selectedIndex, rarityTo.selectedIndex);
+                rarityClassFix(rarityFrom);
+                rarityClassFix(rarityTo);
+            });
+        }
     }
 
     init().catch(alert);

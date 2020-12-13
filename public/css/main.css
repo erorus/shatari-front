@@ -219,6 +219,8 @@ body {
             padding: 0 0.5em;
             text-align: right;
             width: 3em; }
+          .main .search-bar button.filter div table.rarity td:first-child, .main .search-bar > div.filter.filter div table.rarity td:first-child, .main .search-bar > div.favorite.filter div table.rarity td:first-child {
+            text-align: right; }
   .main .main-result {
     display: flex;
     flex: 1 1; }

@@ -338,6 +338,8 @@ body {
             text-align: right;
             width: 3em;
           }
+
+          table.rarity td:first-child {text-align: right}
         }
       }
     }

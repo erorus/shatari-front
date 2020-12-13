@@ -31,12 +31,26 @@
             <label><input type="checkbox" name="never-seen"> Include Never Seen</label><br>
             <br>
             <span class="q">Rarity</span><br>
-            <label><input type="checkbox" class="rarity" value="0" CHECKED><span class="q0"> Poor</span></label><br>
-            <label><input type="checkbox" class="rarity" value="1" CHECKED><span class="q1"> Common</span></label><br>
-            <label><input type="checkbox" class="rarity" value="2" CHECKED><span class="q2"> Uncommon</span></label><br>
-            <label><input type="checkbox" class="rarity" value="3" CHECKED><span class="q3"> Rare</span></label><br>
-            <label><input type="checkbox" class="rarity" value="4" CHECKED><span class="q4"> Epic</span></label><br>
-            <label><input type="checkbox" class="rarity" value="5" CHECKED><span class="q5"> Legendary</span></label><br>
+            <table class="rarity">
+                <tr><td>From</td>
+                    <td><select class="rarity q0" name="rarity-from">
+                    <option value="0" class="q0" SELECTED>Poor</option>
+                    <option value="1" class="q1">Common</option>
+                    <option value="2" class="q2">Uncommon</option>
+                    <option value="3" class="q3">Rare</option>
+                    <option value="4" class="q4">Epic</option>
+                    <option value="5" class="q5">Legendary</option>
+                </select></td></tr>
+                <tr><td>To</td>
+                    <td><select class="rarity q5" name="rarity-to">
+                    <option value="0" class="q0">Poor</option>
+                    <option value="1" class="q1">Common</option>
+                    <option value="2" class="q2">Uncommon</option>
+                    <option value="3" class="q3">Rare</option>
+                    <option value="4" class="q4">Epic</option>
+                    <option value="5" class="q5" SELECTED>Legendary</option>
+                </select></td></tr>
+            </table>
         </div></div>
         <button class="search">Search</button>
     </div>
