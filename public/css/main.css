@@ -202,11 +202,12 @@ body {
           padding: 8px;
           z-index: 10;
           display: none;
-          left: 8px;
+          min-width: 15em;
           position: absolute;
+          right: calc(-100% - 24px);
           text-align: left;
-          top: calc(100% + 2px);
-          width: 200%; }
+          top: calc(100% + 4px);
+          width: calc(200% + 4px); }
           .main .search-bar button.filter div input, .main .search-bar > div.filter.filter div input, .main .search-bar > div.favorite.filter div input {
             margin: 0;
             position: relative;
@@ -429,7 +430,8 @@ body {
             padding-right: 17px; }
             .main .main-result .search-result table tbody td.quantity .delta-timestamp {
               font-size: 70%;
-              padding-left: 1em; }
+              padding-left: 1em;
+              white-space: nowrap; }
             .main .main-result .search-result table tbody td.quantity span.favorite {
               background-image: url("../images/favorite-star-off.png");
               background-position: center center;

@@ -318,11 +318,12 @@ body {
         div {
           @include tooltip();
           display: none;
-          left: $marginStep;
+          min-width: 15em;
           position: absolute;
+          right: calc(-100% - #{2 * ($marginStep + 2 * $bevel)});
           text-align: left;
-          top: calc(100% + #{$bevel});
-          width: 200%;
+          top: calc(100% + #{2 * $bevel});
+          width: calc(200% + #{2 * $bevel});
 
           input {
             margin: 0;
@@ -623,6 +624,7 @@ body {
               .delta-timestamp {
                 font-size: 70%;
                 padding-left: 1em;
+                white-space: nowrap;
               }
               span.favorite {
                 background-image: url('../images/favorite-star-off.png');
