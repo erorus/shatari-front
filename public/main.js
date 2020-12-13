@@ -139,6 +139,7 @@ new function () {
      * @property {number} [side]
      * @property {number} [slots]
      * @property {number} subclass
+     * @property {number} [vendorBuy]
      * @property {number} [vendorSell]
      * @property {number} [vendorSellBase]
      * @property {number} [vendorSellFactor]
@@ -1472,10 +1473,19 @@ new function () {
                 const vendorSell = Items.getVendorSellPrice(item);
                 if (vendorSell >= 100) {
                     table.appendChild(tr = ce('tr'));
-                    tr.appendChild(ce('td', {}, ct('Vendor')));
+                    tr.appendChild(ce('td', {}, ct('Vendor Sell')));
                     tr.appendChild(ce('td', {
                         dataset: {simpleTooltip: 'The amount you get when selling this item to a vendor.'}
                     }, priceElement(vendorSell)));
+                    tr.appendChild(ce('td'));
+                }
+
+                if (item.vendorBuy) {
+                    table.appendChild(tr = ce('tr'));
+                    tr.appendChild(ce('td', {}, ct('Vendor Buy')));
+                    tr.appendChild(ce('td', {
+                        dataset: {simpleTooltip: 'The amount you pay when buying this item from a vendor.'}
+                    }, priceElement(Math.max(100, item.vendorBuy))));
                     tr.appendChild(ce('td'));
                 }
             })();
