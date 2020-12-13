@@ -1844,7 +1844,13 @@ new function () {
                         prices.push(itemState.price);
                     }
 
-                    const ourRealms = [itemState.realm].concat(Realms.getConnectedRealm(itemState.realm).secondary);
+                    const connectedRealm = Realms.getConnectedRealm(itemState.realm);
+                    /** @var {Realm[]} ourRealms */
+                    const ourRealms = [connectedRealm.canonical].concat(connectedRealm.secondary);
+                    ourRealms.sort((a, b) => {
+                        return ((a.id === itemState.realm.id ? 0 : 1) - (b.id === itemState.realm.id ? 0 : 1)) ||
+                            a.name.localeCompare(b.name);
+                    });
                     for (let realm, index = 0; realm = ourRealms[index]; index++) {
                         const tr = ce('tr');
                         let td, a;
