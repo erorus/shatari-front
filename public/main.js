@@ -2800,6 +2800,14 @@ new function () {
         const MAX_RESULTS_SHOWN = 500;
 
         // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = {
+            rows: [],
+        };
+
+        // ********************* //
         // ***** FUNCTIONS ***** //
         // ********************* //
 
@@ -2882,21 +2890,17 @@ new function () {
             setPreferredSort(columnPos * (dir === 'asc' ? 1 : -1));
 
             headerTd.dataset.sort = dir;
-            let table = headerTr;
-            while (table.tagName !== 'TABLE') {
-                table = table.parentNode;
-            }
-            let rows = Array.from(table.querySelectorAll('tbody tr'));
-            rows.sort(function (a, b) {
-                if (a.classList.contains('message')) {
+
+            my.rows.sort(function (a, b) {
+                if (a[0].classList.contains('message')) {
                     return dir === 'asc' ? -1 : 1;
                 }
-                if (b.classList.contains('message')) {
+                if (b[0].classList.contains('message')) {
                     return dir === 'asc' ? 1 : -1;
                 }
 
-                const aVal = a.dataset['sortValue' + columnPos];
-                const bVal = b.dataset['sortValue' + columnPos];
+                const aVal = a[columnPos];
+                const bVal = b[columnPos];
 
                 if (isString) {
                     return aVal.localeCompare(bVal);
@@ -2909,8 +2913,8 @@ new function () {
 
                 // Fallbacks.
                 if (columnPos !== COL_PRICE) {
-                    const aPrice = a.dataset['sortValue' + COL_PRICE];
-                    const bPrice = b.dataset['sortValue' + COL_PRICE];
+                    const aPrice = a[COL_PRICE];
+                    const bPrice = b[COL_PRICE];
 
                     const valDiff = parseInt(aPrice) - parseInt(bPrice);
                     if (valDiff) {
@@ -2919,8 +2923,8 @@ new function () {
                 }
 
                 if (columnPos !== COL_NAME) {
-                    const aName = a.dataset['sortValue' + COL_NAME];
-                    const bName = b.dataset['sortValue' + COL_NAME];
+                    const aName = a[COL_NAME];
+                    const bName = b[COL_NAME];
 
                     const valDiff = aName.localeCompare(bName);
                     if (valDiff) {
@@ -2929,8 +2933,8 @@ new function () {
                 }
 
                 if (headerTds.length > 3 && columnPos !== COL_DETAIL) {
-                    const aDetail = a.dataset['sortValue' + COL_DETAIL];
-                    const bDetail = b.dataset['sortValue' + COL_DETAIL];
+                    const aDetail = a[COL_DETAIL];
+                    const bDetail = b[COL_DETAIL];
 
                     const valDiff = parseInt(aDetail) - parseInt(bDetail);
                     if (valDiff) {
@@ -2942,11 +2946,9 @@ new function () {
             });
 
             if (dir === 'desc') {
-                rows.reverse();
+                my.rows.reverse();
             }
-            rows.forEach(function (row) {
-                row.parentNode.appendChild(row);
-            });
+            my.rows.forEach(row => row[0].parentNode.appendChild(row[0]));
         }
 
         /**
@@ -2956,6 +2958,7 @@ new function () {
         function emptyItemList() {
             qs('.main .welcome').style.display = 'none';
             ee(qs('.main .search-result-target'));
+            my.rows = [];
         }
 
         /**
@@ -3058,7 +3061,7 @@ new function () {
             tr.appendChild(td = ce('td', {}, ct('Available')));
             td.addEventListener('click', columnSort.bind(null, td, false));
 
-            let rowsAdded = 0;
+            my.rows = [];
             const tbody = ce('tbody');
             table.appendChild(tbody);
             for (let item, itemIndex = 0; item = itemsList[itemIndex]; itemIndex++) {
@@ -3078,8 +3081,8 @@ new function () {
                     }
                 }
 
-                if (rowsAdded++ % MAX_RESULTS_SHOWN === 0) {
-                    await new Promise(resolve => setTimeout(() => resolve, 10));
+                if (my.rows.length % MAX_RESULTS_SHOWN === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
                 let suffix;
@@ -3090,12 +3093,15 @@ new function () {
                 let tr, td;
                 tbody.appendChild(tr = ce('tr'));
 
+                const sortRow = [tr];
+                my.rows.push(sortRow);
+
                 //
                 // PRICE
                 //
                 {
                     tr.appendChild(td = ce('td', {className: 'price'}));
-                    tr.dataset.sortValue1 = item.price || 0;
+                    sortRow.push(item.price || 0);
                     const rowLink = ce('a');
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
@@ -3132,7 +3138,7 @@ new function () {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
                     tr.appendChild(td = ce('td', {className: 'name'}));
-                    tr.dataset.sortValue2 = itemName;
+                    sortRow.push(itemName);
                     if (item.side === SIDE_ALLIANCE) {
                         td.appendChild(ce('img', {
                             src: Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM),
@@ -3167,7 +3173,7 @@ new function () {
                         value = item.bonusLevel;
                     }
                     tr.appendChild(td = ce('td', {className: detailColumn.prop}));
-                    tr.dataset.sortValue3 = value;
+                    sortRow.push(value);
                     td.appendChild(ct(value.toLocaleString()));
                 }
 
@@ -3178,12 +3184,11 @@ new function () {
                 tr.appendChild(td = ce('td', {
                     className: 'quantity' + (quantity === 0 ? ' q0' : ''),
                 }, ct(quantity.toLocaleString())));
-                const quantityColumnIndex = detailColumn ? 4 : 3;
                 if (quantity === 0) {
                     td.appendChild(ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}}));
-                    tr.dataset['sortValue' + quantityColumnIndex] = quantity + item.snapshot / 10000000000000;
+                    sortRow.push(quantity + item.snapshot / 10000000000000);
                 } else {
-                    tr.dataset['sortValue' + quantityColumnIndex] = quantity;
+                    sortRow.push(quantity);
                 }
 
                 let itemKey = Items.stringifyKey({
