@@ -162,8 +162,13 @@ body {
   user-select: none;
   width: 100%;
 
+  @media screen and (max-width:600px) {
+    max-height: none;
+  }
+
   .search-bar {
     display: flex;
+    flex-flow: row wrap;
     margin: $marginStep $marginStep 0;
 
     & > * {
@@ -184,6 +189,7 @@ body {
     }
     div.text-container {
       flex: 5 1;
+      min-width: 50%;
       position: relative;
 
       .text-reset {
@@ -274,6 +280,8 @@ body {
     button, > div.filter, > div.favorite {
       @include button();
 
+      max-width: 10em;
+
       &.favorite {
         background-image: url('../images/favorite-star-off.png');
         background-position: center center;
@@ -281,6 +289,7 @@ body {
         background-size: calc(100% - 2px);
         flex: 0 0 auto;
         width: 2em;
+        height: 2em;
 
         &[data-enabled] {
           background-image: url('../images/favorite-star.png');
@@ -299,6 +308,7 @@ body {
         display: flex;
         justify-content: center;
         line-height: 2;
+        min-width: 5em;
         padding-right: 1em;
         position: relative;
 
@@ -349,11 +359,35 @@ body {
         }
       }
     }
+
+    @media screen and (max-width:750px) {
+      font-size: 80%;
+
+      > div.filter.filter div {
+        left: -100%;
+        right: 0;
+        width: unset;
+      }
+
+      > div.text-container {min-width: 33%}
+    }
+
+    @media screen and (max-width:600px) {
+      > select {order: 1}
+      > div.filter.filter {order: 2}
+      > div.favorite {order: 3}
+      > div.text-container {order: 4}
+      > button.search {order: 5}
+    }
   }
 
   .main-result {
     display: flex;
     flex: 1 1;
+
+    @media screen and (max-width:600px) {
+      flex-direction: column;
+    }
 
     & > div {
       margin: $marginStep
@@ -382,6 +416,11 @@ body {
         margin: $marginStep 0 $marginStep $marginStep;
         max-width: $categoryMaxWidth;
         min-width: $categoryMinWidth;
+
+        @media screen and (max-width:600px) {
+          max-width: calc(100% - #{2 * ($marginStep + $bevel)});
+          margin-bottom: 0;
+        }
       }
 
       & > div {
@@ -538,6 +577,10 @@ body {
         }
       }
 
+      @media screen and (max-width:750px) {
+        font-size: 80%;
+      }
+
       table {
         border-radius: $borderRadius $borderRadius 0 0;
         border-spacing: 0;
@@ -637,16 +680,16 @@ body {
                 border-right-color: #555;
                 border-bottom-color: #555;
                 border-radius: 4px;
-                height: $iconSize;
+                height: 1em;
                 margin-right: 6px;
                 position: relative;
                 top: 2px;
-                width: $iconSize;
+                width: 1em;
               }
             }
 
             &.quantity {
-              padding-right: $iconSize;
+              padding-right: 1em;
               .delta-timestamp {
                 font-size: 70%;
                 padding-left: 1em;
@@ -662,7 +705,7 @@ body {
                 right: 0;
                 top: 0;
                 visibility: hidden;
-                width: $iconSize + 2 * $iconBorderSize;
+                width: calc(1em + #{2 * $iconBorderSize});
                 z-index: 10;
 
                 &[data-favorite] {
@@ -673,7 +716,7 @@ body {
             }
           }
           &[data-side-icon] td.name {
-            img {margin-left: $iconSize + $iconMargin + 2 * $iconBorderSize;}
+            img {margin-left: calc(1em + #{$iconMargin + 2 * $iconBorderSize});}
             &[data-side-icon] img {margin-left:0}
           }
         }
@@ -696,6 +739,9 @@ body {
         justify-content: space-between;
         margin: $marginStep;
 
+        @media screen and (max-width:600px) {
+          margin-top: 0;
+        }
         .alt-realm {
           flex: 1 1;
           margin: 0 $marginStep;
@@ -712,6 +758,14 @@ body {
       .panels {
         display: flex;
         flex: 1 1;
+
+        @media screen and (max-width:750px) {
+          font-size: 80%;
+        }
+
+        @media screen and (max-width:600px) {
+          flex-direction: column;
+        }
 
         & > div {
           border: $bevel solid;

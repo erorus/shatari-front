@@ -46,8 +46,12 @@ body {
   max-width: 1050px;
   user-select: none;
   width: 100%; }
+  @media screen and (max-width: 600px) {
+    .main {
+      max-height: none; } }
   .main .search-bar {
     display: flex;
+    flex-flow: row wrap;
     margin: 8px 8px 0; }
     .main .search-bar > * {
       flex: 1 1;
@@ -63,6 +67,7 @@ body {
       padding: 4px; }
     .main .search-bar div.text-container {
       flex: 5 1;
+      min-width: 50%;
       position: relative; }
       .main .search-bar div.text-container .text-reset {
         background-image: url("../images/clear-search.png");
@@ -140,7 +145,8 @@ body {
       border-radius: 6px;
       color: #EEE;
       font: 12.8px "Friz Quadrata TT", sans-serif;
-      text-shadow: 1px 1px 2px #000; }
+      text-shadow: 1px 1px 2px #000;
+      max-width: 10em; }
       .main .search-bar button:hover, .main .search-bar > div.filter:hover, .main .search-bar > div.favorite:hover {
         background-color: #8080ff;
         box-shadow: inset 0 0 10px 10px #282322; }
@@ -150,7 +156,8 @@ body {
         background-repeat: no-repeat;
         background-size: calc(100% - 2px);
         flex: 0 0 auto;
-        width: 2em; }
+        width: 2em;
+        height: 2em; }
         .main .search-bar button.favorite[data-enabled], .main .search-bar > div.filter.favorite[data-enabled], .main .search-bar > div.favorite.favorite[data-enabled] {
           background-image: url("../images/favorite-star.png"); }
         .main .search-bar button.favorite:hover, .main .search-bar > div.filter.favorite:hover, .main .search-bar > div.favorite.favorite:hover {
@@ -180,6 +187,7 @@ body {
         display: flex;
         justify-content: center;
         line-height: 2;
+        min-width: 5em;
         padding-right: 1em;
         position: relative; }
         @media screen and (max-height: 500px) {
@@ -226,9 +234,32 @@ body {
             width: 3em; }
           .main .search-bar button.filter div table.rarity td:first-child, .main .search-bar > div.filter.filter div table.rarity td:first-child, .main .search-bar > div.favorite.filter div table.rarity td:first-child {
             text-align: right; }
+    @media screen and (max-width: 750px) {
+      .main .search-bar {
+        font-size: 80%; }
+        .main .search-bar > div.filter.filter div {
+          left: -100%;
+          right: 0;
+          width: unset; }
+        .main .search-bar > div.text-container {
+          min-width: 33%; } }
+    @media screen and (max-width: 600px) {
+      .main .search-bar > select {
+        order: 1; }
+      .main .search-bar > div.filter.filter {
+        order: 2; }
+      .main .search-bar > div.favorite {
+        order: 3; }
+      .main .search-bar > div.text-container {
+        order: 4; }
+      .main .search-bar > button.search {
+        order: 5; } }
   .main .main-result {
     display: flex;
     flex: 1 1; }
+    @media screen and (max-width: 600px) {
+      .main .main-result {
+        flex-direction: column; } }
     .main .main-result > div {
       margin: 8px; }
     .main .main-result .categories {
@@ -251,6 +282,10 @@ body {
         margin: 8px 0 8px 8px;
         max-width: 200px;
         min-width: 150px; }
+        @media screen and (max-width: 600px) {
+          .main .main-result .categories-parent {
+            max-width: calc(100% - 20px);
+            margin-bottom: 0; } }
       .main .main-result .categories > div {
         background-color: #282322;
         border: 2px solid;
@@ -369,6 +404,9 @@ body {
             left: 20%;
             right: 20%;
             bottom: 20%; }
+      @media screen and (max-width: 750px) {
+        .main .main-result .search-result {
+          font-size: 80%; } }
       .main .main-result .search-result table {
         border-radius: 8px 8px 0 0;
         border-spacing: 0;
@@ -446,13 +484,13 @@ body {
               border-right-color: #555;
               border-bottom-color: #555;
               border-radius: 4px;
-              height: 17px;
+              height: 1em;
               margin-right: 6px;
               position: relative;
               top: 2px;
-              width: 17px; }
+              width: 1em; }
           .main .main-result .search-result table tbody td.quantity {
-            padding-right: 17px; }
+            padding-right: 1em; }
             .main .main-result .search-result table tbody td.quantity .delta-timestamp {
               font-size: 70%;
               padding-left: 1em;
@@ -467,13 +505,13 @@ body {
               right: 0;
               top: 0;
               visibility: hidden;
-              width: 19px;
+              width: calc(1em + 2px);
               z-index: 10; }
               .main .main-result .search-result table tbody td.quantity span.favorite[data-favorite] {
                 background-image: url("../images/favorite-star.png");
                 visibility: visible; }
         .main .main-result .search-result table tbody[data-side-icon] td.name img {
-          margin-left: 25px; }
+          margin-left: calc(1em + 8px); }
         .main .main-result .search-result table tbody[data-side-icon] td.name[data-side-icon] img {
           margin-left: 0; }
     .main .main-result .item {
@@ -504,6 +542,9 @@ body {
         display: flex;
         justify-content: space-between;
         margin: 8px; }
+        @media screen and (max-width: 600px) {
+          .main .main-result .item .back-bar {
+            margin-top: 0; } }
         .main .main-result .item .back-bar .alt-realm {
           flex: 1 1;
           margin: 0 8px;
@@ -515,6 +556,12 @@ body {
       .main .main-result .item .panels {
         display: flex;
         flex: 1 1; }
+        @media screen and (max-width: 750px) {
+          .main .main-result .item .panels {
+            font-size: 80%; } }
+        @media screen and (max-width: 600px) {
+          .main .main-result .item .panels {
+            flex-direction: column; } }
         .main .main-result .item .panels > div {
           border: 2px solid;
           border-color: #060100 #161211 #4a4644;
