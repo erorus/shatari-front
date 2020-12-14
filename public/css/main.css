@@ -345,25 +345,19 @@ body {
         margin: 2em 0; }
       .main .main-result .welcome div:last-child {
         margin-top: 6em; }
-      .main .main-result .welcome .full-screen {
-        display: none; }
-        .main .main-result .welcome .full-screen[data-available] {
-          display: block; }
-        .main:full-screen .main .main-result .welcome .full-screen, .main:-webkit-full-screen .main .main-result .welcome .full-screen, .main:-moz-full-screen .main .main-result .welcome .full-screen {
-          display: none; }
-        .main .main-result .welcome .full-screen button {
-          background-color: #282322;
-          border: 2px solid;
-          border-color: #393433 #312c2a #161211;
-          border-radius: 6px;
-          color: #EEE;
-          font: 12.8px "Friz Quadrata TT", sans-serif;
-          text-shadow: 1px 1px 2px #000;
-          margin: 0 2em;
-          padding: 8px; }
-          .main .main-result .welcome .full-screen button:hover {
-            background-color: #8080ff;
-            box-shadow: inset 0 0 10px 10px #282322; }
+      .main .main-result .welcome .full-screen button {
+        background-color: #282322;
+        border: 2px solid;
+        border-color: #393433 #312c2a #161211;
+        border-radius: 6px;
+        color: #EEE;
+        font: 12.8px "Friz Quadrata TT", sans-serif;
+        text-shadow: 1px 1px 2px #000;
+        margin: 0 2em;
+        padding: 8px; }
+        .main .main-result .welcome .full-screen button:hover {
+          background-color: #8080ff;
+          box-shadow: inset 0 0 10px 10px #282322; }
     .main .main-result .search-result, .main .main-result .item {
       flex: 7 1;
       font: 19px "Arial Narrow", sans-serif;

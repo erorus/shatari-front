@@ -3989,6 +3989,15 @@ new function () {
     //      //
 
     async function init() {
+        const fsDiv = qs('.main .welcome .full-screen');
+        if (document.fullscreenEnabled) {
+            fsDiv.querySelector('button').addEventListener('click', () => {
+                qs('.main').requestFullscreen();
+            });
+        } else {
+            fsDiv.style.visibility = 'hidden';
+        }
+
         await Promise.all([
             Categories.init(),
             Items.init(),
@@ -4064,14 +4073,6 @@ new function () {
             Search.hide();
             qs('.main .welcome').style.display = '';
         });
-
-        if (document.fullscreenEnabled) {
-            const fsDiv = qs('.main .welcome .full-screen');
-            fsDiv.dataset.available = 1;
-            fsDiv.querySelector('button').addEventListener('click', () => {
-                qs('.main').requestFullscreen();
-            })
-        }
 
         setInterval(updateDeltaTimestamps, MS_MINUTE);
     }
