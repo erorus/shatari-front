@@ -337,12 +337,16 @@ body {
           background: linear-gradient(90deg, rgba(128, 128, 255, 0.1) 0%, rgba(128, 128, 255, 0.6) 40%, rgba(128, 128, 255, 0.6) 60%, rgba(128, 128, 255, 0.1) 100%); }
     .main .main-result .welcome {
       font: 16px "Friz Quadrata TT", sans-serif;
-      padding: 8px; }
+      padding: 8px;
+      text-align: center; }
       .main .main-result .welcome h1:first-child {
         margin-top: 0; }
-      .main .main-result .welcome .full-screen {
-        display: none;
+      .main .main-result .welcome div {
         margin: 2em 0; }
+      .main .main-result .welcome div:last-child {
+        margin-top: 6em; }
+      .main .main-result .welcome .full-screen {
+        display: none; }
         .main .main-result .welcome .full-screen[data-available] {
           display: block; }
         .main:full-screen .main .main-result .welcome .full-screen, .main:-webkit-full-screen .main .main-result .welcome .full-screen, .main:-moz-full-screen .main .main-result .welcome .full-screen {

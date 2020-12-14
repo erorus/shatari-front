@@ -495,12 +495,15 @@ body {
     .welcome {
       font: $fontSizeFriz $fontFriz;
       padding: $marginStep;
+      text-align: center;
 
       h1:first-child {margin-top: 0}
 
+      div {margin: 2em 0}
+      div:last-child {margin-top: 6em}
+
       .full-screen {
         display: none;
-        margin: 2em 0;
 
         &[data-available] {
           display: block;
