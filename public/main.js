@@ -126,6 +126,14 @@ new function () {
     /** @typedef {number} Timestamp  A UNIX timestamp, in milliseconds. */
 
     /**
+     * @typedef {object} TokenState
+     * @property {string}        region
+     * @property {Money}         price
+     * @property {Timestamp}     snapshot   When the token price last changed
+     * @property {SummaryLine[]} snapshots  An array of prices, order by snapshot ascending
+     */
+
+    /**
      * @typedef {object} UnnamedItem
      * @property {number} class
      * @property {number} [display]
@@ -175,6 +183,7 @@ new function () {
         const VERSION_GLOBAL_STATE = 2;
         const VERSION_ITEM_STATE = 4;
         const VERSION_REALM_STATE = 3;
+        const VERSION_TOKEN_STATE = 1;
 
         // ********************* //
         // ***** VARIABLES ***** //
@@ -226,6 +235,69 @@ new function () {
 
             return realmState;
         };
+
+        /**
+         * Return the WoW token state for the given realm.
+         *
+         * @param {Realm|null} realm
+         * @return {Promise<TokenState>}
+         */
+        this.getToken = async function (realm) {
+            if (!realm) {
+                realm = Realms.getCurrentRealm();
+            }
+
+            const url = 'data/global/token-' + realm.region + '.bin';
+            const response = await fetch(url, {mode: 'same-origin'});
+            if (!response.ok) {
+                return {
+                    region: realm.region,
+                    snapshot: 0,
+                    price: 0,
+                    snapshots: [],
+                };
+            }
+
+            const buffer = await response.arrayBuffer();
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const read = function (byteCount) {
+                let result = offset;
+                offset += byteCount;
+
+                return result;
+            };
+
+            let version = view.getUint8(read(1));
+            switch (version) {
+                case VERSION_TOKEN_STATE:
+                    // no op
+                    break;
+                default:
+                    throw "Unknown data version for token state.";
+            }
+
+            /** @var {TokenState} result */
+            const result = {
+                region: realm.region,
+            };
+            result.snapshot = view.getUint32(read(4), true) * MS_SEC;
+            result.price = view.getUint32(read(4), true) * COPPER_SILVER;
+
+            result.snapshots = [];
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                let snapshot = view.getUint32(read(4), true) * MS_SEC;
+                let price = view.getUint32(read(4), true) * COPPER_SILVER;
+                result.snapshots.push({
+                    snapshot: snapshot,
+                    price: price,
+                    quantity: 1,
+                });
+            }
+
+            return result;
+        }
 
         /**
          * Hydrates a list of items with prices and quantities for the currently-selected realm.
@@ -776,6 +848,9 @@ new function () {
                 );
                 categoriesParent.appendChild(catDiv);
                 catDiv.addEventListener('click', clickCategory.bind(null, catDiv, cat));
+                if (cat['class'] === Items.CLASS_WOW_TOKEN) {
+                    catDiv.classList.add('q8');
+                }
 
                 if (!cat.subcategories) {
                     return;
@@ -857,6 +932,7 @@ new function () {
         function clickCategory(catDiv, cat) {
             const classId = parseInt(catDiv.dataset.classId);
             const wasSelected = !!catDiv.dataset.selected;
+            const oldClassId = my.classId;
 
             // De-select everything.
             qsa('.main .categories > div').forEach(function (node) {
@@ -880,6 +956,14 @@ new function () {
                 qsa('.main .categories .subcategory[data-parent-class="' + classId + '"]').forEach(function (node) {
                     node.dataset.visible = 1;
                 });
+            }
+
+            if (my.classId === Items.CLASS_WOW_TOKEN) {
+                // Jump straight to the WoW Token detail panel.
+                Detail.showWowToken();
+            } else if (oldClassId === Items.CLASS_WOW_TOKEN) {
+                // Exit WoW Token mode.
+                Detail.hide();
             }
         }
 
@@ -1098,6 +1182,270 @@ new function () {
             populateDetails(item, itemState);
         }
 
+        /**
+         * Shows the WoW Token panel for the current region.
+         */
+        this.showWowToken = async function () {
+            qs('.main .main-result').dataset.detailMode = 1;
+
+            const itemDiv = qs('.main .main-result .item');
+            ee(itemDiv);
+
+            {
+                const backBar = ce('div', {className: 'back-bar'});
+                itemDiv.appendChild(backBar);
+
+                const backButton = ce('button', {}, ct('Back'));
+                backBar.appendChild(backButton);
+                backButton.addEventListener('click', self.hide);
+            }
+
+            const panels = ce('div', {className: 'panels'});
+            itemDiv.appendChild(panels);
+
+            const details = ce('div', {className: 'details'});
+            panels.appendChild(details);
+
+            const scroller = ce('div', {className: 'scroller'});
+            details.appendChild(scroller);
+            scroller.scrollTop = 0;
+
+            // Name panel
+            {
+                const namePanel = ce('span', {
+                    className: 'title q8',
+                });
+                scroller.appendChild(namePanel);
+
+                const icon = ce('span', {className: 'icon', dataset: {quality: 8}});
+                icon.style.backgroundImage = 'url("' + Items.getIconUrl('wow_token01', Items.ICON_SIZE.LARGE) + '")';
+                namePanel.appendChild(icon);
+
+                let itemName = 'WoW Token';
+                const nameLink = ce('a', {
+                    href: 'https://www.wowhead.com/item=122284',
+                }, ct(itemName));
+                namePanel.appendChild(nameLink);
+            }
+
+            const tokenState = await Auctions.getToken(null);
+            const regionName = tokenState.region.toUpperCase();
+            const days = tokenState.snapshots.length ? Math.round(
+                (tokenState.snapshots[tokenState.snapshots.length - 1].snapshot - tokenState.snapshots[0].snapshot) /
+                (24 * 60 * 60 * 1000)
+            ) : 0;
+
+            // Stats
+            (() => {
+                const statsPanel = ce('div', {className: 'base-stats framed'});
+                scroller.appendChild(statsPanel);
+
+                statsPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Base Stats')));
+
+                const table = ce('table');
+                statsPanel.appendChild(table);
+
+                let tr;
+
+                table.appendChild(tr = ce('tr', {className: 'header'}));
+                tr.appendChild(ce('td'));
+                tr.appendChild(ce('td', {}, ct(regionName)));
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Current')));
+                tr.appendChild(ce('td', {
+                    dataset: {simpleTooltip: 'Price of a token in ' + regionName + ' right now.'}
+                }, tokenState.price ? priceElement(tokenState.price) : null));
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Updated')));
+                tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: tokenState.snapshot}})));
+
+                let prices = [];
+                tokenState.snapshots.forEach(snapshot => {
+                    if (snapshot.price > 0) {
+                        prices.push(snapshot.price);
+                    }
+                });
+                prices.sort((a, b) => a - b);
+
+                let elements = {};
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Median')));
+                tr.appendChild(elements.median = ce('td', {
+                    dataset: {simpleTooltip: 'Median price in ' + regionName + ' over the past ' + days + ' days.'}
+                }));
+
+                table.appendChild(tr = ce('tr'));
+                tr.appendChild(ce('td', {}, ct('Mean')));
+                tr.appendChild(elements.mean = ce('td', {
+                    dataset: {simpleTooltip: 'Mean (average) price in ' + regionName + ' over the past ' + days + ' days.'}
+                }));
+
+                let statistics = getStatistics(prices);
+                elements.median.appendChild(priceElement(statistics.median));
+                elements.mean.appendChild(priceElement(statistics.mean));
+            })();
+
+            // Price chart
+            (() => {
+                // Chart container
+                const chartContainer = ce('div', {
+                    className: 'charts-container framed',
+                });
+                scroller.appendChild(chartContainer);
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(days + '-Day History')));
+
+                // Chart wrapper and parent SVG
+                const constScale = 5;
+                const xMax = 1000 * constScale;
+                const yMaxPrice = 333 * constScale;
+                const yMax = yMaxPrice;
+
+                const chartWrapper = ce('div', {
+                    className: 'chart-wrapper',
+                    style: {
+                        paddingBottom: (yMax / xMax * 100) + '%',
+                    }
+                });
+                chartContainer.appendChild(chartWrapper);
+                const priceChart = svge('svg', {
+                    'viewBox': [0, 0, xMax, yMax].join(' '),
+                });
+                chartWrapper.appendChild(priceChart);
+
+                // Determine scaling
+                let maxPrice = 0;
+                let firstTimestamp = Date.now();
+                let lastTimestamp = 0;
+                {
+                    let prices = [];
+                    tokenState.snapshots.forEach(snapshot => {
+                        maxPrice = Math.max(maxPrice, snapshot.price);
+                        firstTimestamp = Math.min(firstTimestamp, snapshot.snapshot);
+                        lastTimestamp = Math.max(lastTimestamp, snapshot.snapshot);
+                        if (snapshot.price > 0) {
+                            prices.push(snapshot.price);
+                        }
+                    });
+                    if (maxPrice === 0) {
+                        return;
+                    }
+
+                    prices.sort((a, b) => a - b);
+                    let q1 = prices[Math.floor(prices.length * 0.25)];
+                    let q3 = prices[Math.floor(prices.length * 0.75)];
+                    let iqr = q3 - q1;
+
+                    maxPrice = Math.min(maxPrice, q3 + iqr * 1.5) * 1.15;
+                }
+                const timestampRange = lastTimestamp - firstTimestamp;
+
+                // Set point arrays.
+                const pricePoints = [];
+                const hoverData = [];
+
+                const xOffset = Math.round(1 / tokenState.snapshots.length * xMax / 2);
+                const xRange = xMax - 2 * xOffset;
+
+                tokenState.snapshots.forEach(snapshot => {
+                    const x = xOffset + Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xRange);
+                    const priceY = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
+                    pricePoints.push([x, priceY].join(','));
+
+                    const hoverPoint = {
+                        xCenter: x / xMax,
+                    };
+                    co(hoverPoint, snapshot);
+                    if (hoverData.length === 0) {
+                        hoverPoint.xMin = 0;
+                    } else {
+                        let prev = hoverData[hoverData.length - 1];
+                        hoverPoint.xMin = prev.xMax = prev.xCenter + (hoverPoint.xCenter - prev.xCenter) / 2;
+                    }
+
+                    hoverData.push(hoverPoint);
+                });
+                hoverData[hoverData.length - 1].xMax = 1;
+
+                // line + fill
+                [
+                    {data: pricePoints, max: yMaxPrice, name: 'price'},
+                ].forEach(dataset => {
+                    const firstY = dataset.data[0].split(',')[1];
+                    const lastY = dataset.data[dataset.data.length - 1].split(',')[1];
+
+                    const line = svge('polyline', {
+                        points: '0,' + firstY + ' ' + dataset.data.join(' ') + ' ' + xMax + ',' + lastY,
+                    });
+                    line.classList.add(dataset.name);
+
+                    // Loop us back around to fill the shape.
+                    dataset.data.push([xMax, lastY].join(','));
+                    dataset.data.push([xMax, dataset.max].join(','));
+                    dataset.data.push([0, dataset.max].join(','));
+                    dataset.data.push([0, firstY].join(','));
+                    const fill = svge('polygon', {
+                        points: dataset.data.join(' '),
+                    });
+                    fill.classList.add(dataset.name);
+
+                    priceChart.appendChild(fill);
+                    priceChart.appendChild(line);
+                });
+
+                const hoverLine = svge('line', {x1: -1000, x2: -1000, y1: 0, y2: yMax});
+                hoverLine.classList.add('hover');
+                priceChart.appendChild(hoverLine);
+
+                const formatter = new Intl.DateTimeFormat([], {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    timeZoneName: 'short',
+                });
+
+                priceChart.addEventListener('mousemove', (event) => {
+                    let leftOffset = priceChart.getBoundingClientRect().left;
+                    let xPos = Math.min(0.9999, (event.clientX - leftOffset) / priceChart.clientWidth);
+
+                    hoverLine.x1.baseVal.value = hoverLine.x2.baseVal.value = xPos * xMax;
+
+                    let left = 0;
+                    let right = hoverData.length - 1;
+                    let mid = 0;
+                    while (left <= right) {
+                        mid = Math.floor((left + right) / 2);
+                        if (hoverData[mid].xMax < xPos) {
+                            left = mid + 1;
+                        } else if (hoverData[mid].xMin > xPos) {
+                            right = mid - 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let snapshot = hoverData[mid];
+
+                    const result = ce('table', {className: 'shatari-tooltip'});
+                    result.appendChild(ce('tr', {}, ce('td', {className: 'date', colSpan: 2}, ct(formatter.format(new Date(snapshot.snapshot))))));
+
+                    const priceLine = ce('tr');
+                    priceLine.appendChild(ce('td', {className: 'price'}, ct('Price')));
+                    priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
+                    result.appendChild(priceLine);
+
+                    WH.Tooltip.showAtCursor(event, result.outerHTML);
+                });
+                priceChart.addEventListener('mouseout', WH.Tooltip.hide);
+            })();
+
+            updateDeltaTimestamps();
+        }
+
         // ------- //
         // PRIVATE //
         // ------- //
@@ -1136,6 +1484,33 @@ new function () {
                 stamina: roundToOdd((baseStats.stamina + breedStats.stamina) * 5 * level * (1 + quality / 10) + 100),
                 power: roundToOdd((baseStats.power + breedStats.power) * level * (1 + quality / 10)),
                 speed: roundToOdd((baseStats.speed + breedStats.speed) * level * (1 + quality / 10)),
+            };
+        }
+
+        /**
+         * Given an array of numbers, return the median and mean.
+         *
+         * @param {number[]} values
+         * @return {{median: number, mean: number}}
+         */
+        function getStatistics(values) {
+            let median;
+            if (values.length % 2 === 1) {
+                median = values[Math.floor(values.length / 2)];
+            } else {
+                let value1 = values[values.length / 2 - 1];
+                let value2 = values[values.length / 2];
+                median = Math.round((value1 + value2) / 2);
+            }
+
+            let mean;
+            let sum = 0;
+            values.forEach(value => sum += value);
+            mean = Math.round(sum / values.length);
+
+            return {
+                median: median,
+                mean: mean,
             };
         }
 
@@ -1371,27 +1746,6 @@ new function () {
                 }
             }
 
-            const getStatistics = (values) => {
-                let median;
-                if (values.length % 2 === 1) {
-                    median = values[Math.floor(values.length / 2)];
-                } else {
-                    let value1 = values[values.length / 2 - 1];
-                    let value2 = values[values.length / 2];
-                    median = Math.round((value1 + value2) / 2);
-                }
-
-                let mean;
-                let sum = 0;
-                values.forEach(value => sum += value);
-                mean = Math.round(sum / values.length);
-
-                return {
-                    median: median,
-                    mean: mean,
-                };
-            }
-
             let regionElements = {};
 
             // Stats
@@ -1423,7 +1777,7 @@ new function () {
                 if (!item.quantity) {
                     table.appendChild(tr = ce('tr'));
                     tr.appendChild(ce('td', {}, ct('Last Seen')));
-                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: itemState.snapshot}})));
+                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}})));
                     tr.appendChild(ce('td'));
                 }
 
@@ -1967,6 +2321,7 @@ new function () {
             co(repricedItem, item);
             repricedItem.quantity = itemState.quantity;
             repricedItem.price = itemState.price;
+            repricedItem.snapshot = itemState.snapshot;
 
             self.show(repricedItem, realm);
         }
@@ -2000,6 +2355,7 @@ new function () {
         this.CLASS_ARMOR = 4;
         this.CLASS_MISCELLANEOUS = 15;
         this.CLASS_BATTLE_PET = 17;
+        this.CLASS_WOW_TOKEN = 18;
         this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON];
 
         /**
@@ -2861,6 +3217,11 @@ new function () {
          * @param {boolean} favoritesOnly
          */
         this.perform = async function (favoritesOnly) {
+            if (Categories.getClassId() === Items.CLASS_WOW_TOKEN) {
+                // Get out of WoW Token mode before performing any searches.
+                qs('.main .categories .category[data-class-id="' + Items.CLASS_WOW_TOKEN + '"]').dispatchEvent(new MouseEvent('click'));
+            }
+
             if (!Realms.getCurrentRealm()) {
                 alert('Please select a realm in the top left corner.');
                 qs('.main .search-bar select').focus();
