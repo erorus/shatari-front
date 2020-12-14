@@ -243,19 +243,28 @@ new function () {
          * @return {Promise<TokenState>}
          */
         this.getToken = async function (realm) {
+            /** @var {TokenState} result */
+            const result = {
+                region: null,
+                snapshot: 0,
+                price: 0,
+                snapshots: [],
+            };
+
             if (!realm) {
                 realm = Realms.getCurrentRealm();
             }
 
+            if (!realm) {
+                return result;
+            }
+
+            result.region = realm.region;
+
             const url = 'data/global/token-' + realm.region + '.bin';
             const response = await fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
-                return {
-                    region: realm.region,
-                    snapshot: 0,
-                    price: 0,
-                    snapshots: [],
-                };
+                return result;
             }
 
             const buffer = await response.arrayBuffer();
@@ -278,10 +287,6 @@ new function () {
                     throw "Unknown data version for token state.";
             }
 
-            /** @var {TokenState} result */
-            const result = {
-                region: realm.region,
-            };
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.price = view.getUint32(read(4), true) * COPPER_SILVER;
 
@@ -1229,6 +1234,12 @@ new function () {
             }
 
             const tokenState = await Auctions.getToken(null);
+            if (!tokenState.region) {
+                scroller.appendChild(ct('Choose a realm first.'));
+
+                return;
+            }
+
             const regionName = tokenState.region.toUpperCase();
             const days = tokenState.snapshots.length ? Math.round(
                 (tokenState.snapshots[tokenState.snapshots.length - 1].snapshot - tokenState.snapshots[0].snapshot) /
