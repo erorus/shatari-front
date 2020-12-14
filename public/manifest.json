@@ -1,8 +1,12 @@
 {
-  "name": "Sha'tari Project",
-  "short_name": "Sha'tari",
+  "name": "Oribos Exchange",
+  "short_name": "Oribos",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#060100",
-  "description": "Alpha version of a World of Warcraft Auction House stats app"
+  "description": "World of Warcraft Auction House stats",
+  "icons":[
+    {"src":"/images/favicon/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},
+    {"src":"/images/favicon/native.png","sizes":"45x45","type":"image/png"}
+  ]
 }
