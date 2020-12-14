@@ -13,7 +13,7 @@
       background: #161211; }
     *::-webkit-scrollbar-thumb {
       background-color: #4a4644;
-      border-left: 6px solid #161211; }
+      border: 4px solid #161211; }
 
 input[type="number"] {
   -moz-appearance: textfield; }
@@ -182,6 +182,9 @@ body {
         line-height: 2;
         padding-right: 1em;
         position: relative; }
+        @media screen and (max-height: 500px) {
+          .main .search-bar button.filter, .main .search-bar > div.filter.filter, .main .search-bar > div.favorite.filter {
+            line-height: 1; } }
         .main .search-bar button.filter::after, .main .search-bar > div.filter.filter::after, .main .search-bar > div.favorite.filter::after {
           background-image: url("../images/triangle-arrow.png");
           background-size: contain;
@@ -235,9 +238,11 @@ body {
       position: absolute;
       right: 4px;
       top: 4px; }
+      .main .main-result .categories::-webkit-scrollbar-thumb {
+        border-right: 0;
+        border-left-width: 6px; }
       .main .main-result .categories-parent {
         background-color: #161211;
-        background: linear-gradient(180deg, #161211 0%, #201b1a 100%);
         border: 2px solid;
         border-color: #060100 #161211 #4a4644;
         border-radius: 8px;
@@ -300,6 +305,26 @@ body {
       padding: 8px; }
       .main .main-result .welcome h1:first-child {
         margin-top: 0; }
+      .main .main-result .welcome .full-screen {
+        display: none;
+        margin: 2em 0; }
+        .main .main-result .welcome .full-screen[data-available] {
+          display: block; }
+        .main:full-screen .main .main-result .welcome .full-screen, .main:-webkit-full-screen .main .main-result .welcome .full-screen, .main:-moz-full-screen .main .main-result .welcome .full-screen {
+          display: none; }
+        .main .main-result .welcome .full-screen button {
+          background-color: #282322;
+          border: 2px solid;
+          border-color: #393433 #312c2a #161211;
+          border-radius: 6px;
+          color: #EEE;
+          font: 12.8px "Friz Quadrata TT", sans-serif;
+          text-shadow: 1px 1px 2px #000;
+          margin: 0 2em;
+          padding: 8px; }
+          .main .main-result .welcome .full-screen button:hover {
+            background-color: #8080ff;
+            box-shadow: inset 0 0 10px 10px #282322; }
     .main .main-result .search-result, .main .main-result .item {
       flex: 7 1;
       font: 19px "Arial Narrow", sans-serif;

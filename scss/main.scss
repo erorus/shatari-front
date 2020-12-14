@@ -120,7 +120,7 @@ $scrollbarTrack: $background10;
 
     &-thumb {
       background-color: $scrollbarThumb;
-      border-left: 6px solid $scrollbarTrack;
+      border: 4px solid $scrollbarTrack;
     }
   }
 }
@@ -302,6 +302,9 @@ body {
         padding-right: 1em;
         position: relative;
 
+        @media screen and (max-height:500px) {
+          line-height: 1;
+        }
         &::after {
           background-image: url("../images/triangle-arrow.png");
           background-size: contain;
@@ -364,9 +367,13 @@ body {
       right: $marginStep / 2;
       top: $marginStep / 2;
 
+      &::-webkit-scrollbar-thumb {
+        border-right:0;
+        border-left-width:6px;
+      }
+
       &-parent {
         background-color: $background10;
-        background: linear-gradient(180deg, $background10 0%, $background15 100%);
         border: $bevel solid;
         border-color: $background00 $background10 $background40;
         border-radius: $borderRadius;
@@ -451,6 +458,25 @@ body {
       padding: $marginStep;
 
       h1:first-child {margin-top: 0}
+
+      .full-screen {
+        display: none;
+        margin: 2em 0;
+
+        &[data-available] {
+          display: block;
+        }
+
+        .main:full-screen &, .main:-webkit-full-screen &, .main:-moz-full-screen & {
+          display: none;
+        }
+
+        button {
+          @include button();
+          margin: 0 2em;
+          padding: $marginStep;
+        }
+      }
     }
 
     .search-result, .item {

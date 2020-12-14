@@ -4065,6 +4065,14 @@ new function () {
             qs('.main .welcome').style.display = '';
         });
 
+        if (document.fullscreenEnabled) {
+            const fsDiv = qs('.main .welcome .full-screen');
+            fsDiv.dataset.available = 1;
+            fsDiv.querySelector('button').addEventListener('click', () => {
+                qs('.main').requestFullscreen();
+            })
+        }
+
         setInterval(updateDeltaTimestamps, MS_MINUTE);
     }
 
