@@ -237,7 +237,9 @@ new function () {
 
             const now = Date.now();
             const nextCheck = nextCheckTimestamp(realmState);
-            if (nextCheck - now < MS_MINUTE) {
+            if (nextCheck < now) {
+                // Add nothing.
+            } else if (nextCheck - now < MS_MINUTE) {
                 updatedElement.appendChild(ct(' Next update: imminent.'))
             } else {
                 updatedElement.appendChild(ct(' Next update: '))
@@ -721,14 +723,12 @@ new function () {
          * Returns the timestamp of the next time we should check for a snapshot, given a realm state.
          *
          * @param {RealmState} realmState
-         * @return {number}
+         * @return {number|undefined}
          */
         function nextCheckTimestamp(realmState) {
-            const now = Date.now();
-
             if (!realmState.lastCheck) {
                 // We never checked this realm before.
-                return now;
+                return;
             }
 
             const snapshots = realmState.snapshots || [];
@@ -738,16 +738,7 @@ new function () {
             }
             const nextSnapshot = (realmState.snapshot || realmState.lastCheck) + minInterval;
 
-            // Don't let us check more frequently than every 5 minutes.
-            const fallback = realmState.lastCheck + 5 * MS_MINUTE;
-
-            if (nextSnapshot < now) {
-                // We're overdue.
-                return Math.max(fallback, now);
-            }
-
-            // It's soon.
-            return nextSnapshot + 10 * MS_SEC;
+            return nextSnapshot + 2.5 * MS_MINUTE;
         }
     };
 
@@ -4021,8 +4012,6 @@ new function () {
             let timeString = '';
             if (sign === 0) {
                 timeString = 'now';
-            } else if (delta < MS_MINUTE) {
-                timeString = Math.round(delta / MS_SEC) + ' seconds ' + ago;
             } else if (delta < 2 * MS_HOUR) {
                 timeString = Math.round(delta / MS_MINUTE) + ' minutes ' + ago;
             } else if (delta < 2 * MS_DAY) {
