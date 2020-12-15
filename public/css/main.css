@@ -817,6 +817,7 @@ body {
     .main .bottom-bar a {
       color: #CCC; }
     .main .bottom-bar .last-updated {
+      margin-left: 2em;
       text-align: right; }
 
 .main .gold, .main .silver, .main .copper, .shatari-tooltip .gold, .shatari-tooltip .silver, .shatari-tooltip .copper {

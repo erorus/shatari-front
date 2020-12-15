@@ -178,6 +178,9 @@ new function () {
 
         const COPPER_SILVER = 100;
 
+        const MAX_SNAPSHOT_INTERVAL = 2 * MS_HOUR;
+        const SNAPSHOTS_FOR_INTERVAL = 20;
+
         const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
         const VERSION_GLOBAL_STATE = 2;
@@ -231,6 +234,20 @@ new function () {
                 dataset: {timestamp: realmState.snapshot}
             }));
             updatedElement.appendChild(ct('.'));
+
+            const now = Date.now();
+            const nextCheck = nextCheckTimestamp(realmState);
+            if (nextCheck - now < MS_MINUTE) {
+                updatedElement.appendChild(ct(' Next update: imminent.'))
+            } else {
+                updatedElement.appendChild(ct(' Next update: '))
+                updatedElement.appendChild(ce('span', {
+                    className: 'delta-timestamp',
+                    dataset: {timestamp: nextCheck}
+                }));
+                updatedElement.appendChild(ct('.'));
+            }
+
             updateDeltaTimestamps();
 
             return realmState;
@@ -698,6 +715,39 @@ new function () {
          */
         async function getSnapshotList(realm) {
             return (await fetchSnapshotList())[realm.connectedId] || [];
+        }
+
+        /**
+         * Returns the timestamp of the next time we should check for a snapshot, given a realm state.
+         *
+         * @param {RealmState} realmState
+         * @return {number}
+         */
+        function nextCheckTimestamp(realmState) {
+            const now = Date.now();
+
+            if (!realmState.lastCheck) {
+                // We never checked this realm before.
+                return now;
+            }
+
+            const snapshots = realmState.snapshots || [];
+            let minInterval = MAX_SNAPSHOT_INTERVAL;
+            for (let x = Math.max(1, snapshots.length - SNAPSHOTS_FOR_INTERVAL); x < snapshots.length; x++) {
+                minInterval = Math.min(minInterval, snapshots[x] - snapshots[x - 1]);
+            }
+            const nextSnapshot = (realmState.snapshot || realmState.lastCheck) + minInterval;
+
+            // Don't let us check more frequently than every 5 minutes.
+            const fallback = realmState.lastCheck + 5 * MS_MINUTE;
+
+            if (nextSnapshot < now) {
+                // We're overdue.
+                return Math.max(fallback, now);
+            }
+
+            // It's soon.
+            return nextSnapshot + 10 * MS_SEC;
         }
     };
 
@@ -3965,17 +4015,20 @@ new function () {
 
             let now = Date.now();
             let delta = now - timestamp;
+            let sign = Math.sign(delta);
+            delta = Math.abs(delta);
+            let ago = sign > 0 ? 'ago' : 'away';
             let timeString = '';
-            if (delta < 0) {
-                timeString = ele.dataset.simpleTooltip;
+            if (sign === 0) {
+                timeString = 'now';
             } else if (delta < MS_MINUTE) {
-                timeString = Math.round(delta / MS_SEC) + ' seconds ago';
+                timeString = Math.round(delta / MS_SEC) + ' seconds ' + ago;
             } else if (delta < 2 * MS_HOUR) {
-                timeString = Math.round(delta / MS_MINUTE) + ' minutes ago';
+                timeString = Math.round(delta / MS_MINUTE) + ' minutes ' + ago;
             } else if (delta < 2 * MS_DAY) {
-                timeString = Math.round(delta / MS_HOUR) + ' hours ago';
+                timeString = Math.round(delta / MS_HOUR) + ' hours ' + ago;
             } else if (delta < 14 * MS_DAY) {
-                timeString = Math.round(delta / MS_DAY) + ' days ago';
+                timeString = Math.round(delta / MS_DAY) + ' days ' + ago;
             } else {
                 timeString = shortFormatter.format(new Date(timestamp));
             }
