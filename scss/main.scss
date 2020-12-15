@@ -493,14 +493,19 @@ body {
     }
 
     .welcome {
+      bottom: $marginStep / 2;
       font: $fontSizeFriz $fontFriz;
-      padding: $marginStep;
+      left: $marginStep / 2;
+      overflow-y: auto;
+      position: absolute;
+      right: $marginStep / 2;
       text-align: center;
+      top: $marginStep / 2;
 
       h1:first-child {margin-top: 0}
 
       div {margin: 2em 0}
-      div:last-child {margin-top: 6em}
+      div:last-child {margin-top: 5em}
 
       .full-screen button {
         @include button();

@@ -336,15 +336,20 @@ body {
           box-shadow: none;
           background: linear-gradient(90deg, rgba(128, 128, 255, 0.1) 0%, rgba(128, 128, 255, 0.6) 40%, rgba(128, 128, 255, 0.6) 60%, rgba(128, 128, 255, 0.1) 100%); }
     .main .main-result .welcome {
+      bottom: 4px;
       font: 16px "Friz Quadrata TT", sans-serif;
-      padding: 8px;
-      text-align: center; }
+      left: 4px;
+      overflow-y: auto;
+      position: absolute;
+      right: 4px;
+      text-align: center;
+      top: 4px; }
       .main .main-result .welcome h1:first-child {
         margin-top: 0; }
       .main .main-result .welcome div {
         margin: 2em 0; }
       .main .main-result .welcome div:last-child {
-        margin-top: 6em; }
+        margin-top: 5em; }
       .main .main-result .welcome .full-screen button {
         background-color: #282322;
         border: 2px solid;
