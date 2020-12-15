@@ -49,7 +49,7 @@ $pageMaxWidth: 1050px;
 $categoryMinWidth: 150px;
 $categoryMaxWidth: 200px;
 $priceWidth: 175px;
-$silverWidth: 30px;
+$silverWidth: 1.75em;
 
 $tooltipBorderSize: 1px;
 $tooltipPadding: 8px;
@@ -168,7 +168,6 @@ body {
 
   .search-bar {
     display: flex;
-    flex-flow: row wrap;
     margin: $marginStep $marginStep 0;
 
     & > * {
@@ -189,7 +188,6 @@ body {
     }
     div.text-container {
       flex: 5 1;
-      min-width: 50%;
       position: relative;
 
       .text-reset {
@@ -360,8 +358,8 @@ body {
       }
     }
 
-    @media screen and (max-width:750px) {
-      font-size: 80%;
+    @media screen and (max-width:700px) {
+      flex-flow: row wrap;
 
       > div.filter.filter div {
         left: -100%;
@@ -369,14 +367,11 @@ body {
         width: unset;
       }
 
-      > div.text-container {min-width: 33%}
-    }
-
-    @media screen and (max-width:600px) {
+      > div.text-container {}
       > select {order: 1}
       > div.filter.filter {order: 2}
       > div.favorite {order: 3}
-      > div.text-container {order: 4}
+      > div.text-container {order: 4; min-width: 50%}
       > button.search {order: 5}
     }
   }
@@ -385,7 +380,7 @@ body {
     display: flex;
     flex: 1 1;
 
-    @media screen and (max-width:600px) {
+    @media screen and (max-width:550px) {
       flex-direction: column;
     }
 
@@ -450,6 +445,10 @@ body {
           border-color: $categoryHoverBorder;
           box-shadow: inset 0 0 20px 2px $categoryHoverGlow;
           color: $text10;
+        }
+
+        @media screen and (max-width:550px) {
+          font-size: $fontSizeFriz * 0.7;
         }
       }
 
@@ -755,12 +754,9 @@ body {
         display: flex;
         flex: 1 1;
 
-        @media screen and (max-width:750px) {
-          font-size: 80%;
-        }
-
-        @media screen and (max-width:600px) {
+        @media screen and (max-width:700px) {
           flex-direction: column;
+          font-size: 80%;
         }
 
         & > div {
@@ -795,6 +791,10 @@ body {
               font: $fontSizeFriz * 1.75 $fontFriz;
               margin: 2 * $marginStep;
               padding: 2 * $marginStep;
+
+              @media screen and (max-width:700px) {
+                font-size: $fontSizeFriz * 1.25;
+              }
 
               a {
                 text-decoration: none;
@@ -865,6 +865,10 @@ body {
                   font: $fontSizeFriz $fontFriz;
                   vertical-align: middle;
                   width: auto;
+
+                  @media screen and (max-width:700px) {
+                    font-size: $fontSizeFriz * 0.8;
+                  }
                 }
               }
 
@@ -1014,6 +1018,10 @@ body {
                     &:first-child {
                       font: $fontSizeFriz $fontFriz;
                       text-align: left;
+
+                      @media screen and (max-width:700px) {
+                        font-size: $fontSizeFriz * 0.8;
+                      }
                     }
                     &:last-child {
                       padding-right: $marginStep;
@@ -1036,6 +1044,10 @@ body {
 
             flex: 6 1;
             margin-left: $marginStep;
+
+            @media screen and (max-width:700px) {
+              margin-left: 0;
+            }
 
             table {
               border-collapse: collapse;
