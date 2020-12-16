@@ -623,9 +623,7 @@ body {
           $iconMargin: 6px;
           $iconSize: $fontSizeArial - 2 * $iconBorderSize;
 
-          tr {transform: translateY(0);
-            a {bottom:0; left:0; position:absolute; right:0; top:0; z-index:5}
-
+          tr {
             &.vendor-flip {
               background: linear-gradient(90deg,
                 transparentize($rowHighlightColor, 0.9) 0%,
@@ -660,6 +658,21 @@ body {
               text-align: right;
               width: $priceWidth;
               .silver {display: inline-block; width: $silverWidth}
+
+              // Nonsense to handle the row-wide link.
+              padding-top: 0;
+              > * {
+                position: relative;
+                top: $marginStep / 4;
+              }
+              > a {
+                height: calc(1.25em + #{$marginStep / 2});
+                left: 0;
+                position: absolute;
+                right: 0;
+                top: unset;
+                z-index:5;
+              }
             }
 
             &.name {
@@ -685,6 +698,7 @@ body {
 
             &.quantity {
               padding-right: 1em;
+              position: relative;
               .delta-timestamp {
                 font-size: 70%;
                 padding-left: 1em;
@@ -960,6 +974,7 @@ body {
 
               table {
                 border-collapse: collapse;
+                position: relative;
                 width: 100%;
 
                 thead {
@@ -1001,8 +1016,6 @@ body {
 
                 tbody {
                   tr {
-                    transform: translateY(0);
-                    a {bottom:0; left:0; position:absolute; right:0; top:0; z-index: 5;}
                     &:hover {
                       background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
                     }
@@ -1021,6 +1034,15 @@ body {
 
                       @media screen and (max-width:700px) {
                         font-size: $fontSizeFriz * 0.8;
+                      }
+
+                      // Nonsense to handle the row-wide link.
+                      > a {
+                        height: 1.25em;
+                        left: 0;
+                        position: absolute;
+                        right: 0;
+                        z-index:5;
                       }
                     }
                     &:last-child {
