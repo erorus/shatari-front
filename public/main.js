@@ -3292,6 +3292,7 @@ new function () {
             }
 
             const headerTr = headerTd.parentNode;
+            const tbody = headerTr.parentNode.parentNode.querySelector('tbody');
             const headerTds = headerTr.querySelectorAll('td');
             let columnPos = 0;
             for (let x = 0; x < headerTds.length; x++) {
@@ -3306,13 +3307,6 @@ new function () {
             headerTd.dataset.sort = dir;
 
             my.rows.sort(function (a, b) {
-                if (a[0].classList.contains('message')) {
-                    return dir === 'asc' ? -1 : 1;
-                }
-                if (b[0].classList.contains('message')) {
-                    return dir === 'asc' ? 1 : -1;
-                }
-
                 const aVal = a[columnPos];
                 const bVal = b[columnPos];
 
@@ -3362,7 +3356,153 @@ new function () {
             if (dir === 'desc') {
                 my.rows.reverse();
             }
-            my.rows.forEach(row => row[0].parentNode.appendChild(row[0]));
+
+            const favorites = self.getFavorites();
+            const afterNode = tbody.querySelector('tr.message');
+            for (let x = Math.min(MAX_RESULTS_SHOWN, my.rows.length) - 1; x >= 0; x--) {
+                let tr = my.rows[x][0];
+                if (typeof tr === 'function') {
+                    tr = tr(favorites);
+                    my.rows[x][0] = tr;
+                }
+                tbody.insertBefore(tr, afterNode ? afterNode.nextSibling : tbody.firstChild);
+            }
+
+            updateDeltaTimestamps();
+        }
+
+        /**
+         * Creates a search result row.
+         *
+         * @param {PricedItem} item
+         * @param {HTMLTableSectionElement} tbody
+         * @param {DetailColumn|undefined} detailColumn
+         * @param {boolean} vendorFlip
+         * @param {ItemKeyString[]} favorites
+         * @return {HTMLTableRowElement}
+         */
+        function createRow(item, tbody, detailColumn, vendorFlip, favorites) {
+            let suffix;
+            if (item.bonusSuffix) {
+                suffix = Items.getSuffix(item.id, item.bonusSuffix);
+            }
+
+            let tr = document.createElement('tr');
+            let td;
+
+            //
+            // PRICE
+            //
+            {
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'price';
+                const rowLink = document.createElement('a');
+                if (item.price) {
+                    td.appendChild(priceElement(item.price));
+
+                    if (!vendorFlip && item.quantity && Items.getVendorSellPrice(item) > item.price) {
+                        tr.classList.add('vendor-flip');
+                        rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
+                    }
+                }
+                if (item.id === ITEM_PET_CAGE) {
+                    rowLink.dataset.wowhead = 'npc=' + item.npc;
+                } else {
+                    rowLink.dataset.wowhead = 'item=' + item.id;
+                    if (item.bonusLevel) {
+                        rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
+                    }
+                    if (suffix && suffix.bonus) {
+                        rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                    }
+                }
+                rowLink.addEventListener('click', Detail.show.bind(null, item, null));
+                td.appendChild(rowLink);
+            }
+
+            //
+            // NAME
+            //
+            {
+                let itemName = item.name;
+                if (suffix) {
+                    itemName += ' ' + suffix.name;
+                }
+                if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
+                    itemName += ' (' + item.bonusLevel + ')';
+                }
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'name';
+                if (item.side === SIDE_ALLIANCE) {
+                    let img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.src = Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM);
+                    td.appendChild(img);
+                    td.dataset.sideIcon = 1;
+                    tbody.dataset.sideIcon = 1;
+                } else if (item.side === SIDE_HORDE) {
+                    let img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.src = Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM);
+                    td.appendChild(img);
+                    td.dataset.sideIcon = 1;
+                    tbody.dataset.sideIcon = 1;
+                }
+                let img = document.createElement('img');
+                img.loading = 'lazy';
+                img.src = Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM);
+                td.appendChild(img);
+
+                let span = document.createElement('span');
+                span.className = 'q' + item.quality;
+                span.appendChild(ct(itemName));
+                td.appendChild(span);
+            }
+
+            //
+            // DETAIL
+            //
+            if (detailColumn) {
+                let value = item[detailColumn.prop];
+                if (detailColumn.prop === 'reqLevel' && value <= 1) {
+                    value = 1;
+                }
+                if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
+                    value = item.bonusLevel;
+                }
+                tr.appendChild(td = document.createElement('td'));
+                td.className = detailColumn.prop;
+                td.appendChild(ct(value.toLocaleString()));
+            }
+
+            //
+            // QUANTITY
+            //
+            const quantity = item.quantity || 0;
+            tr.appendChild(td = document.createElement('td'));
+            td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
+            td.appendChild(ct(quantity.toLocaleString()));
+            if (quantity === 0) {
+                let span = document.createElement('span');
+                span.className = 'delta-timestamp';
+                span.dataset.timestamp = item.snapshot;
+                td.appendChild(span);
+            }
+
+            let itemKey = Items.stringifyKey({
+                itemId: item.id,
+                itemLevel: item.bonusLevel,
+                itemSuffix: item.bonusSuffix,
+            });
+            let favSpan = document.createElement('span');
+            favSpan.className = 'favorite';
+            if (favorites.includes(itemKey)) {
+                favSpan.dataset.favorite = 1;
+            }
+            favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
+            td.appendChild(favSpan);
+
+            return tr;
         }
 
         /**
@@ -3451,10 +3591,8 @@ new function () {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
-            const favorites = self.getFavorites();
 
             const parent = qs('.main .search-result-target');
-            parent.classList.add('processing');
 
             let tr, td;
 
@@ -3478,8 +3616,8 @@ new function () {
             my.rows = [];
             const tbody = ce('tbody');
             table.appendChild(tbody);
-            const df = document.createDocumentFragment();
-            for (let item, itemIndex = 0; item = itemsList[itemIndex]; itemIndex++) {
+            for (let itemIndex = 0; itemIndex < itemsList.length; itemIndex++) {
+                let item = itemsList[itemIndex];
                 if ((item.quantity || 0) === 0) {
                     if ((item.price || 0) === 0) {
                         continue;
@@ -3496,54 +3634,20 @@ new function () {
                     }
                 }
 
-                if (my.rows.length % (MAX_RESULTS_SHOWN * 4) === 0) {
-                    if (my.rows.length > 0) {
-                        parent.classList.add('spinner');
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                }
-
                 let suffix;
                 if (item.bonusSuffix) {
                     suffix = Items.getSuffix(item.id, item.bonusSuffix);
                 }
 
-                let tr, td;
-                df.appendChild(tr = document.createElement('tr'));
-
-                const sortRow = [tr];
+                const sortRow = [
+                    createRow.bind(self, item, tbody, detailColumn, vendorFlip),
+                ];
                 my.rows.push(sortRow);
 
                 //
                 // PRICE
                 //
-                {
-                    tr.appendChild(td = document.createElement('td'));
-                    td.className = 'price';
-                    sortRow.push(item.price || 0);
-                    const rowLink = document.createElement('a');
-                    if (item.price) {
-                        td.appendChild(priceElement(item.price));
-
-                        if (!vendorFlip && item.quantity && Items.getVendorSellPrice(item) > item.price) {
-                            tr.classList.add('vendor-flip');
-                            rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
-                        }
-                    }
-                    if (item.id === ITEM_PET_CAGE) {
-                        rowLink.dataset.wowhead = 'npc=' + item.npc;
-                    } else {
-                        rowLink.dataset.wowhead = 'item=' + item.id;
-                        if (item.bonusLevel) {
-                            rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
-                        }
-                        if (suffix && suffix.bonus) {
-                            rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
-                        }
-                    }
-                    rowLink.addEventListener('click', Detail.show.bind(null, item, null));
-                    td.appendChild(rowLink);
-                }
+                sortRow.push(item.price || 0);
 
                 //
                 // NAME
@@ -3556,33 +3660,7 @@ new function () {
                     if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
-                    tr.appendChild(td = document.createElement('td'));
-                    td.className = 'name';
                     sortRow.push(itemName);
-                    if (item.side === SIDE_ALLIANCE) {
-                        let img = document.createElement('img');
-                        img.loading = 'lazy';
-                        img.src = Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM);
-                        td.appendChild(img);
-                        td.dataset.sideIcon = 1;
-                        tbody.dataset.sideIcon = 1;
-                    } else if (item.side === SIDE_HORDE) {
-                        let img = document.createElement('img');
-                        img.loading = 'lazy';
-                        img.src = Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM);
-                        td.appendChild(img);
-                        td.dataset.sideIcon = 1;
-                        tbody.dataset.sideIcon = 1;
-                    }
-                    let img = document.createElement('img');
-                    img.loading = 'lazy';
-                    img.src = Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM);
-                    td.appendChild(img);
-
-                    let span = document.createElement('span');
-                    span.className = 'q' + item.quality;
-                    span.appendChild(ct(itemName));
-                    td.appendChild(span);
                 }
 
                 //
@@ -3596,51 +3674,27 @@ new function () {
                     if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
                         value = item.bonusLevel;
                     }
-                    tr.appendChild(td = document.createElement('td'));
-                    td.className = detailColumn.prop;
                     sortRow.push(value);
-                    td.appendChild(ct(value.toLocaleString()));
                 }
 
                 //
                 // QUANTITY
                 //
                 const quantity = item.quantity || 0;
-                tr.appendChild(td = document.createElement('td'));
-                td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
-                td.appendChild(ct(quantity.toLocaleString()));
                 if (quantity === 0) {
-                    let span = document.createElement('span');
-                    span.className = 'delta-timestamp';
-                    span.dataset.timestamp = item.snapshot;
-                    td.appendChild(span);
                     sortRow.push(quantity + item.snapshot / 10000000000000);
                 } else {
                     sortRow.push(quantity);
                 }
-
-                let itemKey = Items.stringifyKey({
-                    itemId: item.id,
-                    itemLevel: item.bonusLevel,
-                    itemSuffix: item.bonusSuffix,
-                });
-                let favSpan = document.createElement('span');
-                favSpan.className = 'favorite';
-                if (favorites.includes(itemKey)) {
-                    favSpan.dataset.favorite = 1;
-                }
-                favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
-                td.appendChild(favSpan);
             }
 
-            tbody.appendChild(df);
-            if (tbody.childNodes.length === 0) {
+            if (my.rows.length === 0) {
                 tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
                 td.appendChild(ct('No results found. Double-check your category and filter settings.'));
             } else {
-                if (tbody.childNodes.length > MAX_RESULTS_SHOWN) {
+                if (my.rows.length > MAX_RESULTS_SHOWN) {
                     tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
-                        tbody.childNodes.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
+                        my.rows.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
                     ))));
                 }
 
@@ -3653,9 +3707,7 @@ new function () {
                 sortTd.dispatchEvent(new MouseEvent('click'));
             }
 
-            parent.classList.remove('processing', 'spinner');
             parent.scrollTop = 0;
-            updateDeltaTimestamps();
         }
 
         /**

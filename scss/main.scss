@@ -538,38 +538,6 @@ body {
         top: $marginStep / 2;
 
         &:empty {display: none}
-
-        &.processing {
-          overflow-y: hidden;
-          pointer-events: none;
-
-          table {
-            opacity: 0.3;
-          }
-
-          @keyframes spinner {
-            0% {
-              transform: rotate(0);
-            }
-            100% {
-              transform: rotate(360deg);
-            }
-          }
-
-          &.spinner:after {
-            animation: linear infinite spinner 1.75s;
-            background-image: url("../images/loading.png");
-            background-position: center center;
-            background-repeat: no-repeat;
-            background-size: contain;
-            content: '';
-            position: absolute;
-            top: 20%;
-            left: 20%;
-            right: 20%;
-            bottom: 20%;
-          }
-        }
       }
 
       @media screen and (max-width:750px) {
