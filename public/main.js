@@ -642,14 +642,12 @@ new function () {
             const result = {};
             result.realm = {};
             co(result.realm, realm);
-            Object.freeze(result.realm);
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
             result.snapshots = [];
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
             }
-            Object.freeze(result.snapshots);
             result.summary = {};
             result.variants = {};
             result.speciesVariants = {};
@@ -678,26 +676,12 @@ new function () {
                 let snapshot = view.getUint32(read(4), true) * MS_SEC;
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
                 let quantity = view.getUint32(read(4), true);
-                result.summary[itemKeyString] = Object.freeze({
+                result.summary[itemKeyString] = {
                     snapshot: snapshot,
                     price: price,
                     quantity: quantity,
-                });
+                };
             }
-            for (let itemId in result.variants) {
-                if (result.variants.hasOwnProperty(itemId)) {
-                    Object.freeze(result.variants[itemId]);
-                }
-            }
-            for (let speciesId in result.speciesVariants) {
-                if (result.speciesVariants.hasOwnProperty(speciesId)) {
-                    Object.freeze(result.speciesVariants[speciesId]);
-                }
-            }
-            Object.freeze(result.summary);
-            Object.freeze(result.variants);
-            Object.freeze(result.speciesVariants);
-            Object.freeze(result);
 
             my.lastRealmState = {
                 id: realm.connectedId,
