@@ -3454,7 +3454,6 @@ new function () {
             const favorites = self.getFavorites();
 
             const parent = qs('.main .search-result-target');
-            parent.classList.add('processing');
 
             let tr, td;
 
@@ -3478,6 +3477,7 @@ new function () {
             my.rows = [];
             const tbody = ce('tbody');
             table.appendChild(tbody);
+            const df = document.createDocumentFragment();
             for (let item, itemIndex = 0; item = itemsList[itemIndex]; itemIndex++) {
                 if ((item.quantity || 0) === 0) {
                     if ((item.price || 0) === 0) {
@@ -3495,20 +3495,13 @@ new function () {
                     }
                 }
 
-                if (my.rows.length % (MAX_RESULTS_SHOWN * 4) === 0) {
-                    if (my.rows.length > 0) {
-                        parent.classList.add('spinner');
-                    }
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                }
-
                 let suffix;
                 if (item.bonusSuffix) {
                     suffix = Items.getSuffix(item.id, item.bonusSuffix);
                 }
 
                 let tr, td;
-                tbody.appendChild(tr = ce('tr'));
+                df.appendChild(tr = document.createElement('tr'));
 
                 const sortRow = [tr];
                 my.rows.push(sortRow);
@@ -3517,9 +3510,10 @@ new function () {
                 // PRICE
                 //
                 {
-                    tr.appendChild(td = ce('td', {className: 'price'}));
+                    tr.appendChild(td = document.createElement('td'));
+                    td.className = 'price';
                     sortRow.push(item.price || 0);
-                    const rowLink = ce('a');
+                    const rowLink = document.createElement('a');
                     if (item.price) {
                         td.appendChild(priceElement(item.price));
 
@@ -3554,28 +3548,33 @@ new function () {
                     if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
-                    tr.appendChild(td = ce('td', {className: 'name'}));
+                    tr.appendChild(td = document.createElement('td'));
+                    td.className = 'name';
                     sortRow.push(itemName);
                     if (item.side === SIDE_ALLIANCE) {
-                        td.appendChild(ce('img', {
-                            src: Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM),
-                            loading: 'lazy',
-                        }));
+                        let img = document.createElement('img');
+                        img.loading = 'lazy';
+                        img.src = Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM);
+                        td.appendChild(img);
                         td.dataset.sideIcon = 1;
                         tbody.dataset.sideIcon = 1;
                     } else if (item.side === SIDE_HORDE) {
-                        td.appendChild(ce('img', {
-                            src: Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM),
-                            loading: 'lazy',
-                        }));
+                        let img = document.createElement('img');
+                        img.loading = 'lazy';
+                        img.src = Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM);
+                        td.appendChild(img);
                         td.dataset.sideIcon = 1;
                         tbody.dataset.sideIcon = 1;
                     }
-                    td.appendChild(ce('img', {
-                        src: Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM),
-                        loading: 'lazy',
-                    }));
-                    td.appendChild(ce('span', {className: 'q' + item.quality}, ct(itemName)));
+                    let img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.src = Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM);
+                    td.appendChild(img);
+
+                    let span = document.createElement('span');
+                    span.className = 'q' + item.quality;
+                    span.appendChild(ct(itemName));
+                    td.appendChild(span);
                 }
 
                 //
@@ -3589,7 +3588,8 @@ new function () {
                     if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
                         value = item.bonusLevel;
                     }
-                    tr.appendChild(td = ce('td', {className: detailColumn.prop}));
+                    tr.appendChild(td = document.createElement('td'));
+                    td.className = detailColumn.prop;
                     sortRow.push(value);
                     td.appendChild(ct(value.toLocaleString()));
                 }
@@ -3598,11 +3598,14 @@ new function () {
                 // QUANTITY
                 //
                 const quantity = item.quantity || 0;
-                tr.appendChild(td = ce('td', {
-                    className: 'quantity' + (quantity === 0 ? ' q0' : ''),
-                }, ct(quantity.toLocaleString())));
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
+                td.appendChild(ct(quantity.toLocaleString()));
                 if (quantity === 0) {
-                    td.appendChild(ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}}));
+                    let span = document.createElement('span');
+                    span.className = 'delta-timestamp';
+                    span.dataset.timestamp = item.snapshot;
+                    td.appendChild(span);
                     sortRow.push(quantity + item.snapshot / 10000000000000);
                 } else {
                     sortRow.push(quantity);
@@ -3613,7 +3616,8 @@ new function () {
                     itemLevel: item.bonusLevel,
                     itemSuffix: item.bonusSuffix,
                 });
-                let favSpan = ce('span', {className: 'favorite'});
+                let favSpan = document.createElement('span');
+                favSpan.className = 'favorite';
                 if (favorites.includes(itemKey)) {
                     favSpan.dataset.favorite = 1;
                 }
@@ -3621,6 +3625,7 @@ new function () {
                 td.appendChild(favSpan);
             }
 
+            tbody.appendChild(df);
             if (tbody.childNodes.length === 0) {
                 tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
                 td.appendChild(ct('No results found. Double-check your category and filter settings.'));
@@ -3640,7 +3645,6 @@ new function () {
                 sortTd.dispatchEvent(new MouseEvent('click'));
             }
 
-            parent.classList.remove('processing', 'spinner');
             parent.scrollTop = 0;
             updateDeltaTimestamps();
         }
@@ -3950,15 +3954,22 @@ new function () {
      * @return {HTMLSpanElement}
      */
     function priceElement(coppers) {
-        const df = ce('span', {style: {whiteSpace: 'nowrap'}});
+        const df = document.createElement('span');
+        df.style.whiteSpace = 'nowrap';
         coppers = Math.abs(coppers);
         const silver = Math.floor(coppers / 100) % 100;
         const gold = Math.floor(coppers / 10000);
 
         if (gold > 0) {
-            df.appendChild(ce('span', {className: 'gold'}, ct(gold.toLocaleString())));
+            let goldSpan = document.createElement('span');
+            goldSpan.className = 'gold';
+            goldSpan.appendChild(ct(gold.toLocaleString()));
+            df.appendChild(goldSpan);
         }
-        df.appendChild(ce('span', {className: 'silver'}, ct(silver)));
+        let silverSpan = document.createElement('span');
+        silverSpan.className = 'silver';
+        silverSpan.appendChild(ct(silver));
+        df.appendChild(silverSpan);
 
         return df;
     }
