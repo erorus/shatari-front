@@ -3454,6 +3454,7 @@ new function () {
             const favorites = self.getFavorites();
 
             const parent = qs('.main .search-result-target');
+            parent.classList.add('processing');
 
             let tr, td;
 
@@ -3493,6 +3494,13 @@ new function () {
                     if (!vendorPrice || vendorPrice <= item.price) {
                         continue;
                     }
+                }
+
+                if (my.rows.length % (MAX_RESULTS_SHOWN * 4) === 0) {
+                    if (my.rows.length > 0) {
+                        parent.classList.add('spinner');
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
                 let suffix;
@@ -3645,6 +3653,7 @@ new function () {
                 sortTd.dispatchEvent(new MouseEvent('click'));
             }
 
+            parent.classList.remove('processing', 'spinner');
             parent.scrollTop = 0;
             updateDeltaTimestamps();
         }
