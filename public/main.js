@@ -96,6 +96,7 @@ new function () {
      * @typedef {Object} Realm
      * @property {string} region  "us" or "eu"
      * @property {string} name
+     * @property {string} category
      * @property {string} slug
      * @property {RealmID} id
      * @property {ConnectedRealmID} connectedId
@@ -2969,8 +2970,10 @@ new function () {
 
         this.REGION_US = 'us';
         this.REGION_EU = 'eu';
+        this.REGION_TW = 'tw';
+        this.REGION_KR = 'kr';
 
-        const REGIONS = [this.REGION_US, this.REGION_EU];
+        const REGIONS = [this.REGION_US, this.REGION_EU, this.REGION_TW, this.REGION_KR];
 
         // ********************* //
         // ***** VARIABLES ***** //
@@ -3181,12 +3184,36 @@ new function () {
          * Fetches the realm list and stores it locally.
          */
         async function getRealms() {
-            const response = await fetch('json/realm-list.enus.json', {mode:'same-origin'});
-            if (!response.ok) {
+            const responses = await Promise.all([
+                fetch('json/realms/realm-list.json', {mode:'same-origin'}),
+                fetch('json/realms/realm-names.enus.json', {mode:'same-origin'}),
+            ]);
+
+            if (!responses[0].ok) {
                 throw 'Cannot get list of realms!';
             }
+            if (!responses[1].ok) {
+                throw 'Cannot get list of realm names!';
+            }
 
-            my.realms = await response.json();
+            my.realms = await responses[0].json();
+            setNames(await responses[1].json());
+        }
+
+        /**
+         * Set the names and categories of our cached realms using the given dictionary.
+         *
+         * @param {Object.<number, {name: string, category: string}>} names
+         */
+        function setNames(names) {
+            for (let id in my.realms) {
+                if (!my.realms.hasOwnProperty(id)) {
+                    continue;
+                }
+                let nameRec = names[my.realms[id].id] || {};
+                my.realms[id].name = nameRec.name || ('Realm ' + id);
+                my.realms[id].category = nameRec.category || '';
+            }
         }
     }
 
