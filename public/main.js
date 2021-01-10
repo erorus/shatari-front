@@ -2553,7 +2553,7 @@ new function () {
             await Promise.all([
                 fetchItemIds(),
                 fetchItemNames(Locales.getCurrent()),
-                fetchItemSuffixes(),
+                fetchItemSuffixes(Locales.getCurrent()),
                 fetchBattlePets(),
                 fetchBattlePetNames(Locales.getCurrent()),
                 fetchVendor(),
@@ -2963,9 +2963,11 @@ new function () {
 
         /**
          * Fetches the list of item names and stores it locally.
+         *
+         * @param {string} locale
          */
-        async function fetchItemSuffixes() {
-            const response = await fetch('json/name-suffixes.enus.json', {mode:'same-origin'});
+        async function fetchItemSuffixes(locale) {
+            const response = await fetch('json/name-suffixes.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of item suffixes!';
             }
@@ -2994,6 +2996,7 @@ new function () {
             await Promise.all([
                 fetchBattlePetNames(locale),
                 fetchItemNames(locale),
+                fetchItemSuffixes(locale),
             ]);
         }
     };
