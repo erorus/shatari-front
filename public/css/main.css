@@ -795,6 +795,14 @@ body {
     color: #CCC; }
     .main .bottom-bar a {
       color: #CCC; }
+    .main .bottom-bar select {
+      background-color: #282322;
+      border: 2px solid;
+      border-color: #060100 #060100 #4a4644;
+      border-radius: 8px;
+      color: #EEE;
+      font: 12.8px "Friz Quadrata TT", sans-serif;
+      padding: 0 4px; }
     .main .bottom-bar .last-updated {
       margin-left: 2em;
       text-align: right; }

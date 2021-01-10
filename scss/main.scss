@@ -1098,6 +1098,16 @@ body {
       color: $text30;
     }
 
+    select {
+      background-color: $background20;
+      border: $bevel solid;
+      border-color: $background00 $background00 $background40;
+      border-radius: $borderRadius;
+      color: $text10;
+      font: $fontSizeFriz * 0.8 $fontFriz;
+      padding: 0 $marginStep / 2;
+    }
+
     .last-updated {
       margin-left: 2em;
       text-align: right;

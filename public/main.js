@@ -2959,6 +2959,113 @@ new function () {
     };
 
     /**
+     * Methods to handle locale changes, to show localized names and fields.
+     */
+    const Locales = new function () {
+        const self = this;
+
+        // ********************* //
+        // ***** CONSTANTS ***** //
+        // ********************* //
+
+        const NAMES = {
+            enus: 'English',
+            dede: 'Deutsch',
+            eses: 'Español',
+            frfr: 'Français',
+            itit: 'Italiano',
+            ptbr: 'Português',
+            ruru: 'Русский',
+            zhtw: '中文',
+            kokr: '한국어',
+        };
+
+        // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        let my = {
+            changeCallbacks: [],
+
+            locale: 'enus',
+        };
+
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Returns the current 4-letter lowercase locale code.
+         *
+         * @return {string}
+         */
+        this.getCurrent = function () {
+            return my.locale;
+        }
+
+        /**
+         * Sets up any controls and reads the user's preferred locale from local storage.
+         */
+        this.init = function () {
+            let curLocale = localStorage.getItem('locale') || my.locale;
+            if (!NAMES.hasOwnProperty(curLocale)) {
+                curLocale = my.locale;
+            }
+            my.locale = curLocale;
+
+            const sel = qs('.main .bottom-bar select.locales');
+            for (let id in NAMES) {
+                if (!NAMES.hasOwnProperty(id)) {
+                    continue;
+                }
+
+                let o = ce('option', {
+                    value: id,
+                    label: NAMES[id],
+                    selected: id === my.locale,
+                }, document.createTextNode(NAMES[id]));
+
+                sel.appendChild(o);
+            }
+            sel.addEventListener('change', changeLocale.bind(self, sel));
+        };
+
+        /**
+         * Registers a callback function for when the locale changes. The new locale is given as the first param.
+         *
+         * @param {function} callback
+         */
+        this.registerCallback = function (callback) {
+            my.changeCallbacks.push(callback);
+        }
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Change the locale to the currently-selected locale in the given select element.
+         *
+         * @param {HTMLSelectElement} sel
+         */
+        function changeLocale(sel) {
+            my.locale = sel.options[sel.selectedIndex].value;
+
+            try {
+                localStorage.setItem('locale', my.locale);
+            } catch (e) {
+                // Ignore
+            }
+
+            my.changeCallbacks.forEach(f => f(self.getCurrent()));
+        }
+    };
+
+    /**
      * Methods to handle realms and connected realms.
      */
     const Realms = new function () {
@@ -3066,8 +3173,6 @@ new function () {
         this.init = async function () {
             await getRealms();
 
-            const savedRealmId = parseInt(localStorage.getItem('realm') || 0);
-
             const select = qs('.main .search-bar select');
             const placeholderUsageCheck = function () {
                 if (!select.options[0].value) {
@@ -3081,47 +3186,11 @@ new function () {
             }
             select.addEventListener('change', placeholderUsageCheck);
 
-            const sorted = [];
-            for (let k in my.realms) {
-                if (!my.realms.hasOwnProperty(k)) {
-                    continue;
-                }
-
-                sorted.push(my.realms[k]);
-            }
-            sorted.sort((a, b) => {
-                return a.name.localeCompare(b.name) || (REGIONS.indexOf(a.region) - REGIONS.indexOf(b.region));
-            });
-
-            const seenNames = {};
-            sorted.forEach(realm => {
-                let o = ce('option');
-                o.value = realm.id;
-                o.label = realm.name;
-
-                if (seenNames[realm.name]) {
-                    if (seenNames[realm.name] !== true) {
-                        const opt = seenNames[realm.name];
-                        opt.label += ' ' + self.getRealm(parseInt(opt.value)).region.toUpperCase();
-                        ee(opt);
-                        opt.appendChild(ct(opt.label));
-
-                        seenNames[realm.name] = true;
-                    }
-                    o.label += ' ' + realm.region.toUpperCase();
-                } else {
-                    seenNames[realm.name] = o;
-                }
-                o.appendChild(ct(o.label));
-
-                if (realm.id === savedRealmId) {
-                    o.selected = true;
-                }
-
-                select.appendChild(o);
-            });
+            updateSelectNames(parseInt(localStorage.getItem('realm') || 0));
 
             placeholderUsageCheck();
+
+            Locales.registerCallback(onLocaleChange);
         }
 
         // ------- //
@@ -3184,9 +3253,11 @@ new function () {
          * Fetches the realm list and stores it locally.
          */
         async function getRealms() {
+            const localeCode = Locales.getCurrent();
+
             const responses = await Promise.all([
                 fetch('json/realms/realm-list.json', {mode:'same-origin'}),
-                fetch('json/realms/realm-names.enus.json', {mode:'same-origin'}),
+                fetch('json/realms/realm-names.' + localeCode + '.json', {mode:'same-origin'}),
             ]);
 
             if (!responses[0].ok) {
@@ -3198,6 +3269,21 @@ new function () {
 
             my.realms = await responses[0].json();
             setNames(await responses[1].json());
+        }
+
+        /**
+         * Called when the user changes their preferred locale, this updates the UI with the new names.
+         *
+         * @param {string} locale
+         */
+        async function onLocaleChange(locale) {
+            const response = await fetch('json/realms/realm-names.' + locale + '.json', {mode:'same-origin'});
+            if (!response.ok) {
+                throw 'Could not load realm names in locale ' + locale;
+            }
+
+            setNames(await response.json());
+            updateSelectNames();
         }
 
         /**
@@ -3214,6 +3300,63 @@ new function () {
                 my.realms[id].name = nameRec.name || ('Realm ' + id);
                 my.realms[id].category = nameRec.category || '';
             }
+        }
+
+        /**
+         * Updates the realm select box options with their names for the current locale.
+         *
+         * @param {number} [savedRealmId] The "current" realm ID.
+         */
+        function updateSelectNames(savedRealmId) {
+            if (!savedRealmId) {
+                savedRealmId = (self.getCurrentRealm() || {}).id;
+            }
+
+            const select = qs('.main .search-bar select');
+
+            const sorted = [];
+            for (let k in my.realms) {
+                if (!my.realms.hasOwnProperty(k)) {
+                    continue;
+                }
+
+                sorted.push(my.realms[k]);
+            }
+            sorted.sort((a, b) => {
+                return a.name.localeCompare(b.name) || (REGIONS.indexOf(a.region) - REGIONS.indexOf(b.region));
+            });
+
+            const seenNames = {};
+            sorted.forEach(realm => {
+                let o = select.querySelector('option[value="' + realm.id + '"]');
+                if (o) {
+                    ee(o);
+                } else {
+                    o = ce('option', {value: realm.id});
+                }
+                o.label = realm.name;
+
+                if (seenNames[realm.name]) {
+                    if (seenNames[realm.name] !== true) {
+                        const opt = seenNames[realm.name];
+                        opt.label += ' ' + self.getRealm(parseInt(opt.value)).region.toUpperCase();
+                        ee(opt);
+                        opt.appendChild(ct(opt.label));
+
+                        seenNames[realm.name] = true;
+                    }
+                    o.label += ' ' + realm.region.toUpperCase();
+                } else {
+                    seenNames[realm.name] = o;
+                }
+                o.appendChild(ct(o.label));
+
+                if (realm.id === savedRealmId) {
+                    o.selected = true;
+                }
+
+                select.appendChild(o);
+            });
         }
     }
 
@@ -4122,6 +4265,8 @@ new function () {
         } else {
             fsDiv.style.visibility = 'hidden';
         }
+
+        Locales.init();
 
         await Promise.all([
             Categories.init(),
