@@ -1276,7 +1276,7 @@ new function () {
 
                 let itemName = 'WoW Token';
                 const nameLink = ce('a', {
-                    href: 'https://www.wowhead.com/item=122284',
+                    href: 'https://' + Locales.getWowheadDomain() + '.wowhead.com/item=122284',
                 }, ct(itemName));
                 namePanel.appendChild(nameLink);
             }
@@ -1689,6 +1689,7 @@ new function () {
                 } else {
                     const wowheadParams = [];
                     wowheadParams.push('item=' + item.id);
+                    wowheadParams.push('domain=' + Locales.getWowheadDomain());
                     if (specLine.bonuses.length) {
                         wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
                     }
@@ -1796,9 +1797,9 @@ new function () {
                 namePanel.appendChild(nameLink);
 
                 if (item.id === ITEM_PET_CAGE) {
-                    nameLink.href = 'https://www.wowhead.com/npc=' + item.npc;
+                    nameLink.href = 'https://' + Locales.getWowheadDomain() + '.wowhead.com/npc=' + item.npc;
                 } else {
-                    nameLink.href = 'https://www.wowhead.com/item=' + item.id;
+                    nameLink.href = 'https://' + Locales.getWowheadDomain() + '.wowhead.com/item=' + item.id;
                 }
                 if (wowheadParams.length) {
                     nameLink.dataset.wowhead = wowheadParams.join('&');
@@ -3023,6 +3024,18 @@ new function () {
             kokr: '한국어',
         };
 
+        const WOWHEAD_DOMAINS = {
+            enus: 'www',
+            dede: 'de',
+            eses: 'es',
+            frfr: 'fr',
+            itit: 'it',
+            ptbr: 'pt',
+            ruru: 'ru',
+            zhtw: 'cn',
+            kokr: 'ko',
+        };
+
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
@@ -3048,6 +3061,15 @@ new function () {
          */
         this.getCurrent = function () {
             return my.locale;
+        };
+
+        /**
+         * Returns the Wowhead subdomain for the current locale.
+         *
+         * @return {string}
+         */
+        this.getWowheadDomain = function () {
+            return WOWHEAD_DOMAINS[my.locale];
         }
 
         /**
@@ -3086,7 +3108,7 @@ new function () {
             if (!my.changeCallbacks.includes(callback)) {
                 my.changeCallbacks.push(callback);
             }
-        }
+        };
 
         // ------- //
         // PRIVATE //
@@ -3621,9 +3643,9 @@ new function () {
                     }
                 }
                 if (item.id === ITEM_PET_CAGE) {
-                    rowLink.dataset.wowhead = 'npc=' + item.npc;
+                    rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + Locales.getWowheadDomain();
                 } else {
-                    rowLink.dataset.wowhead = 'item=' + item.id;
+                    rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + Locales.getWowheadDomain();;
                     if (item.bonusLevel) {
                         rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
                     }
