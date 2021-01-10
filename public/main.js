@@ -948,6 +948,8 @@ new function () {
                     });
                 });
             });
+
+            Locales.registerCallback(onLocaleChange);
         }
 
         // ------- //
@@ -1098,7 +1100,8 @@ new function () {
                 return my.categories;
             }
 
-            const response = await fetch('json/categories.enus.json', {mode:'same-origin'});
+            const locale = Locales.getCurrent();
+            const response = await fetch('json/categories.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of categories!';
             }
@@ -1130,6 +1133,25 @@ new function () {
             }
 
             return ct(nameString);
+        }
+
+        /**
+         * Called when the user changes their preferred locale, this updates the UI with the new names.
+         *
+         * @param {string} locale
+         */
+        async function onLocaleChange(locale) {
+            my.categories = undefined;
+            my.battlePetTypes = {};
+
+            my.classId = undefined;
+            my.subClassId = undefined;
+            my.subClassIds = undefined;
+            my.invTypes = undefined;
+            my.extraFilters = undefined;
+            my.detailColumn = undefined;
+
+            await Categories.init();
         }
     };
 
@@ -3040,7 +3062,9 @@ new function () {
          * @param {function} callback
          */
         this.registerCallback = function (callback) {
-            my.changeCallbacks.push(callback);
+            if (!my.changeCallbacks.includes(callback)) {
+                my.changeCallbacks.push(callback);
+            }
         }
 
         // ------- //
