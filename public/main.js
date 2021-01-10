@@ -858,6 +858,24 @@ new function () {
         }
 
         /**
+         * Returns the name of the WoW Token in the current locale, since it's a BoP item (and not included in our item
+         * names) but is a category name.
+         *
+         * @return {string}
+         */
+        this.getTokenName = function () {
+            let tokenName = 'WoW Token';
+
+            my.categories.forEach(category => {
+                if (category['class'] === Items.CLASS_WOW_TOKEN) {
+                    tokenName = category.name;
+                }
+            });
+
+            return tokenName;
+        };
+
+        /**
          * Fetches the category list data and creates its elements in the category div.
          */
         this.init = async function () {
@@ -1274,7 +1292,7 @@ new function () {
                 icon.style.backgroundImage = 'url("' + Items.getIconUrl('wow_token01', Items.ICON_SIZE.LARGE) + '")';
                 namePanel.appendChild(icon);
 
-                let itemName = 'WoW Token';
+                let itemName = Categories.getTokenName();
                 const nameLink = ce('a', {
                     href: 'https://' + Locales.getWowheadDomain() + '.wowhead.com/item=122284',
                 }, ct(itemName));
@@ -3645,7 +3663,7 @@ new function () {
                 if (item.id === ITEM_PET_CAGE) {
                     rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + Locales.getWowheadDomain();
                 } else {
-                    rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + Locales.getWowheadDomain();;
+                    rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + Locales.getWowheadDomain();
                     if (item.bonusLevel) {
                         rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
                     }
