@@ -2552,12 +2552,14 @@ new function () {
         this.init = async function () {
             await Promise.all([
                 fetchItemIds(),
-                fetchItemNames(),
+                fetchItemNames(Locales.getCurrent()),
                 fetchItemSuffixes(),
                 fetchBattlePets(),
-                fetchBattlePetNames(),
+                fetchBattlePetNames(Locales.getCurrent()),
                 fetchVendor(),
             ]);
+
+            Locales.registerCallback(onLocaleChange);
         };
 
         /**
@@ -2889,9 +2891,11 @@ new function () {
 
         /**
          * Fetches the list of battle pet names and stores it locally.
+         *
+         * @param {string} locale
          */
-        async function fetchBattlePetNames() {
-            const response = await fetch('json/battlepets.enus.json', {mode:'same-origin'});
+        async function fetchBattlePetNames(locale) {
+            const response = await fetch('json/battlepets.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of battle pet names!';
             }
@@ -2945,9 +2949,11 @@ new function () {
 
         /**
          * Fetches the list of item names and stores it locally.
+         *
+         * @param {string} locale
          */
-        async function fetchItemNames() {
-            const response = await fetch('json/names.enus.json', {mode:'same-origin'});
+        async function fetchItemNames(locale) {
+            const response = await fetch('json/names.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of item names!';
             }
@@ -2977,6 +2983,18 @@ new function () {
             }
 
             my.vendor = await response.json();
+        }
+
+        /**
+         * Called when the user changes their preferred locale, this fetches new names for items and pets.
+         *
+         * @param {string} locale
+         */
+        async function onLocaleChange(locale) {
+            await Promise.all([
+                fetchBattlePetNames(locale),
+                fetchItemNames(locale),
+            ]);
         }
     };
 
