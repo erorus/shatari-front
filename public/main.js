@@ -147,6 +147,7 @@ new function () {
      * @property {number} [reqLevel]
      * @property {number} [side]
      * @property {number} [slots]
+     * @property {number} [stack]
      * @property {number} subclass
      * @property {number} [vendorBuy]
      * @property {number} [vendorSell]
@@ -224,7 +225,13 @@ new function () {
          * @return {Promise<ItemState>}
          */
         this.getItem = async function (item, realm) {
-            return getItemState(realm || Realms.getCurrentRealm(), item, !!realm);
+            realm = realm || Realms.getCurrentRealm();
+
+            if (item.stack) {
+                realm = getCommodityRealm(realm.region);
+            }
+
+            return getItemState(realm, item, !!realm);
         }
 
         /**
@@ -464,7 +471,7 @@ new function () {
                 category: 'Commodities',
                 connectedId: COMMODITY_REALMS[region],
                 id: COMMODITY_REALMS[region],
-                name: 'Commodities',
+                name: region.toUpperCase(),
                 region: region,
                 slug: 'commodity',
             };
@@ -1889,6 +1896,10 @@ new function () {
                 const table = ce('table');
                 statsPanel.appendChild(table);
 
+                if (item.stack) {
+                    table.classList.add('hidden-region-details');
+                }
+
                 let tr;
 
                 table.appendChild(tr = ce('tr', {className: 'header'}));
@@ -2229,6 +2240,12 @@ new function () {
                 validateAndRun();
             }
 
+            updateDeltaTimestamps();
+
+            if (item.stack) {
+                return;
+            }
+
             // Other realms
             (() => {
                 const topContainer = ce('div', {
@@ -2416,8 +2433,6 @@ new function () {
                     regionElements.mean.appendChild(priceElement(statistics.mean));
                 }
             });
-
-            updateDeltaTimestamps();
         }
 
         /**

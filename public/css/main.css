@@ -650,6 +650,8 @@ body {
             .main .main-result .item .panels > div.details .quantity-calc .silver, .main .main-result .item .panels > div.details .base-stats .silver {
               display: inline-block;
               width: 1.75em; }
+            .main .main-result .item .panels > div.details .base-stats .hidden-region-details td:nth-child(3) {
+              display: none; }
             .main .main-result .item .panels > div.details .charts-container {
               margin: 8px; }
               .main .main-result .item .panels > div.details .charts-container .chart-wrapper {

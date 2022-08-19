@@ -870,6 +870,8 @@ body {
               .silver {display: inline-block; width: $silverWidth}
             }
 
+            .base-stats .hidden-region-details td:nth-child(3) {display: none}
+
             .charts-container {
               margin: $marginStep;
 
