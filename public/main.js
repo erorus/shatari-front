@@ -177,6 +177,14 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
+        // Realm IDs used by commodity realms for each region.
+        const COMMODITY_REALMS = {
+            'us': 0x7F00,
+            'eu': 0x7F01,
+            'tw': 0x7F02,
+            'kr': 0x7F03,
+        };
+
         const COPPER_SILVER = 100;
 
         const MAX_SNAPSHOT_INTERVAL = 2 * MS_HOUR;
@@ -194,6 +202,7 @@ new function () {
         // ********************* //
 
         const my = {
+            lastCommodityRealmState: {},
             lastRealmState: {},
 
             lastSnapshotList: {},
@@ -226,6 +235,9 @@ new function () {
         this.getRealmState = async function () {
             const realm = Realms.getCurrentRealm();
             const realmState = await getRealmState(realm);
+            const commodityRealmState = await getRealmState(getCommodityRealm(realm.region));
+
+            mergeCommodityData(realmState, commodityRealmState);
 
             const updatedElement = qs('.main .bottom-bar .last-updated');
             ee(updatedElement);
@@ -442,6 +454,23 @@ new function () {
         }
 
         /**
+         * Returns a fake Realm object for the commodity realm used by the given region.
+         *
+         * @param {string} region
+         * @return {Realm}
+         */
+        function getCommodityRealm(region) {
+            return {
+                category: 'Commodities',
+                connectedId: COMMODITY_REALMS[region],
+                id: COMMODITY_REALMS[region],
+                name: 'Commodities',
+                region: region,
+                slug: 'commodity',
+            };
+        }
+
+        /**
          * Given realm and item objects, return its item state.
          *
          * @param {Realm} realm
@@ -597,12 +626,15 @@ new function () {
          * @return {Promise<RealmState>}
          */
         async function getRealmState(realm) {
+            let lastStateKey = Object.values(COMMODITY_REALMS).includes(realm.connectedId) ?
+                'lastCommodityRealmState' : 'lastRealmState';
+
             if (
-                my.lastRealmState.data &&
-                my.lastRealmState.id === realm.connectedId &&
-                my.lastRealmState.checked > Date.now() - REALM_STATE_CACHE_DURATION
+                my[lastStateKey].data &&
+                my[lastStateKey].id === realm.connectedId &&
+                my[lastStateKey].checked > Date.now() - REALM_STATE_CACHE_DURATION
             ) {
-                return my.lastRealmState.data;
+                return my[lastStateKey].data;
             }
 
             const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode: 'same-origin'});
@@ -610,13 +642,13 @@ new function () {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
 
-            if (my.lastRealmState.data &&
-                my.lastRealmState.id === realm.connectedId &&
-                my.lastRealmState.modified === response.headers.get('last-modified')
+            if (my[lastStateKey].data &&
+                my[lastStateKey].id === realm.connectedId &&
+                my[lastStateKey].modified === response.headers.get('last-modified')
             ) {
-                my.lastRealmState.checked = Date.now();
+                my[lastStateKey].checked = Date.now();
 
-                return my.lastRealmState.data;
+                return my[lastStateKey].data;
             }
 
             const buffer = await response.arrayBuffer();
@@ -684,7 +716,7 @@ new function () {
                 };
             }
 
-            my.lastRealmState = {
+            my[lastStateKey] = {
                 id: realm.connectedId,
                 modified: response.headers.get('last-modified'),
                 checked: Date.now(),
@@ -702,6 +734,27 @@ new function () {
          */
         async function getSnapshotList(realm) {
             return (await fetchSnapshotList())[realm.connectedId] || [];
+        }
+
+        /**
+         * Applies data from the commodity realm state on top of the base realm state.
+         *
+         * @param {RealmState} realmState
+         * @param {RealmState} commodityRealmState
+         */
+        function mergeCommodityData(realmState, commodityRealmState) {
+            let closestCache = {};
+            let getClosestSnapshot = commSnapshot => {
+                let snapshots = realmState.snapshots.slice();
+                snapshots.sort((a, b) => Math.abs(a - commSnapshot) - Math.abs(b - commSnapshot));
+
+                return closestCache[commSnapshot] = snapshots[0];
+            }
+
+            for (const [keyString, itemData] of Object.entries(commodityRealmState.summary)) {
+                itemData.snapshot = closestCache[itemData.snapshot] || getClosestSnapshot(itemData.snapshot);
+                realmState.summary[keyString] = itemData;
+            }
         }
 
         /**
