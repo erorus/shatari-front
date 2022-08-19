@@ -227,7 +227,7 @@ new function () {
         this.getItem = async function (item, realm) {
             realm = realm || Realms.getCurrentRealm();
 
-            if (item.stack) {
+            if (item.stack > 1) {
                 realm = getCommodityRealm(realm.region);
             }
 
@@ -1896,7 +1896,7 @@ new function () {
                 const table = ce('table');
                 statsPanel.appendChild(table);
 
-                if (item.stack) {
+                if (item.stack > 1) {
                     table.classList.add('hidden-region-details');
                 }
 
@@ -2242,7 +2242,7 @@ new function () {
 
             updateDeltaTimestamps();
 
-            if (item.stack) {
+            if (item.stack > 1) {
                 return;
             }
 
