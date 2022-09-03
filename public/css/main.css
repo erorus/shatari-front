@@ -42,8 +42,8 @@ body {
   flex-direction: column;
   margin: 0 auto;
   min-height: 400px;
-  max-height: 800px;
-  max-width: 1050px;
+  max-height: 900px;
+  max-width: 1200px;
   user-select: none;
   width: 100%; }
   @media screen and (max-width: 600px) {
