@@ -728,7 +728,8 @@ new function () {
             result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
             result.snapshots = [];
             if (fetchSummariesOnly) {
-                offset += 4 * view.getUint16(read(2), true);
+                let recordCount = view.getUint16(read(2), true);
+                offset += 4 * recordCount;
             } else {
                 for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                     result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
@@ -3864,17 +3865,23 @@ new function () {
             }
 
             //
-            // QUANTITY
+            // QUANTITY / PERCENTAGE
             //
-            const quantity = item.quantity || 0;
-            tr.appendChild(td = document.createElement('td'));
-            td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
-            td.appendChild(ct(quantity.toLocaleString()));
-            if (quantity === 0 && item.snapshot > 0) {
-                let span = document.createElement('span');
-                span.className = 'delta-timestamp';
-                span.dataset.timestamp = item.snapshot;
-                td.appendChild(span);
+            if (item.regionMedian) {
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'price-percentage'
+                td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
+            } else {
+                const quantity = item.quantity || 0;
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
+                td.appendChild(ct(quantity.toLocaleString()));
+                if (quantity === 0 && item.snapshot > 0) {
+                    let span = document.createElement('span');
+                    span.className = 'delta-timestamp';
+                    span.dataset.timestamp = item.snapshot;
+                    td.appendChild(span);
+                }
             }
 
             let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
@@ -4056,7 +4063,7 @@ new function () {
                 tr.appendChild(td = ce('td', {}, ct(detailColumn.name)));
                 td.addEventListener('click', columnSort.bind(null, td, false));
             }
-            tr.appendChild(td = ce('td', {}, ct('Available')));
+            tr.appendChild(td = ce('td', {}, ct(itemsList.length && itemsList[0].regionMedian ? '% Region Median' :'Available')));
             td.addEventListener('click', columnSort.bind(null, td, false));
 
             my.rows = [];
@@ -4123,13 +4130,17 @@ new function () {
                 }
 
                 //
-                // QUANTITY
+                // QUANTITY / PERCENTAGE
                 //
-                const quantity = item.quantity || 0;
-                if (quantity === 0) {
-                    sortRow.push(quantity + item.snapshot / 10000000000000);
+                if (item.regionMedian) {
+                    sortRow.push(item.price / item.regionMedian);
                 } else {
-                    sortRow.push(quantity);
+                    const quantity = item.quantity || 0;
+                    if (quantity === 0) {
+                        sortRow.push(quantity + item.snapshot / 10000000000000);
+                    } else {
+                        sortRow.push(quantity);
+                    }
                 }
             }
 
