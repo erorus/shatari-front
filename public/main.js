@@ -373,11 +373,7 @@ new function () {
             const result = [];
 
             items.forEach(function (item) {
-                const keyString = Items.stringifyKey({
-                    itemId: item.id,
-                    itemLevel: item.bonusLevel,
-                    itemSuffix: item.bonusSuffix,
-                });
+                const keyString = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
 
                 /** @type {PricedItem} pricedItem */
                 let pricedItem = {};
@@ -504,11 +500,7 @@ new function () {
          * @return {Promise<ItemState>}
          */
         async function getItemState(realm, item, useCached) {
-            let basename = Items.stringifyKey({
-                itemId: item.id,
-                itemLevel: item.bonusLevel,
-                itemSuffix: item.bonusSuffix,
-            });
+            let basename = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
             const url = [
                 'data',
                 useCached ? 'cached' : '',
@@ -749,20 +741,15 @@ new function () {
                 let itemId = view.getUint32(read(4), true);
                 let itemLevel = view.getUint16(read(2), true);
                 let itemSuffix = view.getUint16(read(2), true);
-                let itemKey = {
-                    itemId: itemId,
-                    itemLevel: itemLevel,
-                    itemSuffix: itemSuffix,
-                };
-                let itemKeyString = Items.stringifyKey(itemKey);
+                let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
                 if (!fetchSummariesOnly) {
                     if (itemId === ITEM_PET_CAGE) {
-                        if (itemKey.itemSuffix) {
-                            result.speciesVariants[itemKey.itemLevel] = result.speciesVariants[itemKey.itemLevel] || [];
-                            result.speciesVariants[itemKey.itemLevel].push(itemKeyString);
+                        if (itemSuffix) {
+                            result.speciesVariants[itemLevel] = result.speciesVariants[itemLevel] || [];
+                            result.speciesVariants[itemLevel].push(itemKeyString);
                         }
                     } else {
-                        if (itemKey.itemLevel) {
+                        if (itemLevel) {
                             result.variants[itemId] = result.variants[itemId] || [];
                             result.variants[itemId].push(itemKeyString);
                         }
@@ -2841,17 +2828,17 @@ new function () {
                 let variants;
                 if (!useVariants) {
                     // Not using any variants, just bare item IDs.
-                    variants = [Items.stringifyKey({itemId: parseInt(id), itemLevel: 0, itemSuffix: 0})];
+                    variants = [Items.stringifyKeyParts(parseInt(id), 0, 0)];
                 } else {
                     if (realmState.variants[id]) {
                         variants = realmState.variants[id].slice(0);
                     } else {
                         variants = [
-                            Items.stringifyKey({
-                                itemId: parseInt(id),
-                                itemLevel: self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
-                                itemSuffix: 0,
-                            }),
+                            Items.stringifyKeyParts(
+                                parseInt(id),
+                                self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
+                                0,
+                            ),
                         ];
                     }
 
@@ -2937,12 +2924,12 @@ new function () {
                     let variants;
                     if (!useVariants || forSuggestions) {
                         // Not selecting by breed, just species.
-                        variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
+                        variants = [Items.stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
                     } else {
                         if (realmState.speciesVariants[speciesId]) {
                             variants = realmState.speciesVariants[speciesId].slice(0);
                         } else {
-                            variants = [Items.stringifyKey({itemId: ITEM_PET_CAGE, itemLevel: speciesId, itemSuffix: 0})];
+                            variants = [Items.stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
                         }
                     }
 
@@ -3009,11 +2996,23 @@ new function () {
          * @return {ItemKeyString}
          */
         this.stringifyKey = function (itemKey) {
-            let result = '' + itemKey.itemId;
-            if (itemKey.itemLevel) {
-                result += '-' + itemKey.itemLevel;
-                if (itemKey.itemSuffix) {
-                    result += '-' + itemKey.itemSuffix;
+            return self.stringifyKeyParts(itemKey.itemId, itemKey.itemLevel, itemKey.itemSuffix);
+        };
+
+        /**
+         * Serialize an item key's parts into a short string.
+         *
+         * @param {ItemID}   itemId
+         * @param {number}   itemLevel
+         * @param {SuffixID} itemSuffix
+         * @returns {ItemKeyString}
+         */
+        this.stringifyKeyParts = function (itemId, itemLevel, itemSuffix) {
+            let result = '' + itemId;
+            if (itemLevel) {
+                result += '-' + itemLevel;
+                if (itemSuffix) {
+                    result += '-' + itemSuffix;
                 }
             }
 
@@ -3878,11 +3877,7 @@ new function () {
                 td.appendChild(span);
             }
 
-            let itemKey = Items.stringifyKey({
-                itemId: item.id,
-                itemLevel: item.bonusLevel,
-                itemSuffix: item.bonusSuffix,
-            });
+            let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
             let favSpan = document.createElement('span');
             favSpan.className = 'favorite';
             if (favorites.includes(itemKey)) {
@@ -3934,11 +3929,7 @@ new function () {
             itemsList = itemsList.filter(item => {
                 let offeredPrices = [];
                 let allPrices = [];
-                let itemKey = Items.stringifyKey({
-                    itemId: item.id,
-                    itemLevel: item.bonusLevel,
-                    itemSuffix: item.bonusSuffix,
-                });
+                let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
                 states.forEach(state => {
                     let summaryEntry = state.summary[itemKey];
                     if (summaryEntry && summaryEntry.price) {
