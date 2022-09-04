@@ -50,6 +50,17 @@ new function () {
      * @property {Money} regionMedian
      */
 
+    /**
+     * @typedef {Object} DealsPrices
+     * @property {Money} regionMedian
+     * @property {Money} dealPrice
+     */
+
+    /**
+     * @typedef {object} DealsState
+     * @property {Object<ItemKeyString, DealsPrices>} items
+     */
+
     /** @typedef {number} InventoryType */
 
     /** @typedef {number} ItemID */
@@ -199,6 +210,7 @@ new function () {
 
         const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
+        const VERSION_DEALS_STATE = 1;
         const VERSION_GLOBAL_STATE = 2;
         const VERSION_ITEM_STATE = 5;
         const VERSION_REALM_STATE = 3;
@@ -224,6 +236,70 @@ new function () {
         // ------ //
 
         /**
+         * Returns the deals state for the given realm.
+         *
+         * @param {Realm|null} realm
+         * @return {Promise<DealsState>}
+         */
+        this.getDeals = async function (realm) {
+            const result = {
+                items: {},
+            };
+
+            if (!realm) {
+                realm = Realms.getCurrentRealm();
+            }
+
+            if (!realm) {
+                return result;
+            }
+
+            result.region = realm.region;
+
+            const url = 'data/global/deals-' + realm.region + '.bin';
+            const response = await fetch(url, {mode: 'same-origin'});
+            if (!response.ok) {
+                return result;
+            }
+
+            const buffer = await response.arrayBuffer();
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const read = function (byteCount) {
+                let result = offset;
+                offset += byteCount;
+
+                return result;
+            };
+
+            let version = view.getUint8(read(1));
+            switch (version) {
+                case VERSION_DEALS_STATE:
+                    // no op
+                    break;
+                default:
+                    throw "Unknown data version for token state.";
+            }
+
+            for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
+                let itemId = view.getUint32(read(4), true);
+                let itemLevel = view.getUint16(read(2), true);
+                let itemSuffix = view.getUint16(read(2), true);
+                let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+
+                let median = view.getUint32(read(4), true) * COPPER_SILVER;
+                let dealPrice = view.getUint32(read(4), true) * COPPER_SILVER;
+                result.items[itemKeyString] = {
+                    regionMedian: median,
+                    dealPrice: dealPrice,
+                };
+            }
+
+            return result;
+        };
+
+        /**
          * Given an item object, return its item state for the current/given realm.
          *
          * @param {PricedItem} item
@@ -241,26 +317,14 @@ new function () {
         }
 
         /**
-         * Returns the given realms' states, without commodities merged in.
-         *
-         * @param {Realm[]} realms
-         * @return {Promise<RealmState[]>}
-         */
-        this.getOtherRealmSummaries = async function (realms) {
-            return (await Promise.allSettled(realms.map(realm => getRealmState(realm, true))))
-                .filter(promise => promise.status === 'fulfilled')
-                .map(promise => promise.value);
-        };
-
-        /**
          * Return the current realm's state. May return a cached object shared between calls.
          *
          * @return {Promise<RealmState>}
          */
         this.getRealmState = async function () {
             const realm = Realms.getCurrentRealm();
-            const realmState = await getRealmState(realm, false);
-            const commodityRealmState = await getRealmState(getCommodityRealm(realm.region), false);
+            const realmState = await getRealmState(realm);
+            const commodityRealmState = await getRealmState(getCommodityRealm(realm.region));
 
             mergeCommodityData(realmState, commodityRealmState);
 
@@ -368,7 +432,7 @@ new function () {
          * @return {Promise<PricedItem[]>}
          */
         this.hydrateList = async function (items) {
-            const realmState = await getRealmState(Realms.getCurrentRealm(), false);
+            const realmState = await getRealmState(Realms.getCurrentRealm());
 
             const result = [];
 
@@ -664,14 +728,13 @@ new function () {
          * Given a realm object, return its current realm state. May return a cached object shared between calls.
          *
          * @param {Realm} realm
-         * @param {boolean} fetchSummariesOnly
          * @return {Promise<RealmState>}
          */
-        async function getRealmState(realm, fetchSummariesOnly) {
+        async function getRealmState(realm) {
             let lastStateKey = Object.values(COMMODITY_REALMS).includes(realm.connectedId) ?
                 'lastCommodityRealmState' : 'lastRealmState';
 
-            if (!fetchSummariesOnly &&
+            if (
                 my[lastStateKey].data &&
                 my[lastStateKey].id === realm.connectedId &&
                 my[lastStateKey].checked > Date.now() - REALM_STATE_CACHE_DURATION
@@ -679,18 +742,12 @@ new function () {
                 return my[lastStateKey].data;
             }
 
-            const response = await fetch(
-                'data/' +
-                (fetchSummariesOnly ? 'cached/' : '') +
-                realm.connectedId +
-                '/state.bin',
-                {mode: 'same-origin'}
-            );
+            const response = await fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'});
             if (!response.ok) {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
 
-            if (!fetchSummariesOnly &&
+            if (
                 my[lastStateKey].data &&
                 my[lastStateKey].id === realm.connectedId &&
                 my[lastStateKey].modified === response.headers.get('last-modified')
@@ -727,13 +784,8 @@ new function () {
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
             result.snapshots = [];
-            if (fetchSummariesOnly) {
-                let recordCount = view.getUint16(read(2), true);
-                offset += 4 * recordCount;
-            } else {
-                for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
-                    result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
-                }
+            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
             }
             result.summary = {};
             result.variants = {};
@@ -743,17 +795,15 @@ new function () {
                 let itemLevel = view.getUint16(read(2), true);
                 let itemSuffix = view.getUint16(read(2), true);
                 let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
-                if (!fetchSummariesOnly) {
-                    if (itemId === ITEM_PET_CAGE) {
-                        if (itemSuffix) {
-                            result.speciesVariants[itemLevel] = result.speciesVariants[itemLevel] || [];
-                            result.speciesVariants[itemLevel].push(itemKeyString);
-                        }
-                    } else {
-                        if (itemLevel) {
-                            result.variants[itemId] = result.variants[itemId] || [];
-                            result.variants[itemId].push(itemKeyString);
-                        }
+                if (itemId === ITEM_PET_CAGE) {
+                    if (itemSuffix) {
+                        result.speciesVariants[itemLevel] = result.speciesVariants[itemLevel] || [];
+                        result.speciesVariants[itemLevel].push(itemKeyString);
+                    }
+                } else {
+                    if (itemLevel) {
+                        result.variants[itemId] = result.variants[itemId] || [];
+                        result.variants[itemId].push(itemKeyString);
                     }
                 }
 
@@ -767,14 +817,12 @@ new function () {
                 };
             }
 
-            if (!fetchSummariesOnly) {
-                my[lastStateKey] = {
-                    id: realm.connectedId,
-                    modified: response.headers.get('last-modified'),
-                    checked: Date.now(),
-                    data: result,
-                };
-            }
+            my[lastStateKey] = {
+                id: realm.connectedId,
+                modified: response.headers.get('last-modified'),
+                checked: Date.now(),
+                data: result,
+            };
 
             return result;
         }
@@ -3909,57 +3957,22 @@ new function () {
         /**
          * Returns a list of items which are deals from the given list of priced items.
          *
-         * @param {PricedItem[]} items
+         * @param {PricedItem[]} itemsList
          * @return {Promise<DealItem[]>}
          */
         async function findDeals(itemsList) {
             // Items must be in stock, and must not be commodities.
             itemsList = itemsList.filter(pricedItem => pricedItem.quantity > 0 && !(pricedItem.stack > 1));
 
-            const realms = Realms.getRegionConnectedRealms(Realms.getCurrentRealm().region)
-                .map(connectedRealm => connectedRealm.canonical);
-            const states = await Auctions.getOtherRealmSummaries(realms);
-
-            // How many coppers are in 1g.
-            const GOLD = 10000;
-
-            const getMedian = values => {
-                if (values.length % 2 === 1) {
-                    return values[Math.floor(values.length / 2)];
-                } else {
-                    let value1 = values[values.length / 2 - 1];
-                    let value2 = values[values.length / 2];
-                    return Math.round((value1 + value2) / 2);
-                }
-            };
+            let dealsData = await Auctions.getDeals();
 
             itemsList = itemsList.filter(item => {
-                let offeredPrices = [];
-                let allPrices = [];
                 let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
-                states.forEach(state => {
-                    let summaryEntry = state.summary[itemKey];
-                    if (summaryEntry && summaryEntry.price) {
-                        allPrices.push(summaryEntry.price);
-                        if (summaryEntry.quantity) {
-                            offeredPrices.push(summaryEntry.price);
-                        }
-                    }
-                });
-
-                allPrices.sort((a, b) => a - b);
-                let regionMedian = getMedian(allPrices);
-
-                if (regionMedian <= item.price || regionMedian < 150 * GOLD) {
+                if (!dealsData.items[itemKey] || item.price > dealsData.items[itemKey].dealPrice) {
                     return false;
                 }
 
-                offeredPrices.sort((a, b) => a - b);
-                if (offeredPrices.length >= 15 && offeredPrices[Math.floor(offeredPrices.length / 3)] <= item.price) {
-                    return false;
-                }
-
-                item.regionMedian = regionMedian;
+                item.regionMedian = dealsData.items[itemKey].regionMedian;
 
                 return true;
             });
