@@ -45,6 +45,11 @@ new function () {
      * @property {Realm[]} secondary
      */
 
+    /**
+     * @typedef {PricedItem} DealItem
+     * @property {Money} regionMedian
+     */
+
     /** @typedef {number} InventoryType */
 
     /** @typedef {number} ItemID */
@@ -236,14 +241,26 @@ new function () {
         }
 
         /**
+         * Returns the given realms' states, without commodities merged in.
+         *
+         * @param {Realm[]} realms
+         * @return {Promise<RealmState[]>}
+         */
+        this.getOtherRealmStates = async function (realms) {
+            return (await Promise.allSettled(realms.map(realm => getRealmState(realm, true))))
+                .filter(promise => promise.status === 'fulfilled')
+                .map(promise => promise.value);
+        };
+
+        /**
          * Return the current realm's state. May return a cached object shared between calls.
          *
          * @return {Promise<RealmState>}
          */
         this.getRealmState = async function () {
             const realm = Realms.getCurrentRealm();
-            const realmState = await getRealmState(realm);
-            const commodityRealmState = await getRealmState(getCommodityRealm(realm.region));
+            const realmState = await getRealmState(realm, false);
+            const commodityRealmState = await getRealmState(getCommodityRealm(realm.region), false);
 
             mergeCommodityData(realmState, commodityRealmState);
 
@@ -351,7 +368,7 @@ new function () {
          * @return {Promise<PricedItem[]>}
          */
         this.hydrateList = async function (items) {
-            const realmState = await getRealmState(Realms.getCurrentRealm());
+            const realmState = await getRealmState(Realms.getCurrentRealm(), false);
 
             const result = [];
 
@@ -655,13 +672,14 @@ new function () {
          * Given a realm object, return its current realm state. May return a cached object shared between calls.
          *
          * @param {Realm} realm
+         * @param {boolean} fetchCached
          * @return {Promise<RealmState>}
          */
-        async function getRealmState(realm) {
+        async function getRealmState(realm, fetchCached) {
             let lastStateKey = Object.values(COMMODITY_REALMS).includes(realm.connectedId) ?
                 'lastCommodityRealmState' : 'lastRealmState';
 
-            if (
+            if (!fetchCached &&
                 my[lastStateKey].data &&
                 my[lastStateKey].id === realm.connectedId &&
                 my[lastStateKey].checked > Date.now() - REALM_STATE_CACHE_DURATION
@@ -669,12 +687,19 @@ new function () {
                 return my[lastStateKey].data;
             }
 
-            const response = await fetch('data/' + realm.connectedId + '/state.bin', {mode: 'same-origin'});
+            const response = await fetch(
+                'data/' +
+                (fetchCached ? 'cached/' : '') +
+                realm.connectedId +
+                '/state.bin',
+                {mode: 'same-origin'}
+            );
             if (!response.ok) {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
 
-            if (my[lastStateKey].data &&
+            if (!fetchCached &&
+                my[lastStateKey].data &&
                 my[lastStateKey].id === realm.connectedId &&
                 my[lastStateKey].modified === response.headers.get('last-modified')
             ) {
@@ -748,12 +773,14 @@ new function () {
                 };
             }
 
-            my[lastStateKey] = {
-                id: realm.connectedId,
-                modified: response.headers.get('last-modified'),
-                checked: Date.now(),
-                data: result,
-            };
+            if (!fetchCached) {
+                my[lastStateKey] = {
+                    id: realm.connectedId,
+                    modified: response.headers.get('last-modified'),
+                    checked: Date.now(),
+                    data: result,
+                };
+            }
 
             return result;
         }
@@ -3599,8 +3626,9 @@ new function () {
          * Perform a search for items, reading the parameters from the UI.
          *
          * @param {boolean} favoritesOnly
+         * @param {boolean} dealsOnly
          */
-        this.perform = async function (favoritesOnly) {
+        this.perform = async function (favoritesOnly, dealsOnly) {
             if (Categories.getClassId() === Items.CLASS_WOW_TOKEN) {
                 // Get out of WoW Token mode before performing any searches.
                 qs('.main .categories .category[data-class-id="' + Items.CLASS_WOW_TOKEN + '"]').dispatchEvent(new MouseEvent('click'));
@@ -3617,11 +3645,15 @@ new function () {
             emptyItemList();
 
             const searchBox = qs('.main .search-bar input[type="text"]');
-            let hasSearchText = /\S/.test(searchBox.value);
+            const hasSearchText = /\S/.test(searchBox.value);
 
-            const itemsList = await Auctions.hydrateList(
+            let itemsList = await Auctions.hydrateList(
                 await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL)
             );
+
+            if (dealsOnly) {
+                itemsList = await findDeals(itemsList);
+            }
 
             await showItemList(itemsList, hasSearchText);
         };
@@ -3867,6 +3899,71 @@ new function () {
         }
 
         /**
+         * Returns a list of items which are deals from the given list of priced items.
+         *
+         * @param {PricedItem[]} items
+         * @return {Promise<DealItem[]>}
+         */
+        async function findDeals(itemsList) {
+            // Items must be in stock, and must not be commodities.
+            itemsList = itemsList.filter(pricedItem => pricedItem.quantity > 0 && !(pricedItem.stack > 1));
+
+            const realms = Realms.getRegionConnectedRealms(Realms.getCurrentRealm().region)
+                .map(connectedRealm => connectedRealm.canonical);
+            const states = await Auctions.getOtherRealmStates(realms);
+
+            // How many coppers are in 1g.
+            const GOLD = 10000;
+
+            const getMedian = values => {
+                if (values.length % 2 === 1) {
+                    return values[Math.floor(values.length / 2)];
+                } else {
+                    let value1 = values[values.length / 2 - 1];
+                    let value2 = values[values.length / 2];
+                    return Math.round((value1 + value2) / 2);
+                }
+            };
+
+            itemsList = itemsList.filter(item => {
+                let offeredPrices = [];
+                let allPrices = [];
+                let itemKey = Items.stringifyKey({
+                    itemId: item.id,
+                    itemLevel: item.bonusLevel,
+                    itemSuffix: item.bonusSuffix,
+                });
+                states.forEach(state => {
+                    let summaryEntry = state.summary[itemKey];
+                    if (summaryEntry && summaryEntry.price) {
+                        allPrices.push(summaryEntry.price);
+                        if (summaryEntry.quantity) {
+                            offeredPrices.push(summaryEntry.price);
+                        }
+                    }
+                });
+
+                allPrices.sort((a, b) => a - b);
+                let regionMedian = getMedian(allPrices);
+
+                if (regionMedian <= item.price || regionMedian < 150 * GOLD) {
+                    return false;
+                }
+
+                offeredPrices.sort((a, b) => a - b);
+                if (offeredPrices.length >= 15 && offeredPrices[Math.floor(offeredPrices.length / 3)] >= item.price) {
+                    return false;
+                }
+
+                item.regionMedian = regionMedian;
+
+                return true;
+            });
+
+            return itemsList;
+        }
+
+        /**
          * Returns the column we should use for the initial sort, based on the category class.
          *
          * @return {number|undefined}
@@ -4102,9 +4199,11 @@ new function () {
         updateFavoritesButton(self.getFavorites().length > 0);
         SEARCH_FAVORITES_BUTTON.addEventListener('click', () => {
             if (SEARCH_FAVORITES_BUTTON.dataset.enabled) {
-                self.perform(true);
+                self.perform(true, false);
             }
         });
+
+        qs('.main .search-bar .deals').addEventListener('click', () => self.perform(false, true));
     }
 
     /** Manages the search suggestions list. */
@@ -4461,7 +4560,7 @@ new function () {
             Realms.init(),
         ]);
 
-        qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false));
+        qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false, false));
         qs('.main .search-bar > div.filter').addEventListener('mouseup', (event) => {
             const div = qs('.main .search-bar > div.filter div');
             if (div.style.display === 'block') {
@@ -4492,7 +4591,7 @@ new function () {
         const searchBox = qs('.main .search-bar input[type="text"]');
         searchBox.addEventListener('keyup', event => {
             if (event.key === 'Enter') {
-                Search.perform(false);
+                Search.perform(false, false);
             }
         });
         qs('.main .search-bar .text-reset').addEventListener('click', event => {

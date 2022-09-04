@@ -275,7 +275,7 @@ body {
         display: block;
       }
     }
-    button, > div.filter, > div.favorite {
+    button, > div.filter, > div.small-button {
       @include button();
 
       max-width: 10em;
@@ -285,13 +285,16 @@ body {
         background-position: center center;
         background-repeat: no-repeat;
         background-size: calc(100% - 2px);
-        flex: 0 0 auto;
-        width: 2em;
-        height: 2em;
 
         &[data-enabled] {
           background-image: url('../images/favorite-star.png');
         }
+      }
+      &.deals {display: none}
+      &.small-button {
+        flex: 0 0 auto;
+        width: 2em;
+        height: 2em;
 
         &:hover {
           background-color: $background20;
@@ -370,7 +373,7 @@ body {
       > div.text-container {}
       > select {order: 1}
       > div.filter.filter {order: 2}
-      > div.favorite {order: 3}
+      > div.small-button {order: 3}
       > div.text-container {order: 4; min-width: 50%}
       > button.search {order: 5}
     }
