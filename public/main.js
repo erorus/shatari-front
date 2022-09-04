@@ -83,6 +83,7 @@ new function () {
      * @property {Auction[]}       auctions   An array of distinct prices and quantities, ordered by price ascending
      * @property {AuctionDetail[]} specifics  An array of prices and bonus information, ordered by price ascending
      * @property {SummaryLine[]}   snapshots  An array of summary prices, order by snapshot ascending
+     * @property {SummaryLine[]}   daily      A list of summary prices by day, order by snapshot ascending
      */
 
     /**
@@ -194,7 +195,7 @@ new function () {
         const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
         const VERSION_GLOBAL_STATE = 2;
-        const VERSION_ITEM_STATE = 4;
+        const VERSION_ITEM_STATE = 5;
         const VERSION_REALM_STATE = 3;
         const VERSION_TOKEN_STATE = 1;
 
@@ -526,9 +527,13 @@ new function () {
 
             let version = view.getUint8(read(1));
             let fullModifiers = true;
+            let dailyHistory = true;
             switch (version) {
                 case 3:
                     fullModifiers = false;
+                    // no break
+                case 4:
+                    dailyHistory = false;
                     // no break
                 case VERSION_ITEM_STATE:
                     // no op
@@ -537,6 +542,7 @@ new function () {
                     throw "Unknown data version for item state.";
             }
 
+            /** @type {ItemState} result */
             const result = {
                 realm: realm,
                 item: item,
@@ -621,6 +627,25 @@ new function () {
                         });
                     }
                 });
+            }
+
+            result.daily = [];
+            if (dailyHistory) {
+                for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                    let snapshot = view.getUint32(read(2), true) * MS_DAY;
+                    let price = view.getUint32(read(4), true) * COPPER_SILVER;
+                    let quantity = view.getUint32(read(4), true);
+                    let dayState = {snapshot: snapshot, price: price, quantity: quantity};
+                    if (result.daily.length > 0) {
+                        let prevSeen = result.daily[result.daily.length - 1];
+                        let lostDay = prevSeen.snapshot + MS_DAY;
+                        while (lostDay < dayState.snapshot) {
+                            result.daily.push({snapshot: lostDay, price: prevSeen.price, quantity: 0});
+                            lostDay += MS_DAY;
+                        }
+                    }
+                    result.daily.push(dayState);
+                }
             }
 
             return result;
