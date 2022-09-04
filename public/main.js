@@ -246,7 +246,7 @@ new function () {
          * @param {Realm[]} realms
          * @return {Promise<RealmState[]>}
          */
-        this.getOtherRealmStates = async function (realms) {
+        this.getOtherRealmSummaries = async function (realms) {
             return (await Promise.allSettled(realms.map(realm => getRealmState(realm, true))))
                 .filter(promise => promise.status === 'fulfilled')
                 .map(promise => promise.value);
@@ -672,14 +672,14 @@ new function () {
          * Given a realm object, return its current realm state. May return a cached object shared between calls.
          *
          * @param {Realm} realm
-         * @param {boolean} fetchCached
+         * @param {boolean} fetchSummariesOnly
          * @return {Promise<RealmState>}
          */
-        async function getRealmState(realm, fetchCached) {
+        async function getRealmState(realm, fetchSummariesOnly) {
             let lastStateKey = Object.values(COMMODITY_REALMS).includes(realm.connectedId) ?
                 'lastCommodityRealmState' : 'lastRealmState';
 
-            if (!fetchCached &&
+            if (!fetchSummariesOnly &&
                 my[lastStateKey].data &&
                 my[lastStateKey].id === realm.connectedId &&
                 my[lastStateKey].checked > Date.now() - REALM_STATE_CACHE_DURATION
@@ -689,7 +689,7 @@ new function () {
 
             const response = await fetch(
                 'data/' +
-                (fetchCached ? 'cached/' : '') +
+                (fetchSummariesOnly ? 'cached/' : '') +
                 realm.connectedId +
                 '/state.bin',
                 {mode: 'same-origin'}
@@ -698,7 +698,7 @@ new function () {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
 
-            if (!fetchCached &&
+            if (!fetchSummariesOnly &&
                 my[lastStateKey].data &&
                 my[lastStateKey].id === realm.connectedId &&
                 my[lastStateKey].modified === response.headers.get('last-modified')
@@ -735,8 +735,12 @@ new function () {
             result.snapshot = view.getUint32(read(4), true) * MS_SEC;
             result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
             result.snapshots = [];
-            for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
-                result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
+            if (fetchSummariesOnly) {
+                offset += 4 * view.getUint16(read(2), true);
+            } else {
+                for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
+                    result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
+                }
             }
             result.summary = {};
             result.variants = {};
@@ -751,15 +755,17 @@ new function () {
                     itemSuffix: itemSuffix,
                 };
                 let itemKeyString = Items.stringifyKey(itemKey);
-                if (itemId === ITEM_PET_CAGE) {
-                    if (itemKey.itemSuffix) {
-                        result.speciesVariants[itemKey.itemLevel] = result.speciesVariants[itemKey.itemLevel] || [];
-                        result.speciesVariants[itemKey.itemLevel].push(itemKeyString);
-                    }
-                } else {
-                    if (itemKey.itemLevel) {
-                        result.variants[itemId] = result.variants[itemId] || [];
-                        result.variants[itemId].push(itemKeyString);
+                if (!fetchSummariesOnly) {
+                    if (itemId === ITEM_PET_CAGE) {
+                        if (itemKey.itemSuffix) {
+                            result.speciesVariants[itemKey.itemLevel] = result.speciesVariants[itemKey.itemLevel] || [];
+                            result.speciesVariants[itemKey.itemLevel].push(itemKeyString);
+                        }
+                    } else {
+                        if (itemKey.itemLevel) {
+                            result.variants[itemId] = result.variants[itemId] || [];
+                            result.variants[itemId].push(itemKeyString);
+                        }
                     }
                 }
 
@@ -773,7 +779,7 @@ new function () {
                 };
             }
 
-            if (!fetchCached) {
+            if (!fetchSummariesOnly) {
                 my[lastStateKey] = {
                     id: realm.connectedId,
                     modified: response.headers.get('last-modified'),
@@ -3910,7 +3916,7 @@ new function () {
 
             const realms = Realms.getRegionConnectedRealms(Realms.getCurrentRealm().region)
                 .map(connectedRealm => connectedRealm.canonical);
-            const states = await Auctions.getOtherRealmStates(realms);
+            const states = await Auctions.getOtherRealmSummaries(realms);
 
             // How many coppers are in 1g.
             const GOLD = 10000;
@@ -3951,7 +3957,7 @@ new function () {
                 }
 
                 offeredPrices.sort((a, b) => a - b);
-                if (offeredPrices.length >= 15 && offeredPrices[Math.floor(offeredPrices.length / 3)] >= item.price) {
+                if (offeredPrices.length >= 15 && offeredPrices[Math.floor(offeredPrices.length / 3)] <= item.price) {
                     return false;
                 }
 
