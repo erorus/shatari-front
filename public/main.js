@@ -3616,11 +3616,14 @@ new function () {
             Detail.hide();
             emptyItemList();
 
+            const searchBox = qs('.main .search-bar input[type="text"]');
+            let hasSearchText = /\S/.test(searchBox.value);
+
             const itemsList = await Auctions.hydrateList(
                 await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL)
             );
 
-            await showItemList(itemsList);
+            await showItemList(itemsList, hasSearchText);
         };
 
         // ------- //
@@ -3830,7 +3833,7 @@ new function () {
             tr.appendChild(td = document.createElement('td'));
             td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
             td.appendChild(ct(quantity.toLocaleString()));
-            if (quantity === 0) {
+            if (quantity === 0 && item.snapshot > 0) {
                 let span = document.createElement('span');
                 span.className = 'delta-timestamp';
                 span.dataset.timestamp = item.snapshot;
@@ -3934,8 +3937,9 @@ new function () {
          * Given an pricing-hydrated list of items, show it in the UI.
          *
          * @param {PricedItem[]} itemsList
+         * @param {boolean}      includeNeverSeen
          */
-        async function showItemList(itemsList) {
+        async function showItemList(itemsList, includeNeverSeen) {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
@@ -3967,12 +3971,11 @@ new function () {
             for (let itemIndex = 0; itemIndex < itemsList.length; itemIndex++) {
                 let item = itemsList[itemIndex];
                 if ((item.quantity || 0) === 0) {
-                    if ((item.price || 0) === 0) {
+                    if (!showOutOfStock) {
                         continue;
-                    } else {
-                        if (!showOutOfStock) {
-                            continue;
-                        }
+                    }
+                    if (!includeNeverSeen && (item.price || 0) === 0) {
+                        continue;
                     }
                 }
                 if (vendorFlip) {
@@ -4405,8 +4408,14 @@ new function () {
 
         qsa('.delta-timestamp[data-timestamp]').forEach(ele => {
             const timestamp = parseInt(ele.dataset.timestamp);
-            ele.dataset.simpleTooltip = longFormatter.format(new Date(timestamp));
             ee(ele);
+            if (timestamp <= 0) {
+                delete ele.dataset.simpleTooltip;
+                ele.appendChild(ct('Never'));
+
+                return;
+            }
+            ele.dataset.simpleTooltip = longFormatter.format(new Date(timestamp));
 
             let now = Date.now();
             let delta = now - timestamp;
@@ -4427,7 +4436,7 @@ new function () {
             }
 
             ele.appendChild(ct(timeString));
-        })
+        });
     }
 
     //      //
