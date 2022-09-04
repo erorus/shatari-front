@@ -632,7 +632,7 @@ new function () {
             result.daily = [];
             if (dailyHistory) {
                 for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
-                    let snapshot = view.getUint32(read(2), true) * MS_DAY;
+                    let snapshot = view.getUint16(read(2), true) * MS_DAY;
                     let price = view.getUint32(read(4), true) * COPPER_SILVER;
                     let quantity = view.getUint32(read(4), true);
                     let dayState = {snapshot: snapshot, price: price, quantity: quantity};
