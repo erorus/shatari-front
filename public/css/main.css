@@ -42,8 +42,8 @@ body {
   flex-direction: column;
   margin: 0 auto;
   min-height: 400px;
-  max-height: 900px;
-  max-width: 1200px;
+  max-height: 1000px;
+  max-width: 1400px;
   user-select: none;
   width: 100%; }
   @media screen and (max-width: 600px) {
@@ -372,16 +372,22 @@ body {
       border: 2px solid;
       border-color: #060100 #161211 #4a4644;
       border-radius: 8px; }
+      .main .main-result .search-result .search-result-limits {
+        position: relative;
+        margin: 0 auto;
+        width: calc(100% - 8px);
+        height: 100%;
+        max-width: 800px; }
       .main .main-result .search-result .search-result-border {
         border: 1px solid #393433;
         border-top: 0;
         border-radius: 4px;
-        bottom: 4px;
-        left: 4px;
+        bottom: 5px;
+        left: 1px;
         overflow-y: auto;
         position: absolute;
-        right: 4px;
-        top: 4px; }
+        right: 1px;
+        top: 5px; }
         .main .main-result .search-result .search-result-border:empty {
           display: none; }
       @media screen and (max-width: 750px) {
@@ -697,6 +703,9 @@ body {
               max-height: 18em;
               overflow: auto;
               width: 100%; }
+            .main .main-result .item .panels > div.details .other-realms-container .check-container, .main .main-result .item .panels > div.details .other-realms-container .list {
+              margin: 0 auto;
+              max-width: 30em; }
             .main .main-result .item .panels > div.details .other-realms-container table {
               border-collapse: collapse;
               position: relative;
@@ -761,10 +770,12 @@ body {
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
             flex: 6 1;
-            margin-left: 8px; }
+            margin-left: 8px;
+            max-width: 250px; }
             @media screen and (max-width: 700px) {
               .main .main-result .item .panels > div.auctions {
-                margin-left: 0; } }
+                margin-left: 0;
+                max-width: unset; } }
             .main .main-result .item .panels > div.auctions table {
               border-collapse: collapse;
               width: 100%; }

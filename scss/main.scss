@@ -43,8 +43,8 @@ $thin: 1px;
 $bevel: 2px;
 
 $pageMinHeight: 400px;
-$pageMaxHeight: 900px;
-$pageMaxWidth: 1200px;
+$pageMaxHeight: 1000px;
+$pageMaxWidth: 1400px;
 
 $categoryMinWidth: 150px;
 $categoryMaxWidth: 200px;
@@ -526,16 +526,24 @@ body {
       border-color: $background00 $background10 $background40;
       border-radius: $borderRadius;
 
+      .search-result-limits {
+        position: relative;
+        margin: 0 auto;
+        width: calc(100% - #{$marginStep});
+        height: 100%;
+        max-width: 800px;
+      }
+
       .search-result-border {
         border: $thin solid $background30;
         border-top: 0;
         border-radius: $borderRadius / 2;
-        bottom: $marginStep / 2;
-        left: $marginStep / 2;
+        bottom: #{$marginStep / 2 + $thin};
+        left: $thin;
         overflow-y: auto;
         position: absolute;
-        right: $marginStep / 2;
-        top: $marginStep / 2;
+        right: $thin;
+        top: #{$marginStep / 2 + $thin};
 
         &:empty {display: none}
       }
@@ -942,6 +950,11 @@ body {
                 width: 100%;
               }
 
+              .check-container, .list {
+                margin: 0 auto;
+                max-width: 30em;
+              }
+
               table {
                 border-collapse: collapse;
                 position: relative;
@@ -1036,9 +1049,11 @@ body {
 
             flex: 6 1;
             margin-left: $marginStep;
+            max-width: 250px;
 
             @media screen and (max-width:700px) {
               margin-left: 0;
+              max-width: unset;
             }
 
             table {
