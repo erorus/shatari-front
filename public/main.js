@@ -1366,7 +1366,7 @@ new function () {
          */
         this.hide = function () {
             delete qs('.main .main-result').dataset.detailMode;
-            Hash.set('');
+            Hash.set('', '');
         }
 
         /**
@@ -1390,7 +1390,7 @@ new function () {
                     item.bonusSuffix,
                 );
 
-                Hash.set(`${realmHash}/${itemHash}`);
+                Hash.set(`${realmHash}/${itemHash}`, item.name);
             }
 
             {
@@ -1427,7 +1427,7 @@ new function () {
          */
         this.showWowToken = async function () {
             qs('.main .main-result').dataset.detailMode = 1;
-            Hash.set('');
+            Hash.set('', '');
 
             const itemDiv = qs('.main .main-result .item');
             ee(itemDiv);
@@ -2695,8 +2695,11 @@ new function () {
          * Sets the browser's location bar hash.
          *
          * @param {string} newHash Must not include any initial #
+         * @param {string} title The page title fragment
          */
-        this.set = function (newHash) {
+        this.set = function (newHash, title) {
+            document.title = title ? `OE: ${title}` : 'Oribos Exchange';
+
             if (newHash === getHash()) {
                 return;
             }
