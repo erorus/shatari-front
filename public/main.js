@@ -324,9 +324,6 @@ new function () {
         this.getRealmState = async function () {
             const realm = Realms.getCurrentRealm();
             const realmState = await getRealmState(realm);
-            const commodityRealmState = await getRealmState(getCommodityRealm(realm.region));
-
-            mergeCommodityData(realmState, commodityRealmState);
 
             const updatedElement = qs('.main .bottom-bar .last-updated');
             ee(updatedElement);
@@ -732,8 +729,8 @@ new function () {
          * @return {Promise<RealmState>}
          */
         async function getRealmState(realm) {
-            let lastStateKey = Object.values(COMMODITY_REALMS).includes(realm.connectedId) ?
-                'lastCommodityRealmState' : 'lastRealmState';
+            let isCommodityRealm = Object.values(COMMODITY_REALMS).includes(realm.connectedId);
+            let lastStateKey = isCommodityRealm ? 'lastCommodityRealmState' : 'lastRealmState';
 
             if (
                 my[lastStateKey].data &&
@@ -816,6 +813,10 @@ new function () {
                     price: price,
                     quantity: quantity,
                 };
+            }
+
+            if (!isCommodityRealm) {
+                mergeCommodityData(result, await getRealmState(getCommodityRealm(realm.region)));
             }
 
             my[lastStateKey] = {
