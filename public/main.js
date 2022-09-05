@@ -3837,7 +3837,13 @@ new function () {
                 if (item.price) {
                     td.appendChild(priceElement(item.price));
 
-                    if (!vendorFlip && item.quantity && Items.getVendorSellPrice(item) > item.price) {
+                    let vsp;
+                    if (
+                        !vendorFlip &&
+                        item.quantity &&
+                        (vsp = Items.getVendorSellPrice(item)) > item.price &&
+                        vsp >= 10000
+                    ) {
                         tr.classList.add('vendor-flip');
                         rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
                     }
@@ -4564,6 +4570,15 @@ new function () {
     //      //
 
     async function init() {
+        if (!navigator.userAgentData &&
+            navigator.userAgent.indexOf('Safari') > -1 &&
+            navigator.userAgent.indexOf('Chrome') < 0 &&
+            navigator.userAgent.indexOf('Chromium') < 0
+        ) {
+            // Safari applies TR backgrounds to each TD.
+            document.body.classList.add('no-row-backgrounds');
+        }
+
         const fsDiv = qs('.main .welcome .full-screen');
         if (document.fullscreenEnabled) {
             fsDiv.querySelector('button').addEventListener('click', () => {

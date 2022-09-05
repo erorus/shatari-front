@@ -616,11 +616,13 @@ body {
                 transparentize($rowHighlightColor, 0.9) 100%
               );
             }
+            body.no-row-backgrounds &.vendor-flip {background: transparentize($rowHighlightColor, 0.4)}
             &:hover {
               background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
 
               span.favorite {visibility: visible !important}
             }
+            body.no-row-backgrounds &:hover {background: $rowHoverEnd}
 
             &:not(.message):nth-child(n+500) {
               display: none;
@@ -1010,6 +1012,7 @@ body {
                     &:hover {
                       background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
                     }
+                    body.no-row-backgrounds &:hover {background: $rowHoverEnd}
                   }
 
                   td {
@@ -1089,6 +1092,12 @@ body {
 
                 &:hover {
                   background: linear-gradient(90deg, $rowHoverStart 0%, $rowHoverEnd 20%, $rowHoverEnd 80%, $rowHoverStart 100%);
+                }
+
+                body.no-row-backgrounds & {background: $background15;
+                  &[data-selected] {background: transparentize($rowHighlightColor, 0.4)}
+                  &[data-selected="part"] {background: transparentize($rowHighlightColor, 0.66)}
+                  &:hover {background: $rowHoverEnd}
                 }
               }
               td {
