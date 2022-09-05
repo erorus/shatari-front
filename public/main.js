@@ -2357,12 +2357,19 @@ new function () {
             }
 
             // Other realms
+            let otherRealmsChart;
             (() => {
                 const topContainer = ce('div', {
                     className: 'other-realms-container framed',
                 });
                 scroller.appendChild(topContainer);
                 topContainer.appendChild(ce('span', {className: 'frame-title'}, ct('Current Regional Prices')));
+
+                otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'});
+                topContainer.appendChild(otherRealmsChart);
+                otherRealmsChart.appendChild(ce('div', {className: 'bar-section price-bars'}));
+                otherRealmsChart.appendChild(ce('div', {className: 'bar-section quantity-bars'}));
+                otherRealmsChart.appendChild(ce('div', {className: 'bar-section links'}));
 
                 const otherRealmsContainer = ce('div', {className: 'check-container'});
                 topContainer.appendChild(otherRealmsContainer);
@@ -2492,6 +2499,8 @@ new function () {
                 let quantitySum = 0;
                 let prices = [];
                 let lowestAvailablePrice;
+                let chartData = [];
+
                 otherRealms.forEach(itemState => {
                     quantitySum += itemState.quantity;
                     if (itemState.price) {
@@ -2529,6 +2538,12 @@ new function () {
 
                         regionElements.listTable.appendChild(tr);
                     }
+
+                    chartData.push({
+                        realm: itemState.realm,
+                        price: itemState.price,
+                        quantity: itemState.quantity,
+                    });
                 });
 
                 regionElements.afterList();
@@ -2541,6 +2556,53 @@ new function () {
                     let statistics = getStatistics(prices);
                     regionElements.median.appendChild(priceElement(statistics.median));
                     regionElements.mean.appendChild(priceElement(statistics.mean));
+                }
+
+                {
+                    chartData.sort((a, b) =>
+                        b.price - a.price ||
+                        b.quantity - a.quantity ||
+                        a.realm.name.localeCompare(b.realm.name)
+                    );
+
+                    ['price', 'quantity'].forEach(type => {
+                        let container = otherRealmsChart.querySelector(`.${type}-bars`);
+                        let max = chartData.reduce((prev, cur) => Math.max(cur[type], prev), 0);
+                        chartData.forEach(entry => {
+                            let bar = ce('div', {
+                                className: 'bar',
+                                style: {
+                                    height: entry[type] / max * 100 + '%',
+                                }
+                            });
+                            container.appendChild(bar);
+                        });
+                    });
+                    let container = otherRealmsChart.querySelector('.links');
+                    chartData.forEach(entry => {
+                        const result = ce('table', {className: 'shatari-tooltip'});
+                        result.appendChild(ce('tr', {}, ce('td', {colSpan: 2}, ce('b', {}, ct(entry.realm.name)))));
+
+                        if (entry.price) {
+                            const priceLine = ce('tr');
+                            priceLine.appendChild(ce('td', {className: 'price'}, ct('Current Price')));
+                            priceLine.appendChild(ce('td', {}, priceElement(entry.price)));
+                            result.appendChild(priceLine);
+                        }
+
+                        const quantityLine = ce('tr');
+                        quantityLine.appendChild(ce('td', {className: 'quantity'}, ct('Quantity')));
+                        quantityLine.appendChild(ce('td', {}, ct(entry.quantity.toLocaleString())));
+                        result.appendChild(quantityLine);
+
+                        let link = ce('a', {
+                            className: 'link',
+                            dataset: {
+                                simpleTooltip: result.outerHTML,
+                            }
+                        });
+                        container.appendChild(link);
+                    });
                 }
             });
         }

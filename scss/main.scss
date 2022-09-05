@@ -911,19 +911,21 @@ body {
 
             .base-stats .hidden-region-details td:nth-child(3) {display: none}
 
+            .chart-wrapper {
+              background-color: $background15;
+              border: $bevel solid;
+              border-color: $background00 $background10 $background40;
+              border-radius: $borderRadius;
+
+              box-sizing: border-box;
+              overflow: hidden;
+              position: relative;
+            }
+
             .charts-container {
               margin: $marginStep;
 
               .chart-wrapper {
-                background-color: $background15;
-                border: $bevel solid;
-                border-color: $background00 $background10 $background40;
-                border-radius: $borderRadius;
-
-                box-sizing: border-box;
-                overflow: hidden;
-                position: relative;
-
                 svg {
                   height: 100%;
                   position: absolute;
@@ -967,6 +969,44 @@ body {
             }
 
             .other-realms-container {
+              .other-realms-bars {
+                align-items: stretch;
+                display: flex;
+                flex-flow: column nowrap;
+                gap: $marginStep;
+                height: 20em;
+                margin-bottom: 2 * $marginStep;
+                padding: $marginStep;
+                position: relative;
+
+                .bar-section {
+                  align-items: flex-end;
+                  display: flex;
+                  flex-flow: row nowrap;
+                  gap: 2px;
+
+                  .bar {border: 1px solid transparent}
+                  .bar, .link {width: 100%}
+                }
+
+                .bar-section.price-bars {flex: 20 0 auto;
+                  .bar {border-color: $priceChart; background-color: transparentize($priceChart, 0.5)}
+                }
+                .bar-section.quantity-bars {flex: 10 0 auto;
+                  .bar {border-color: $quantityChart; background-color: transparentize($quantityChart, 0.5)}
+                }
+
+                .bar-section.links {
+                  position: absolute;
+                  top: $marginStep;
+                  left: $marginStep;
+                  right: $marginStep;
+                  bottom: $marginStep;
+
+                  .link {height: 100%}
+                }
+              }
+
               .check-container {
                 text-align: right;
               }
