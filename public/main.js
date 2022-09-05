@@ -4591,9 +4591,13 @@ new function () {
         }
 
         const fsDiv = qs('.main .welcome .full-screen');
-        if (document.fullscreenEnabled) {
+        if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
             fsDiv.querySelector('button').addEventListener('click', () => {
-                qs('.main').requestFullscreen();
+                if (document.fullscreenEnabled) {
+                    qs('.main').requestFullscreen();
+                } else if (document.webkitFullscreenEnabled) {
+                    qs('.main').webkitRequestFullscreen();
+                }
             });
         } else {
             fsDiv.style.visibility = 'hidden';
