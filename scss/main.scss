@@ -1003,7 +1003,17 @@ body {
                   right: $marginStep;
                   bottom: $marginStep;
 
-                  .link {height: 100%}
+                  .link {text-align: center; height: 100%;
+                    .hover-line {
+                      background-color: $qColor;
+                      display: none;
+                      height: 100%;
+                      width: 2px;
+                    }
+                    @media (hover: hover) {
+                      &:hover .hover-line {display: inline-block}
+                    }
+                  }
                 }
               }
 

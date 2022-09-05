@@ -753,7 +753,16 @@ body {
                 right: 8px;
                 bottom: 8px; }
                 .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars .bar-section.links .link {
+                  text-align: center;
                   height: 100%; }
+                  .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars .bar-section.links .link .hover-line {
+                    background-color: #CA4;
+                    display: none;
+                    height: 100%;
+                    width: 2px; }
+                  @media (hover: hover) {
+                    .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars .bar-section.links .link:hover .hover-line {
+                      display: inline-block; } }
             .main .main-result .item .panels > div.details .other-realms-container .check-container {
               text-align: right; }
             .main .main-result .item .panels > div.details .other-realms-container .list {

@@ -2600,7 +2600,7 @@ new function () {
                             dataset: {
                                 simpleTooltip: result.outerHTML,
                             }
-                        });
+                        }, ce('div', {className: 'hover-line'}));
                         container.appendChild(link);
                     });
                 }
