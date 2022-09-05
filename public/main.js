@@ -429,10 +429,11 @@ new function () {
          * Hydrates a list of items with prices and quantities for the currently-selected realm.
          *
          * @param {Item[]} items
+         * @param {Realm|undefined} [realm]
          * @return {Promise<PricedItem[]>}
          */
-        this.hydrateList = async function (items) {
-            const realmState = await getRealmState(Realms.getCurrentRealm());
+        this.hydrateList = async function (items, realm) {
+            const realmState = await getRealmState(realm || Realms.getCurrentRealm());
 
             const result = [];
 
@@ -1364,6 +1365,7 @@ new function () {
          */
         this.hide = function () {
             delete qs('.main .main-result').dataset.detailMode;
+            setHash('');
         }
 
         /**
@@ -1377,6 +1379,18 @@ new function () {
 
             const itemDiv = qs('.main .main-result .item');
             ee(itemDiv);
+
+            {
+                let realmHash = Realms.getRealmHash(realm || Realms.getCurrentRealm())
+
+                let itemHash = Items.stringifyKeyParts(
+                    item.id,
+                    item.bonusLevel,
+                    item.bonusSuffix,
+                );
+
+                setHash(`${realmHash}/${itemHash}`);
+            }
 
             {
                 const backBar = ce('div', {className: 'back-bar'});
@@ -1412,6 +1426,7 @@ new function () {
          */
         this.showWowToken = async function () {
             qs('.main .main-result').dataset.detailMode = 1;
+            setHash('');
 
             const itemDiv = qs('.main .main-result .item');
             ee(itemDiv);
@@ -2642,8 +2657,6 @@ new function () {
             "12": "H/B",
         };
 
-        const ID_PET_CAGE = 82800;
-
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
@@ -2688,6 +2701,57 @@ new function () {
         this.getIconUrl = function (iconName, size) {
             return 'https://wow.zamimg.com/images/wow/icons/' + size + '/' + iconName + '.jpg';
         }
+
+        /**
+         * Returns the Item record for the item with the given key on the given/current realm.
+         *
+         * @param {ItemKey} itemKey
+         * @returns {Item|null}
+         */
+        this.getItemByKey = function (itemKey) {
+            let item = my.items[itemKey.itemId];
+            if (!item) {
+                return null;
+            }
+
+            let newItem = {};
+            co(newItem, item);
+
+            newItem.id = itemKey.itemId;
+            newItem.bonusLevel = itemKey.itemLevel;
+            newItem.bonusSuffix = itemKey.itemSuffix;
+            newItem.name = my.names[itemKey.itemId];
+
+            if (itemKey.itemId !== ITEM_PET_CAGE) {
+                return newItem;
+            }
+
+            // Battle pets only below.
+
+            let speciesId = itemKey.itemLevel;
+            let species = my.battlePets[speciesId];
+            if (!species) {
+                return null;
+            }
+
+            newItem.name = my.battlePetNames[speciesId];
+
+            // Overwrite the pet cage UnnamedItem vars
+            newItem.display = species.display;
+            newItem.icon = species.icon;
+            newItem.side = species.side || 0;
+
+            // Add our own pet-specific properties to the Item
+            newItem.npc = species.npc;
+            newItem.battlePetType = species.type;
+            newItem.battlePetStats = {
+                power: species.power,
+                stamina: species.stamina,
+                speed: species.speed,
+            };
+
+            return newItem;
+        };
 
         /**
          * Returns the localized name suffix for the given suffix ID.
@@ -2827,7 +2891,7 @@ new function () {
                 if (classId !== undefined && item['class'] !== classId) {
                     continue;
                 }
-                if (parseInt(id) === ID_PET_CAGE) {
+                if (parseInt(id) === ITEM_PET_CAGE) {
                     // Handle that later.
                     usePetCage = true;
                     continue;
@@ -2895,8 +2959,7 @@ new function () {
                         // Strip out item levels. We won't be looking up these key strings anyway.
                         for (let index = 0; index < variants.length; index++) {
                             let itemKey = Items.parseKey(variants[index]);
-                            itemKey.itemLevel = 0;
-                            variants[index] = Items.stringifyKey(itemKey);
+                            variants[index] = Items.stringifyKeyParts(itemKey.itemId, 0, itemKey.itemSuffix);
                         }
                         // Now get a unique list.
                         variants.sort();
@@ -3037,16 +3100,6 @@ new function () {
 
             return result;
         }
-
-        /**
-         * Serialize an item key into a short string.
-         *
-         * @param {ItemKey} itemKey
-         * @return {ItemKeyString}
-         */
-        this.stringifyKey = function (itemKey) {
-            return self.stringifyKeyParts(itemKey.itemId, itemKey.itemLevel, itemKey.itemSuffix);
-        };
 
         /**
          * Serialize an item key's parts into a short string.
@@ -3411,6 +3464,25 @@ new function () {
             co(result, my.realms[realmId]);
 
             return result;
+        }
+
+        /**
+         * Returns the realm matching the given hash slug, or undefined for no realm.
+         *
+         * @param {string} hashSlug
+         * @return {Realm|undefined}
+         */
+        this.getRealmByHash = function (hashSlug) {
+            return Object.values(my.realms).find(realm => hashSlug === self.getRealmHash(realm));
+        };
+
+        /**
+         * Returns the realm's slug which is used in the location hash.
+         *
+         * @param {Realm} realm
+         */
+        this.getRealmHash = function (realm) {
+            return `${realm.region}-${realm.slug}`;
         }
 
         /**
@@ -4497,6 +4569,67 @@ new function () {
     }
 
     /**
+     * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes are
+     * silently ignored.
+     */
+    async function readHash() {
+        let hash = location.hash.replace(/^#+/, '');
+        let hashParts = hash.split('/');
+        if (hashParts.length !== 2) {
+            // Didn't recognize hash format.
+            return;
+        }
+
+        let realm = Realms.getRealmByHash(hashParts[0]);
+        if (!realm) {
+            // Didn't recognize realm.
+            return;
+        }
+
+        let match = /^\d+(?:-\d+(?:-\d+)?)?$/.exec(hashParts[1]);
+        if (match) {
+            // Try to show an item detail page.
+            let item = Items.getItemByKey(Items.parseKey(match[0]));
+            if (item) {
+                let hydrated = await Auctions.hydrateList([item], realm);
+                if (hydrated.length) {
+                    await Detail.show(hydrated[0], realm);
+                }
+            }
+
+            return;
+        }
+    }
+
+    /**
+     * Sets the browser's location bar hash.
+     *
+     * @param {string} newHash Must not include any initial #
+     */
+    function setHash(newHash) {
+        if (newHash === location.hash.replace(/^#+/, '')) {
+            return;
+        }
+
+        let path = location.pathname + location.search;
+        if (newHash) {
+            path += '#' + newHash;
+        }
+
+        let hasExistingHash = location.hash.replace(/^#+/, '') !== '';
+
+        try {
+            if (hasExistingHash) {
+                history.pushState({}, '', path);
+            } else {
+                history.replaceState({}, '', path);
+            }
+        } catch {
+            // Ignore errors.
+        }
+    }
+
+    /**
      * Returns an element for the given price.
      *
      * @param {Money} coppers
@@ -4682,6 +4815,9 @@ new function () {
         });
 
         setInterval(updateDeltaTimestamps, MS_MINUTE);
+
+        window.addEventListener('hashchange', () => readHash());
+        readHash();
     }
 
     init().catch(alert);
