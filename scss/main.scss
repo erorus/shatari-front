@@ -1005,13 +1005,16 @@ body {
 
                   .link {text-align: center; height: 100%;
                     .hover-line {
-                      background-color: $qColor;
+                      border-left: 2px dotted #808080;
                       display: none;
                       height: 100%;
-                      width: 2px;
                     }
+                    &[data-shown] .hover-line {display: inline-block}
                     @media (hover: hover) {
-                      &:hover .hover-line {display: inline-block}
+                      &:hover .hover-line {
+                        border-left: 2px solid $qColor;
+                        display: inline-block;
+                      }
                     }
                   }
                 }

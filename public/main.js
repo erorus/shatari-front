@@ -2601,6 +2601,9 @@ new function () {
                                 simpleTooltip: result.outerHTML,
                             }
                         }, ce('div', {className: 'hover-line'}));
+                        if (entry.realm.connectedId === itemState.realm.connectedId) {
+                            link.dataset.shown = 1;
+                        }
                         container.appendChild(link);
                     });
                 }

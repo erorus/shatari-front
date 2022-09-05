@@ -756,12 +756,14 @@ body {
                   text-align: center;
                   height: 100%; }
                   .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars .bar-section.links .link .hover-line {
-                    background-color: #CA4;
+                    border-left: 2px dotted #808080;
                     display: none;
-                    height: 100%;
-                    width: 2px; }
+                    height: 100%; }
+                  .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars .bar-section.links .link[data-shown] .hover-line {
+                    display: inline-block; }
                   @media (hover: hover) {
                     .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars .bar-section.links .link:hover .hover-line {
+                      border-left: 2px solid #CA4;
                       display: inline-block; } }
             .main .main-result .item .panels > div.details .other-realms-container .check-container {
               text-align: right; }
