@@ -145,9 +145,10 @@ body {
       font: 12.8px "Friz Quadrata TT", sans-serif;
       text-shadow: 1px 1px 2px #000;
       max-width: 10em; }
-      .main .search-bar button:hover, .main .search-bar > div.filter:hover, .main .search-bar > div.small-button:hover {
-        background-color: #8080ff;
-        box-shadow: inset 0 0 10px 10px #282322; }
+      @media (hover: hover) {
+        .main .search-bar button:hover, .main .search-bar > div.filter:hover, .main .search-bar > div.small-button:hover {
+          background-color: #8080ff;
+          box-shadow: inset 0 0 10px 10px #282322; } }
       .main .search-bar button.favorite, .main .search-bar > div.filter.favorite, .main .search-bar > div.small-button.favorite {
         background-image: url("../images/favorite-star-off.png");
         background-position: center center;
@@ -164,9 +165,10 @@ body {
         flex: 0 0 auto;
         width: 2em;
         height: 2em; }
-        .main .search-bar button.small-button:hover, .main .search-bar > div.filter.small-button:hover, .main .search-bar > div.small-button.small-button:hover {
-          background-color: #282322;
-          box-shadow: none; }
+        @media (hover: hover) {
+          .main .search-bar button.small-button:hover, .main .search-bar > div.filter.small-button:hover, .main .search-bar > div.small-button.small-button:hover {
+            background-color: #282322;
+            box-shadow: none; } }
       .main .search-bar button.search, .main .search-bar > div.filter.search, .main .search-bar > div.small-button.search {
         background-color: #282322;
         border: 2px solid;
@@ -179,13 +181,15 @@ body {
         border-color: #6e1414 #6e1414 #460000;
         color: #ffd100;
         font-size: 17.6px; }
-        .main .search-bar button.search:hover, .main .search-bar > div.filter.search:hover, .main .search-bar > div.small-button.search:hover {
-          background-color: #8080ff;
-          box-shadow: inset 0 0 10px 10px #282322; }
-        .main .search-bar button.search:hover, .main .search-bar > div.filter.search:hover, .main .search-bar > div.small-button.search:hover {
-          background-color: #6c0d0d;
-          box-shadow: none;
-          color: #EEE; }
+        @media (hover: hover) {
+          .main .search-bar button.search:hover, .main .search-bar > div.filter.search:hover, .main .search-bar > div.small-button.search:hover {
+            background-color: #8080ff;
+            box-shadow: inset 0 0 10px 10px #282322; } }
+        @media (hover: hover) {
+          .main .search-bar button.search:hover, .main .search-bar > div.filter.search:hover, .main .search-bar > div.small-button.search:hover {
+            background-color: #6c0d0d;
+            box-shadow: none;
+            color: #EEE; } }
       .main .search-bar button.filter, .main .search-bar > div.filter.filter, .main .search-bar > div.small-button.filter {
         align-items: center;
         display: flex;
@@ -306,10 +310,11 @@ body {
           margin-top: 0; }
         .main .main-result .categories > div[data-selected] {
           box-shadow: inset 0 0 8px 2px #ff6; }
-        .main .main-result .categories > div:hover {
-          border-color: #aaf;
-          box-shadow: inset 0 0 20px 2px #8080ff;
-          color: #EEE; }
+        @media (hover: hover) {
+          .main .main-result .categories > div:hover {
+            border-color: #aaf;
+            box-shadow: inset 0 0 20px 2px #8080ff;
+            color: #EEE; } }
         @media screen and (max-width: 550px) {
           .main .main-result .categories > div {
             font-size: 11.2px; } }
@@ -337,9 +342,10 @@ body {
         .main .main-result .categories .subsubcategory[data-selected] {
           box-shadow: none;
           background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.6) 40%, rgba(230, 179, 53, 0.6) 60%, rgba(230, 179, 53, 0.1) 100%); }
-        .main .main-result .categories .subsubcategory:hover {
-          box-shadow: none;
-          background: linear-gradient(90deg, rgba(128, 128, 255, 0.1) 0%, rgba(128, 128, 255, 0.6) 40%, rgba(128, 128, 255, 0.6) 60%, rgba(128, 128, 255, 0.1) 100%); }
+        @media (hover: hover) {
+          .main .main-result .categories .subsubcategory:hover {
+            box-shadow: none;
+            background: linear-gradient(90deg, rgba(128, 128, 255, 0.1) 0%, rgba(128, 128, 255, 0.6) 40%, rgba(128, 128, 255, 0.6) 60%, rgba(128, 128, 255, 0.1) 100%); } }
     .main .main-result .welcome {
       bottom: 4px;
       font: 16px "Friz Quadrata TT", sans-serif;
@@ -365,9 +371,10 @@ body {
         text-shadow: 1px 1px 2px #000;
         margin: 0 2em;
         padding: 8px; }
-        .main .main-result .welcome .full-screen button:hover {
-          background-color: #8080ff;
-          box-shadow: inset 0 0 10px 10px #282322; }
+        @media (hover: hover) {
+          .main .main-result .welcome .full-screen button:hover {
+            background-color: #8080ff;
+            box-shadow: inset 0 0 10px 10px #282322; } }
     .main .main-result .search-result, .main .main-result .item {
       flex: 7 1;
       font: 19px "Arial Narrow", sans-serif;
@@ -430,26 +437,29 @@ body {
               width: 1em; }
             .main .main-result .search-result table thead td[data-sort="asc"]::after {
               transform: scaleY(-1); }
-            .main .main-result .search-result table thead td:hover {
-              background-color: #8080ff;
-              box-shadow: inset 0 0 10px 10px #282322; }
+            @media (hover: hover) {
+              .main .main-result .search-result table thead td:hover {
+                background-color: #8080ff;
+                box-shadow: inset 0 0 10px 10px #282322; } }
         .main .main-result .search-result table tbody tr.vendor-flip {
           background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.6) 40%, rgba(230, 179, 53, 0.6) 60%, rgba(230, 179, 53, 0.1) 100%); }
         body.no-row-backgrounds .main .main-result .search-result table tbody tr.vendor-flip {
           background: rgba(230, 179, 53, 0.6); }
-        .main .main-result .search-result table tbody tr:hover {
-          background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
-          .main .main-result .search-result table tbody tr:hover span.favorite {
-            visibility: visible !important; }
-        body.no-row-backgrounds .main .main-result .search-result table tbody tr:hover {
-          background: rgba(128, 128, 255, 0.6); }
+        @media (hover: hover) {
+          .main .main-result .search-result table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
+            .main .main-result .search-result table tbody tr:hover span.favorite {
+              visibility: visible !important; }
+          body.no-row-backgrounds .main .main-result .search-result table tbody tr:hover {
+            background: rgba(128, 128, 255, 0.6); } }
         .main .main-result .search-result table tbody tr:not(.message):nth-child(n+500) {
           display: none; }
         .main .main-result .search-result table tbody tr.message td {
           padding: 16px;
           text-align: center; }
-        .main .main-result .search-result table tbody tr.message:hover {
-          background: unset; }
+        @media (hover: hover) {
+          .main .main-result .search-result table tbody tr.message:hover {
+            background: unset; } }
         .main .main-result .search-result table tbody td {
           padding: 2px 8px; }
           .main .main-result .search-result table tbody td.price {
@@ -503,9 +513,11 @@ body {
               position: absolute;
               right: 0;
               top: 0;
-              visibility: hidden;
               width: calc(1em + 2px);
               z-index: 10; }
+              @media (hover: hover) {
+                .main .main-result .search-result table tbody td.quantity span.favorite {
+                  visibility: hidden; } }
               .main .main-result .search-result table tbody td.quantity span.favorite[data-favorite] {
                 background-image: url("../images/favorite-star.png");
                 visibility: visible; }
@@ -529,13 +541,15 @@ body {
         color: #ffd100;
         font-size: 17.6px;
         padding: 0 3em; }
-        .main .main-result .item button:hover {
-          background-color: #8080ff;
-          box-shadow: inset 0 0 10px 10px #282322; }
-        .main .main-result .item button:hover {
-          background-color: #6c0d0d;
-          box-shadow: none;
-          color: #EEE; }
+        @media (hover: hover) {
+          .main .main-result .item button:hover {
+            background-color: #8080ff;
+            box-shadow: inset 0 0 10px 10px #282322; } }
+        @media (hover: hover) {
+          .main .main-result .item button:hover {
+            background-color: #6c0d0d;
+            box-shadow: none;
+            color: #EEE; } }
       .main .main-result .item .back-bar {
         align-items: flex-end;
         display: flex;
@@ -747,13 +761,15 @@ body {
                     width: 1em; }
                   .main .main-result .item .panels > div.details .other-realms-container table thead td[data-sort="asc"]::after {
                     transform: scaleY(-1); }
-                  .main .main-result .item .panels > div.details .other-realms-container table thead td:hover {
-                    background-color: #8080ff;
-                    box-shadow: inset 0 0 10px 10px #282322; }
-              .main .main-result .item .panels > div.details .other-realms-container table tbody tr:hover {
-                background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
-              body.no-row-backgrounds .main .main-result .item .panels > div.details .other-realms-container table tbody tr:hover {
-                background: rgba(128, 128, 255, 0.6); }
+                  @media (hover: hover) {
+                    .main .main-result .item .panels > div.details .other-realms-container table thead td:hover {
+                      background-color: #8080ff;
+                      box-shadow: inset 0 0 10px 10px #282322; } }
+              @media (hover: hover) {
+                .main .main-result .item .panels > div.details .other-realms-container table tbody tr:hover {
+                  background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
+                body.no-row-backgrounds .main .main-result .item .panels > div.details .other-realms-container table tbody tr:hover {
+                  background: rgba(128, 128, 255, 0.6); } }
               .main .main-result .item .panels > div.details .other-realms-container table tbody td {
                 overflow: hidden;
                 padding-left: 8px;
@@ -797,16 +813,18 @@ body {
                   background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.6) 40%, rgba(230, 179, 53, 0.6) 60%, rgba(230, 179, 53, 0.1) 100%); }
                 .main .main-result .item .panels > div.auctions table tr[data-selected="part"] {
                   background: linear-gradient(90deg, rgba(230, 179, 53, 0.1) 0%, rgba(230, 179, 53, 0.34) 40%, rgba(230, 179, 53, 0.34) 60%, rgba(230, 179, 53, 0.1) 100%); }
-                .main .main-result .item .panels > div.auctions table tr:hover {
-                  background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); }
+                @media (hover: hover) {
+                  .main .main-result .item .panels > div.auctions table tr:hover {
+                    background: linear-gradient(90deg, rgba(128, 128, 255, 0) 0%, rgba(128, 128, 255, 0.6) 20%, rgba(128, 128, 255, 0.6) 80%, rgba(128, 128, 255, 0) 100%); } }
                 body.no-row-backgrounds .main .main-result .item .panels > div.auctions table tr {
                   background: #201b1a; }
                   body.no-row-backgrounds .main .main-result .item .panels > div.auctions table tr[data-selected] {
                     background: rgba(230, 179, 53, 0.6); }
                   body.no-row-backgrounds .main .main-result .item .panels > div.auctions table tr[data-selected="part"] {
                     background: rgba(230, 179, 53, 0.34); }
-                  body.no-row-backgrounds .main .main-result .item .panels > div.auctions table tr:hover {
-                    background: rgba(128, 128, 255, 0.6); }
+                  @media (hover: hover) {
+                    body.no-row-backgrounds .main .main-result .item .panels > div.auctions table tr:hover {
+                      background: rgba(128, 128, 255, 0.6); } }
               .main .main-result .item .panels > div.auctions table td {
                 text-align: right;
                 width: 50%; }

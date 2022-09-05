@@ -3848,15 +3848,17 @@ new function () {
                         rowLink._fixTooltip = html => html + '<div class="q2">Posted for under vendor price!</div>';
                     }
                 }
-                if (item.id === ITEM_PET_CAGE) {
-                    rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + Locales.getWowheadDomain();
-                } else {
-                    rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + Locales.getWowheadDomain();
-                    if (item.bonusLevel) {
-                        rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
-                    }
-                    if (suffix && suffix.bonus) {
-                        rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                if (canHover()) {
+                    if (item.id === ITEM_PET_CAGE) {
+                        rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + Locales.getWowheadDomain();
+                    } else {
+                        rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + Locales.getWowheadDomain();
+                        if (item.bonusLevel) {
+                            rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
+                        }
+                        if (suffix && suffix.bonus) {
+                            rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                        }
                     }
                 }
                 rowLink.addEventListener('click', Detail.show.bind(null, item, null));
@@ -4483,6 +4485,15 @@ new function () {
         while (ele.hasChildNodes()) {
             ele.removeChild(ele.firstChild);
         }
+    }
+
+    /**
+     * Returns true when the primary input can hover.
+     *
+     * @return {boolean}
+     */
+    function canHover() {
+        return window.matchMedia('(hover: hover)').matches;
     }
 
     /**
