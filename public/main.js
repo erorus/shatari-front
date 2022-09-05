@@ -1366,7 +1366,7 @@ new function () {
          */
         this.hide = function () {
             delete qs('.main .main-result').dataset.detailMode;
-            setHash('');
+            Hash.set('');
         }
 
         /**
@@ -1390,7 +1390,7 @@ new function () {
                     item.bonusSuffix,
                 );
 
-                setHash(`${realmHash}/${itemHash}`);
+                Hash.set(`${realmHash}/${itemHash}`);
             }
 
             {
@@ -1427,7 +1427,7 @@ new function () {
          */
         this.showWowToken = async function () {
             qs('.main .main-result').dataset.detailMode = 1;
-            setHash('');
+            Hash.set('');
 
             const itemDiv = qs('.main .main-result .item');
             ee(itemDiv);
@@ -2581,6 +2581,93 @@ new function () {
 
             self.show(repricedItem, realm);
         }
+    };
+
+    /**
+     * Manages the URL/location hash.
+     */
+    const Hash = new function () {
+        const self = this;
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes
+         * are silently ignored.
+         */
+        this.read = async function () {
+            let hash = getHash();
+            let hashParts = hash.split('/');
+            if (hashParts.length !== 2) {
+                // Didn't recognize hash format.
+                return;
+            }
+
+            let realm = Realms.getRealmByHash(hashParts[0]);
+            if (!realm) {
+                // Didn't recognize realm.
+                return;
+            }
+
+            let match = /^\d+(?:-\d+(?:-\d+)?)?$/.exec(hashParts[1]);
+            if (match) {
+                // Try to show an item detail page.
+                let item = Items.getItemByKey(Items.parseKey(match[0]));
+                if (item) {
+                    let hydrated = await Auctions.hydrateList([item], realm);
+                    if (hydrated.length) {
+                        await Detail.show(hydrated[0], realm);
+                    }
+                }
+
+                return;
+            }
+        };
+
+        /**
+         * Sets the browser's location bar hash.
+         *
+         * @param {string} newHash Must not include any initial #
+         */
+        this.set = function (newHash) {
+            if (newHash === getHash()) {
+                return;
+            }
+
+            let path = location.pathname + location.search;
+            if (newHash) {
+                path += '#' + newHash;
+            }
+
+            let hasExistingHash = getHash() !== '';
+
+            try {
+                if (hasExistingHash) {
+                    history.pushState({}, '', path);
+                } else {
+                    history.replaceState({}, '', path);
+                }
+            } catch {
+                // Ignore errors.
+            }
+        };
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Returns the current location hash, without leading #, percent-decoded.
+         *
+         * @return {string}
+         */
+        function getHash() {
+            return decodeURIComponent(location.hash.replace(/^#+/, ''));
+        }
+
+        window.addEventListener('hashchange', () => self.read());
     };
 
     /**
@@ -4570,67 +4657,6 @@ new function () {
     }
 
     /**
-     * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes are
-     * silently ignored.
-     */
-    async function readHash() {
-        let hash = location.hash.replace(/^#+/, '');
-        let hashParts = hash.split('/');
-        if (hashParts.length !== 2) {
-            // Didn't recognize hash format.
-            return;
-        }
-
-        let realm = Realms.getRealmByHash(hashParts[0]);
-        if (!realm) {
-            // Didn't recognize realm.
-            return;
-        }
-
-        let match = /^\d+(?:-\d+(?:-\d+)?)?$/.exec(hashParts[1]);
-        if (match) {
-            // Try to show an item detail page.
-            let item = Items.getItemByKey(Items.parseKey(match[0]));
-            if (item) {
-                let hydrated = await Auctions.hydrateList([item], realm);
-                if (hydrated.length) {
-                    await Detail.show(hydrated[0], realm);
-                }
-            }
-
-            return;
-        }
-    }
-
-    /**
-     * Sets the browser's location bar hash.
-     *
-     * @param {string} newHash Must not include any initial #
-     */
-    function setHash(newHash) {
-        if (newHash === location.hash.replace(/^#+/, '')) {
-            return;
-        }
-
-        let path = location.pathname + location.search;
-        if (newHash) {
-            path += '#' + newHash;
-        }
-
-        let hasExistingHash = location.hash.replace(/^#+/, '') !== '';
-
-        try {
-            if (hasExistingHash) {
-                history.pushState({}, '', path);
-            } else {
-                history.replaceState({}, '', path);
-            }
-        } catch {
-            // Ignore errors.
-        }
-    }
-
-    /**
      * Returns an element for the given price.
      *
      * @param {Money} coppers
@@ -4817,8 +4843,7 @@ new function () {
 
         setInterval(updateDeltaTimestamps, MS_MINUTE);
 
-        window.addEventListener('hashchange', () => readHash());
-        readHash();
+        Hash.read();
     }
 
     init().catch(alert);
