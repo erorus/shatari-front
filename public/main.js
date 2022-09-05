@@ -1382,7 +1382,8 @@ new function () {
             ee(itemDiv);
 
             {
-                let realmHash = Realms.getRealmHash(realm || Realms.getCurrentRealm())
+                let thisRealm = realm || Realms.getCurrentRealm();
+                let realmHash = Realms.getRealmHash(thisRealm);
 
                 let itemHash = Items.stringifyKeyParts(
                     item.id,
@@ -1390,7 +1391,10 @@ new function () {
                     item.bonusSuffix,
                 );
 
-                Hash.set(`${realmHash}/${itemHash}`, item.name);
+                Hash.set(
+                    `${realmHash}/${itemHash}`,
+                    `[${item.name}] - ${thisRealm.name} ${thisRealm.region.toUpperCase()}`,
+                );
             }
 
             {
@@ -2698,7 +2702,7 @@ new function () {
          * @param {string} title The page title fragment
          */
         this.set = function (newHash, title) {
-            document.title = title ? `OE: ${title}` : 'Oribos Exchange';
+            document.title = (title ? `${title} - ` : '') + 'Oribos Exchange';
 
             if (newHash === getHash()) {
                 return;
