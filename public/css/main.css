@@ -156,7 +156,10 @@ body {
         .main .search-bar button.favorite[data-enabled], .main .search-bar > div.filter.favorite[data-enabled], .main .search-bar > div.small-button.favorite[data-enabled] {
           background-image: url("../images/favorite-star.png"); }
       .main .search-bar button.deals, .main .search-bar > div.filter.deals, .main .search-bar > div.small-button.deals {
-        display: none; }
+        background-image: url("../images/goldclover.png");
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: calc(100% - 4px); }
       .main .search-bar button.small-button, .main .search-bar > div.filter.small-button, .main .search-bar > div.small-button.small-button {
         flex: 0 0 auto;
         width: 2em;
