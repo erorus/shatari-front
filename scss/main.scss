@@ -518,6 +518,7 @@ body {
       right: $marginStep / 2;
       text-align: center;
       top: $marginStep / 2;
+      z-index: 3;
 
       h1:first-child {margin-top: 0}
 

@@ -354,7 +354,8 @@ body {
       position: absolute;
       right: 4px;
       text-align: center;
-      top: 4px; }
+      top: 4px;
+      z-index: 3; }
       .main .main-result .welcome h1:first-child {
         margin-top: 0; }
       .main .main-result .welcome div {
