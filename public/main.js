@@ -1689,9 +1689,9 @@ new function () {
                     priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
                     result.appendChild(priceLine);
 
-                    WH.Tooltip.showAtCursor(event, result.outerHTML);
+                    WH.Tooltips.showAtCursor(event, result.outerHTML);
                 });
-                priceChart.addEventListener('mouseout', WH.Tooltip.hide);
+                priceChart.addEventListener('mouseout', WH.Tooltips.hide);
             })();
 
             updateDeltaTimestamps();
@@ -1966,9 +1966,9 @@ new function () {
                         src: url + '.png',
                     }));
 
-                    icon.addEventListener('mouseover', (event) => WH.Tooltip.showAtCursor(event, pic.outerHTML));
-                    icon.addEventListener('mousemove', WH.Tooltip.cursorUpdate);
-                    icon.addEventListener('mouseout', WH.Tooltip.hide);
+                    icon.addEventListener('mouseover', event => WH.Tooltips.showAtCursor(event, pic.outerHTML));
+                    icon.addEventListener('mousemove', WH.Tooltips.cursorUpdate);
+                    icon.addEventListener('mouseout', WH.Tooltips.hide);
                 }
 
                 let itemName = item.name;
@@ -2233,7 +2233,7 @@ new function () {
                     timeZoneName: 'short',
                 });
 
-                priceChart.addEventListener('mousemove', (event) => {
+                priceChart.addEventListener('mousemove', event => {
                     let leftOffset = priceChart.getBoundingClientRect().left;
                     let xPos = Math.min(0.9999, (event.clientX - leftOffset) / priceChart.clientWidth);
 
@@ -2270,9 +2270,9 @@ new function () {
                     quantityLine.appendChild(ce('td', {}, ct(snapshot.quantity.toLocaleString())));
                     result.appendChild(quantityLine);
 
-                    WH.Tooltip.showAtCursor(event, result.outerHTML);
+                    WH.Tooltips.showAtCursor(event, result.outerHTML);
                 });
-                priceChart.addEventListener('mouseout', WH.Tooltip.hide);
+                priceChart.addEventListener('mouseout', WH.Tooltips.hide);
             })();
 
             // Quantity calc
