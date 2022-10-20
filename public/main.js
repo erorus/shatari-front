@@ -1468,7 +1468,7 @@ new function () {
 
                 let itemName = Categories.getTokenName();
                 const nameLink = ce('a', {
-                    href: 'https://' + Locales.getWowheadDomain() + '.wowhead.com/item=122284',
+                    href: 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'item=122284',
                 }, ct(itemName));
                 namePanel.appendChild(nameLink);
             }
@@ -1989,9 +1989,9 @@ new function () {
                 namePanel.appendChild(nameLink);
 
                 if (item.id === ITEM_PET_CAGE) {
-                    nameLink.href = 'https://' + Locales.getWowheadDomain() + '.wowhead.com/npc=' + item.npc;
+                    nameLink.href = 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'npc=' + item.npc;
                 } else {
-                    nameLink.href = 'https://' + Locales.getWowheadDomain() + '.wowhead.com/item=' + item.id;
+                    nameLink.href = 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'item=' + item.id;
                 }
                 if (wowheadParams.length) {
                     nameLink.dataset.wowhead = wowheadParams.join('&');
@@ -3475,7 +3475,16 @@ new function () {
          */
         this.getWowheadDomain = function () {
             return WOWHEAD_DOMAINS[my.locale];
-        }
+        };
+
+        /**
+         * Returns the Wowhead path prefix for the current locale.
+         *
+         * @return {string}
+         */
+        this.getWowheadPathPrefix = function () {
+            return my.locale === 'enus' ? '' : (self.getWowheadDomain() + '/');
+        };
 
         /**
          * Sets up any controls and reads the user's preferred locale from local storage.
