@@ -923,8 +923,6 @@ body {
             }
 
             .charts-container {
-              margin: $marginStep;
-
               .chart-wrapper {
                 svg {
                   height: 100%;
@@ -1255,7 +1253,7 @@ body {
 
 .wowhead-tooltip td {
   .shatari-tooltip {
-    min-width: 15em;
+    min-width: 20em;
     td.date {padding-bottom: 0.5em}
     td.price {color: $priceChart}
     td.quantity {color: $quantityChart}

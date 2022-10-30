@@ -1934,7 +1934,7 @@ new function () {
 
             const days = itemState.snapshots.length ? Math.round(
                 (itemState.snapshots[itemState.snapshots.length - 1].snapshot - itemState.snapshots[0].snapshot) /
-                (24 * 60 * 60 * 1000)
+                MS_DAY
             ) : 0;
             const realmName = itemState.realm.name;
             const regionName = itemState.realm.region.toUpperCase();
@@ -2100,18 +2100,21 @@ new function () {
                 }
             })();
 
-            // Price chart
-            (() => {
-                if (itemState.snapshots.length < MIN_SNAPSHOT_COUNT) {
-                    return;
-                }
-
+            /**
+             * Renders a chart of summary lines.
+             *
+             * @param {SummaryLine[]} snapshotList
+             * @param {string}        timeWindow   How much time this data represents. Only used for the frame title.
+             * @param {boolean}       withTimes    True if the snapshot list includes hourly data, false for daily data.
+             */
+            let showPriceChart = function (snapshotList, timeWindow, withTimes) {
                 // Chart container
                 const chartContainer = ce('div', {
                     className: 'charts-container framed',
                 });
                 scroller.appendChild(chartContainer);
-                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(days + '-Day History')));
+                let adjective = withTimes ? 'Hourly' : 'Daily';
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`${timeWindow} ${adjective} History`)));
 
                 // Chart wrapper and parent SVG
                 const constScale = 5;
@@ -2140,7 +2143,7 @@ new function () {
                 let lastTimestamp = 0;
                 {
                     let prices = [];
-                    itemState.snapshots.forEach(snapshot => {
+                    snapshotList.forEach(snapshot => {
                         maxPrice = Math.max(maxPrice, snapshot.price);
                         maxQuantity = Math.max(maxQuantity, snapshot.quantity);
                         firstTimestamp = Math.min(firstTimestamp, snapshot.snapshot);
@@ -2167,10 +2170,10 @@ new function () {
                 const quantityPoints = [];
                 const hoverData = [];
 
-                const xOffset = Math.round(1 / itemState.snapshots.length * xMax / 2);
+                const xOffset = Math.round(1 / snapshotList.length * xMax / 2);
                 const xRange = xMax - 2 * xOffset;
 
-                itemState.snapshots.forEach(snapshot => {
+                snapshotList.forEach(snapshot => {
                     const x = xOffset + Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xRange);
                     const priceY = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
                     pricePoints.push([x, priceY].join(','));
@@ -2224,13 +2227,19 @@ new function () {
                 hoverLine.classList.add('hover');
                 priceChart.appendChild(hoverLine);
 
-                const formatter = new Intl.DateTimeFormat([], {
+                const formatter = new Intl.DateTimeFormat([], withTimes ? {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
                     hour: 'numeric',
                     minute: 'numeric',
                     timeZoneName: 'short',
+                } : {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: 'UTC',
                 });
 
                 priceChart.addEventListener('mousemove', event => {
@@ -2260,20 +2269,42 @@ new function () {
 
                     if (snapshot.price) {
                         const priceLine = ce('tr');
-                        priceLine.appendChild(ce('td', {className: 'price'}, ct('Lowest Price')));
+                        priceLine.appendChild(ce('td', {className: 'price'}, ct(withTimes ? 'Lowest Price' : 'Price at Max Quantity')));
                         priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
                         result.appendChild(priceLine);
                     }
 
                     const quantityLine = ce('tr');
-                    quantityLine.appendChild(ce('td', {className: 'quantity'}, ct('Total Quantity')));
+                    quantityLine.appendChild(ce('td', {className: 'quantity'}, ct(withTimes ? 'Total Quantity' : 'Max Quantity')));
                     quantityLine.appendChild(ce('td', {}, ct(snapshot.quantity.toLocaleString())));
                     result.appendChild(quantityLine);
 
                     WH.Tooltips.showAtCursor(event, result.outerHTML);
                 });
                 priceChart.addEventListener('mouseout', WH.Tooltips.hide);
-            })();
+            };
+
+            // Price charts
+            if (itemState.snapshots.length >= MIN_SNAPSHOT_COUNT) {
+                showPriceChart(itemState.snapshots, `${days}-Day`, true);
+            }
+            let showDailyChart = (timeWindow, targetDays, minDays) => {
+                let startFrom = Date.now() - (targetDays + 1) * MS_DAY;
+                let dailyChunk = itemState.daily.filter(summaryLine => summaryLine.snapshot > startFrom);
+                let minPoints = MIN_SNAPSHOT_COUNT;
+                let maxPoints = 400;
+                if (dailyChunk.length > maxPoints) {
+                    let modulus = Math.ceil(dailyChunk.length / maxPoints);
+                    dailyChunk = dailyChunk.filter((summaryLine, index) => index % modulus === 0);
+                }
+
+                let days = Math.round((dailyChunk[dailyChunk.length - 1].snapshot - dailyChunk[0].snapshot) / MS_DAY) + 1;
+                if (days >= minDays && dailyChunk.length >= minPoints) {
+                    showPriceChart(dailyChunk, timeWindow, false);
+                }
+            };
+            showDailyChart('1-Year', 365, 15);
+            showDailyChart('3-Year', 365 * 3, 366);
 
             // Quantity calc
             if (itemState.auctions.length) {
