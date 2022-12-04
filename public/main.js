@@ -2802,7 +2802,8 @@ new function () {
         this.CLASS_MISCELLANEOUS = 15;
         this.CLASS_BATTLE_PET = 17;
         this.CLASS_WOW_TOKEN = 18;
-        this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON];
+        this.CLASS_PROFESSION = 19;
+        this.CLASSES_EQUIPMENT = [this.CLASS_ARMOR, this.CLASS_WEAPON, this.CLASS_PROFESSION];
 
         /**
          * Icon sizes.
@@ -3113,6 +3114,7 @@ new function () {
                         break;
                     case Items.CLASS_WEAPON:
                     case Items.CLASS_ARMOR:
+                    case Items.CLASS_PROFESSION:
                         if (useVariants) {
                             // Normally we'll check item level for each variant.
                             break;
