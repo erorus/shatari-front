@@ -2710,6 +2710,9 @@ new function () {
                 // Didn't recognize realm.
                 return;
             }
+            if (!Realms.getCurrentRealm()) {
+                Realms.setCurrentRealm(realm);
+            }
 
             let match = /^\d+(?:-\d+(?:-\d+)?)?$/.exec(hashParts[1]);
             if (match) {
@@ -3627,7 +3630,7 @@ new function () {
          */
         this.getConnectedRealm = function (realm) {
             return getConnectedRealmsForRegion(realm.region)[realm.connectedId];
-        }
+        };
 
         /**
          * Get a copy of the realm object for the currently-selected realm, or undefined if not found.
@@ -3649,7 +3652,7 @@ new function () {
             }
 
             return self.getRealm(parseInt(realmId));
-        }
+        };
 
         /**
          * Get a copy of the realm object for the given realm ID, or undefined if not found.
@@ -3666,7 +3669,7 @@ new function () {
             co(result, my.realms[realmId]);
 
             return result;
-        }
+        };
 
         /**
          * Returns the realm matching the given hash slug, or undefined for no realm.
@@ -3685,7 +3688,7 @@ new function () {
          */
         this.getRealmHash = function (realm) {
             return `${realm.region}-${realm.slug}`;
-        }
+        };
 
         /**
          * Returns a sorted array of connected realms for the given region.
@@ -3698,7 +3701,7 @@ new function () {
             result.sort((a, b) => a.canonical.name.localeCompare(b.canonical.name));
 
             return result;
-        }
+        };
 
         /**
          * Fetches the realm list data and creates the realm list dropdown.
@@ -3707,16 +3710,6 @@ new function () {
             await getRealms();
 
             const select = qs('.main .search-bar select');
-            const placeholderUsageCheck = function () {
-                if (!select.options[0].value) {
-                    if (select.selectedIndex !== 0) {
-                        select.removeChild(select.querySelector('option[value=""]'));
-                        select.removeEventListener('change', placeholderUsageCheck);
-                    }
-                } else {
-                    select.removeEventListener('change', placeholderUsageCheck);
-                }
-            }
             select.addEventListener('change', placeholderUsageCheck);
 
             updateSelectNames(parseInt(localStorage.getItem('realm') || 0));
@@ -3724,6 +3717,21 @@ new function () {
             placeholderUsageCheck();
 
             Locales.registerCallback(onLocaleChange);
+        };
+
+        /**
+         * Changes the currently-selected realm to the given realm.
+         *
+         * @param {Realm} realm
+         */
+        this.setCurrentRealm = function (realm) {
+            const select = qs('.main .search-bar select');
+            let option = select.querySelector(`option[value="${realm.id}"]`);
+            if (option) {
+                option.selected = true;
+            }
+
+            placeholderUsageCheck();
         }
 
         // ------- //
@@ -3817,6 +3825,21 @@ new function () {
 
             setNames(await response.json());
             updateSelectNames();
+        }
+
+        /**
+         * Removes the "Select a realm" placeholder from the realm dropdown once it's no longer needed.
+         */
+        function placeholderUsageCheck() {
+            const select = qs('.main .search-bar select');
+            if (!select.options[0].value) {
+                if (select.selectedIndex !== 0) {
+                    select.removeChild(select.querySelector('option[value=""]'));
+                    select.removeEventListener('change', placeholderUsageCheck);
+                }
+            } else {
+                select.removeEventListener('change', placeholderUsageCheck);
+            }
         }
 
         /**
