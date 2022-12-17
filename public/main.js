@@ -4450,6 +4450,9 @@ new function () {
                     if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                         itemName += ' (' + item.bonusLevel + ')';
                     }
+                    if (item.craftingQualityTier) {
+                        itemName += ' ' + item.craftingQualityTier.toString().padStart(3, '0');
+                    }
                     sortRow.push(itemName);
                 }
 
