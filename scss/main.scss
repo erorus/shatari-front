@@ -621,6 +621,7 @@ body {
           $iconSize: $fontSizeArial - 2 * $iconBorderSize;
 
           tr {
+            cursor: pointer;
             &.vendor-flip {
               background: linear-gradient(90deg,
                 transparentize($rowHighlightColor, 0.9) 0%,
