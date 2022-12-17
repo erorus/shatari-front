@@ -688,7 +688,7 @@ body {
               width: 50%;
 
               a {text-decoration: none}
-              img {
+              .icon {
                 border: $iconBorderSize solid #808080;
                 border-right-color: #555;
                 border-bottom-color: #555;
@@ -699,6 +699,7 @@ body {
                 top: 2px;
                 width: 1em;
               }
+              .quality-tier {height: 1.25em; padding-left: 0.25em; vertical-align: bottom}
             }
 
             &.quantity {
@@ -851,6 +852,8 @@ body {
                 &[data-quality="4"]:after {background-image: url("../images/ring-4.png")}
                 &[data-quality="5"]:after {background-image: url("../images/ring-5.png")}
               }
+
+              .quality-tier {height: 1.25em; padding-left: 0.25em; vertical-align: bottom}
             }
 
             .framed {

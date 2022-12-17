@@ -490,7 +490,7 @@ body {
             width: 50%; }
             .main .main-result .search-result table tbody td.name a {
               text-decoration: none; }
-            .main .main-result .search-result table tbody td.name img {
+            .main .main-result .search-result table tbody td.name .icon {
               border: 1px solid #808080;
               border-right-color: #555;
               border-bottom-color: #555;
@@ -500,6 +500,10 @@ body {
               position: relative;
               top: 2px;
               width: 1em; }
+            .main .main-result .search-result table tbody td.name .quality-tier {
+              height: 1.25em;
+              padding-left: 0.25em;
+              vertical-align: bottom; }
           .main .main-result .search-result table tbody td.quantity {
             padding-right: 1em;
             position: relative; }
@@ -638,6 +642,10 @@ body {
                   background-image: url("../images/ring-4.png"); }
                 .main .main-result .item .panels > div.details .title .icon[data-quality="5"]:after {
                   background-image: url("../images/ring-5.png"); }
+              .main .main-result .item .panels > div.details .title .quality-tier {
+                height: 1.25em;
+                padding-left: 0.25em;
+                vertical-align: bottom; }
             .main .main-result .item .panels > div.details .framed {
               border-top: 2px solid #393433;
               margin: 32px 8px;

@@ -154,6 +154,7 @@ new function () {
     /**
      * @typedef {object} UnnamedItem
      * @property {number} class
+     * @property {number} [craftingQualityTier]
      * @property {number} [display]
      * @property {number} expansion
      * @property {number[]} [extraFilters]
@@ -1995,6 +1996,13 @@ new function () {
                 }
                 if (wowheadParams.length) {
                     nameLink.dataset.wowhead = wowheadParams.join('&');
+                }
+
+                if (item.craftingQualityTier) {
+                    nameLink.appendChild(ce('img', {
+                        className: 'quality-tier',
+                        src: `images/professions-chaticon-quality-tier${item.craftingQualityTier}.webp`,
+                    }));
                 }
             }
 
@@ -4193,12 +4201,20 @@ new function () {
                 let img = document.createElement('img');
                 img.loading = 'lazy';
                 img.src = Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM);
+                img.classList.add('icon');
                 td.appendChild(img);
 
                 let span = document.createElement('span');
                 span.className = 'q' + item.quality;
                 span.appendChild(ct(itemName));
                 td.appendChild(span);
+
+                if (item.craftingQualityTier) {
+                    td.appendChild(ce('img', {
+                        className: 'quality-tier',
+                        src: `images/professions-chaticon-quality-tier${item.craftingQualityTier}.webp`,
+                    }));
+                }
             }
 
             //
