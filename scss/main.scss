@@ -1284,6 +1284,8 @@ body {
 
   }
 }
+// Reduce the size of the crafting quality pip images.
+.wowhead-tooltip[data-type="item"] table td table td img {height: 2em; margin: -0.25em 0}
 
 picture.model-thumbnail img {
   background-color: $background10;

@@ -952,6 +952,10 @@ body {
       margin-top: 4px;
       width: 39px; }
 
+.wowhead-tooltip[data-type="item"] table td table td img {
+  height: 2em;
+  margin: -0.25em 0; }
+
 picture.model-thumbnail img {
   background-color: #161211; }
 
