@@ -1907,6 +1907,9 @@ new function () {
                     if (craftedStats.length) {
                         wowheadParams.push('crafted-stats=' + craftedStats.join(':'));
                     }
+                    if (specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_QUALITY]) {
+                        wowheadParams.push('crafting-quality=' + specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_QUALITY]);
+                    }
 
                     datasetParams.wowhead = wowheadParams.join('&');
                 }
@@ -2836,6 +2839,7 @@ new function () {
         this.MODIFIER_TYPE_TIMEWALKER_LEVEL = 9;
         this.MODIFIER_TYPE_CRAFTING_STAT_1 = 29;
         this.MODIFIER_TYPE_CRAFTING_STAT_2 = 30;
+        this.MODIFIER_TYPE_CRAFTING_QUALITY = 38;
 
         this.SEARCH_MODE_NORMAL = 0;
         this.SEARCH_MODE_SUGGESTIONS = 1;
