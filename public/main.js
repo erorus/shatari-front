@@ -2315,8 +2315,8 @@ new function () {
                     showPriceChart(dailyChunk, timeWindow, false);
                 }
             };
-            showDailyChart('1-Year', 365, 15);
-            showDailyChart('3-Year', 365 * 3, 366);
+            showDailyChart('Recent', 365, 15);
+            showDailyChart('Deep', 365 * 3, 366);
 
             // Quantity calc
             if (itemState.auctions.length) {
