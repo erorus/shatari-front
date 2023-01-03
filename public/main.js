@@ -3055,7 +3055,7 @@ new function () {
             const searchBox = qs('.main .search-bar input[type="text"]');
             searchBox.value.replace(/^\s+|\s+$/, '').split(/\s+/).forEach(function (word) {
                 if (word) {
-                    wordExpressions.push(new RegExp('(?:^|\s)' + escapeRegExp(word), 'i'));
+                    wordExpressions.push(new RegExp('(?:^|\\s)' + escapeRegExp(word), 'i'));
                 }
             });
 
