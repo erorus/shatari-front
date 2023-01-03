@@ -2309,7 +2309,8 @@ new function () {
                     dailyChunk = dailyChunk.filter((summaryLine, index) => index % modulus === 0);
                 }
 
-                let days = Math.round((dailyChunk[dailyChunk.length - 1].snapshot - dailyChunk[0].snapshot) / MS_DAY) + 1;
+                let days = !dailyChunk.length ? 0 :
+                    (Math.round((dailyChunk[dailyChunk.length - 1].snapshot - dailyChunk[0].snapshot) / MS_DAY) + 1);
                 if (days >= minDays && dailyChunk.length >= minPoints) {
                     showPriceChart(dailyChunk, timeWindow, false);
                 }
