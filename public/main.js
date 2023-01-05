@@ -583,6 +583,7 @@ new function () {
                     auctions: [],
                     snapshots: [],
                     specifics: [],
+                    daily: [],
                 };
             }
 
