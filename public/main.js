@@ -4903,6 +4903,11 @@ new function () {
     //      //
 
     async function init() {
+        const inMaintenance = !!qs('.main .welcome').dataset.maintenance;
+        if (inMaintenance) {
+            return;
+        }
+
         if (!navigator.userAgentData &&
             navigator.userAgent.indexOf('Safari') > -1 &&
             navigator.userAgent.indexOf('Chrome') < 0 &&

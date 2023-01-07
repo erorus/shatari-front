@@ -530,6 +530,10 @@ body {
         margin: 0 2em;
         padding: $marginStep;
       }
+
+      .maintenance {display: none}
+      &[data-maintenance] div {display: none}
+      &[data-maintenance] div.maintenance {display: block}
     }
 
     .search-result, .item {

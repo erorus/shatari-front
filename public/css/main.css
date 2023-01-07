@@ -376,6 +376,12 @@ body {
           .main .main-result .welcome .full-screen button:hover {
             background-color: #8080ff;
             box-shadow: inset 0 0 10px 10px #282322; } }
+      .main .main-result .welcome .maintenance {
+        display: none; }
+      .main .main-result .welcome[data-maintenance] div {
+        display: none; }
+      .main .main-result .welcome[data-maintenance] div.maintenance {
+        display: block; }
     .main .main-result .search-result, .main .main-result .item {
       flex: 7 1;
       font: 19px "Arial Narrow", sans-serif;
