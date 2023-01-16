@@ -4193,6 +4193,7 @@ new function () {
                     let img = document.createElement('img');
                     img.loading = 'lazy';
                     img.src = Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM);
+                    img.classList.add('icon');
                     td.appendChild(img);
                     td.dataset.sideIcon = 1;
                     tbody.dataset.sideIcon = 1;
@@ -4200,6 +4201,7 @@ new function () {
                     let img = document.createElement('img');
                     img.loading = 'lazy';
                     img.src = Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM);
+                    img.classList.add('icon');
                     td.appendChild(img);
                     td.dataset.sideIcon = 1;
                     tbody.dataset.sideIcon = 1;

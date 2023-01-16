@@ -738,8 +738,8 @@ body {
             }
           }
           &[data-side-icon] td.name {
-            img {margin-left: calc(1em + #{$iconMargin + 2 * $iconBorderSize});}
-            &[data-side-icon] img {margin-left:0}
+            img.icon {margin-left: calc(1em + #{$iconMargin + 2 * $iconBorderSize});}
+            &[data-side-icon] img.icon {margin-left:0}
           }
         }
       }

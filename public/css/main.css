@@ -534,9 +534,9 @@ body {
               .main .main-result .search-result table tbody td.quantity span.favorite[data-favorite] {
                 background-image: url("../images/favorite-star.png");
                 visibility: visible; }
-        .main .main-result .search-result table tbody[data-side-icon] td.name img {
+        .main .main-result .search-result table tbody[data-side-icon] td.name img.icon {
           margin-left: calc(1em + 8px); }
-        .main .main-result .search-result table tbody[data-side-icon] td.name[data-side-icon] img {
+        .main .main-result .search-result table tbody[data-side-icon] td.name[data-side-icon] img.icon {
           margin-left: 0; }
     .main .main-result .item {
       display: none;
