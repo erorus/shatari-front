@@ -173,6 +173,9 @@ new function () {
      * @property {number} [vendorSellFactor]
      */
 
+    const COPPER_SILVER = 100;
+    const COPPER_GOLD = 10000;
+
     /** @type {ItemID} ITEM_PET_CAGE */
     const ITEM_PET_CAGE = 82800;
 
@@ -203,8 +206,6 @@ new function () {
             'tw': 0x7F02,
             'kr': 0x7F03,
         };
-
-        const COPPER_SILVER = 100;
 
         const MAX_SNAPSHOT_INTERVAL = 2 * MS_HOUR;
         const SNAPSHOTS_FOR_INTERVAL = 20;
@@ -2122,37 +2123,23 @@ new function () {
             let showPriceChart = function (snapshotList, timeWindow, withTimes) {
                 // Chart container
                 const chartContainer = ce('div', {
-                    className: 'charts-container framed',
+                    className: 'highcharts-container framed',
                 });
                 scroller.appendChild(chartContainer);
                 let adjective = withTimes ? 'Hourly' : 'Daily';
                 chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`${timeWindow} ${adjective} History`)));
 
-                // Chart wrapper and parent SVG
-                const constScale = 5;
-                const xMax = 1000 * constScale;
-                const yMaxPrice = 333 * constScale;
-                const yGap = 10 * constScale;
-                const yMaxQuantity = (500 * constScale) - yMaxPrice - yGap;
-                const yMax = yMaxPrice + yMaxQuantity;
-
-                const chartWrapper = ce('div', {
-                    className: 'chart-wrapper',
-                    style: {
-                        paddingBottom: (yMax / xMax * 100) + '%',
-                    }
-                });
-                chartContainer.appendChild(chartWrapper);
-                const priceChart = svge('svg', {
-                    'viewBox': [0, 0, xMax, yMax].join(' '),
-                });
-                chartWrapper.appendChild(priceChart);
+                // Highchart parent.
+                const highchartParent = ce('div', {className: 'chart-wrapper'});
+                chartContainer.appendChild(highchartParent);
 
                 // Determine scaling
                 let maxPrice = 0;
                 let maxQuantity = 0;
                 let firstTimestamp = Date.now();
                 let lastTimestamp = 0;
+                let priceData = [];
+                let quantityData = [];
                 {
                     let prices = [];
                     snapshotList.forEach(snapshot => {
@@ -2163,6 +2150,8 @@ new function () {
                         if (snapshot.price > 0) {
                             prices.push(snapshot.price);
                         }
+                        priceData.push([snapshot.snapshot, snapshot.price]);
+                        quantityData.push([snapshot.snapshot, snapshot.quantity]);
                     });
                     if (maxPrice === 0) {
                         return;
@@ -2173,73 +2162,11 @@ new function () {
                     let q3 = prices[Math.floor(prices.length * 0.75)];
                     let iqr = q3 - q1;
 
-                    maxPrice = Math.min(maxPrice, q3 + iqr * 1.5) * 1.15;
+                    maxPrice = Math.min(maxPrice, q3 + iqr * 1.5);
                 }
-                const timestampRange = lastTimestamp - firstTimestamp;
 
-                // Set point arrays.
-                const pricePoints = [];
-                const quantityPoints = [];
-                const hoverData = [];
-
-                const xOffset = Math.round(1 / snapshotList.length * xMax / 2);
-                const xRange = xMax - 2 * xOffset;
-
-                snapshotList.forEach(snapshot => {
-                    const x = xOffset + Math.round((snapshot.snapshot - firstTimestamp) / timestampRange * xRange);
-                    const priceY = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
-                    pricePoints.push([x, priceY].join(','));
-
-                    const quantityY = Math.round((maxQuantity - snapshot.quantity) / maxQuantity * yMaxQuantity) + yMaxPrice + yGap;
-                    quantityPoints.push([x, quantityY].join(','));
-
-                    const hoverPoint = {
-                        xCenter: x / xMax,
-                    };
-                    co(hoverPoint, snapshot);
-                    if (hoverData.length === 0) {
-                        hoverPoint.xMin = 0;
-                    } else {
-                        let prev = hoverData[hoverData.length - 1];
-                        hoverPoint.xMin = prev.xMax = prev.xCenter + (hoverPoint.xCenter - prev.xCenter) / 2;
-                    }
-
-                    hoverData.push(hoverPoint);
-                });
-                hoverData[hoverData.length - 1].xMax = 1;
-
-                // line + fill
-                [
-                    {data: pricePoints, max: yMaxPrice, name: 'price'},
-                    {data: quantityPoints, max: yMaxQuantity + yMaxPrice + yGap, name: 'quantity'},
-                ].forEach(dataset => {
-                    const firstY = dataset.data[0].split(',')[1];
-                    const lastY = dataset.data[dataset.data.length - 1].split(',')[1];
-
-                    const line = svge('polyline', {
-                        points: '0,' + firstY + ' ' + dataset.data.join(' ') + ' ' + xMax + ',' + lastY,
-                    });
-                    line.classList.add(dataset.name);
-
-                    // Loop us back around to fill the shape.
-                    dataset.data.push([xMax, lastY].join(','));
-                    dataset.data.push([xMax, dataset.max].join(','));
-                    dataset.data.push([0, dataset.max].join(','));
-                    dataset.data.push([0, firstY].join(','));
-                    const fill = svge('polygon', {
-                        points: dataset.data.join(' '),
-                    });
-                    fill.classList.add(dataset.name);
-
-                    priceChart.appendChild(fill);
-                    priceChart.appendChild(line);
-                });
-
-                const hoverLine = svge('line', {x1: -1000, x2: -1000, y1: 0, y2: yMax});
-                hoverLine.classList.add('hover');
-                priceChart.appendChild(hoverLine);
-
-                const formatter = new Intl.DateTimeFormat([], withTimes ? {
+                const priceFormatter = point => (point.value / COPPER_GOLD).toFixed(2) + 'g';
+                const dateFormatter = new Intl.DateTimeFormat([], withTimes ? {
                     weekday: 'short',
                     month: 'short',
                     day: 'numeric',
@@ -2254,70 +2181,172 @@ new function () {
                     timeZone: 'UTC',
                 });
 
-                priceChart.addEventListener('mousemove', event => {
-                    let leftOffset = priceChart.getBoundingClientRect().left;
-                    let xPos = Math.min(0.9999, (event.clientX - leftOffset) / priceChart.clientWidth);
+                Highcharts.chart(highchartParent, {
+                    chart: {
+                        backgroundColor: 'rgba(0,0,0,0)',
+                        height: '38.196%',
+                        style: {
+                            fontFamily: 'inherit',
+                            fontSize: 'inherit',
+                        },
+                        zoomType: 'x',
+                    },
+                    credits: {
+                        style: {
+                            color: '#888',
+                        },
+                    },
+                    legend: {enabled: false},
+                    plotOptions: {
+                        series: {
+                            lineWidth: 2,
+                            marker: {
+                                enabled: false,
+                                radius: 3,
+                                states: {
+                                    hover: {
+                                        enabled: true,
+                                    },
+                                },
+                            },
+                            states: {
+                                hover: {
+                                    lineWidth: 2,
+                                },
+                            },
+                        },
+                    },
+                    series: [{
+                        data: priceData,
+                        fillColor: 'rgba(136,136,255,0.5)',
+                        lineColor: '#8888FF',
+                        marker: {
+                            states: {
+                                hover: {
+                                    fillColor: '#8888FF',
+                                },
+                            },
+                        },
+                        name: withTimes ? 'Lowest Price' : 'Price at Max Quantity',
+                        type: 'area',
+                    }, {
+                        data: quantityData,
+                        lineColor: '#BB5555',
+                        marker: {
+                            states: {
+                                hover: {
+                                    fillColor: '#FF8888',
+                                },
+                            },
+                        },
+                        name: withTimes ? 'Total Quantity' : 'Max Quantity',
+                        type: 'line',
+                        yAxis: 1,
+                    }],
+                    time: {useUTC: !withTimes},
+                    title: {text: undefined},
+                    tooltip: {
+                        backgroundColor: '#282322',
+                        borderColor: '#777',
+                        borderRadius: 4,
+                        formatter: function () {
+                            const result = ce('div');
+                            result.appendChild(ct(dateFormatter.format(new Date(this.x))));
 
-                    hoverLine.x1.baseVal.value = hoverLine.x2.baseVal.value = xPos * xMax;
+                            if (this.points[0].y) {
+                                result.appendChild(ce('br'));
+                                result.appendChild(ce(
+                                    'span',
+                                    {style: {color: '#8888FF'}},
+                                    ct((withTimes ? 'Lowest Price' : 'Price at Max Qty') + ': ')
+                                ));
+                                result.appendChild(ct((this.points[0].y / COPPER_GOLD).toFixed(2) + 'g'));
+                            }
 
-                    let left = 0;
-                    let right = hoverData.length - 1;
-                    let mid = 0;
-                    while (left <= right) {
-                        mid = Math.floor((left + right) / 2);
-                        if (hoverData[mid].xMax < xPos) {
-                            left = mid + 1;
-                        } else if (hoverData[mid].xMin > xPos) {
-                            right = mid - 1;
-                        } else {
-                            break;
+                            result.appendChild(ce('br'));
+                            result.appendChild(ce(
+                                'span',
+                                {style: {color: '#DD6666'}},
+                                ct((withTimes ? 'Total Quantity' : 'Max Quantity') + ': ')
+                            ));
+                            result.appendChild(ct(this.points[1].y.toLocaleString()));
+
+                            return result.innerHTML;
+                        },
+                        shared: true,
+                        style: {
+                            color: '#EEEEEE',
+                            fontFamily: '"Friz Quadrata TT", sans-serif',
+                            fontSize: '14px',
+                            lineHeight: '20px',
                         }
-                    }
-
-                    let snapshot = hoverData[mid];
-
-                    const result = ce('table', {className: 'shatari-tooltip'});
-                    result.appendChild(ce('tr', {}, ce('td', {className: 'date', colSpan: 2}, ct(formatter.format(new Date(snapshot.snapshot))))));
-
-                    if (snapshot.price) {
-                        const priceLine = ce('tr');
-                        priceLine.appendChild(ce('td', {className: 'price'}, ct(withTimes ? 'Lowest Price' : 'Price at Max Quantity')));
-                        priceLine.appendChild(ce('td', {}, priceElement(snapshot.price)));
-                        result.appendChild(priceLine);
-                    }
-
-                    const quantityLine = ce('tr');
-                    quantityLine.appendChild(ce('td', {className: 'quantity'}, ct(withTimes ? 'Total Quantity' : 'Max Quantity')));
-                    quantityLine.appendChild(ce('td', {}, ct(snapshot.quantity.toLocaleString())));
-                    result.appendChild(quantityLine);
-
-                    WH.Tooltips.showAtCursor(event, result.outerHTML);
+                    },
+                    xAxis: {
+                        labels: {
+                            style: {
+                                color: '#CCCCCC',
+                                fontSize: 'inherit',
+                            },
+                        },
+                        lineColor: '#393433',
+                        lineWidth: 1,
+                        maxZoom: 4 * MS_HOUR,
+                        tickColor: '#393433',
+                        type: 'datetime',
+                    },
+                    yAxis: [{
+                        gridLineColor: '#393433',
+                        labels: {
+                            formatter: priceFormatter,
+                            style: {
+                                color: '#CCCCCC',
+                                fontSize: 'inherit',
+                            },
+                        },
+                        max: maxPrice,
+                        min: 0,
+                        title: {
+                            style: {
+                                color: '#8888FF',
+                            },
+                            text: withTimes ? 'Lowest Price' : 'Price at Max Quantity',
+                        },
+                    }, {
+                        gridLineWidth: 0,
+                        labels: {
+                            style: {
+                                color: '#CCCCCC',
+                                fontSize: 'inherit',
+                            },
+                        },
+                        max: maxQuantity,
+                        min: 0,
+                        opposite: true,
+                        title: {
+                            style: {
+                                color: '#BB5555',
+                            },
+                            text: withTimes ? 'Total Quantity' : 'Max Quantity',
+                        },
+                    }],
                 });
-                priceChart.addEventListener('mouseout', WH.Tooltips.hide);
             };
 
             // Price charts
             if (itemState.snapshots.length >= MIN_SNAPSHOT_COUNT) {
                 showPriceChart(itemState.snapshots, `${days}-Day`, true);
             }
-            let showDailyChart = (timeWindow, targetDays, minDays) => {
-                let startFrom = Date.now() - (targetDays + 1) * MS_DAY;
-                let dailyChunk = itemState.daily.filter(summaryLine => summaryLine.snapshot > startFrom);
+            let showDailyChart = (minDays) => {
+                let dailyChunk = itemState.daily;
                 let minPoints = MIN_SNAPSHOT_COUNT;
-                let maxPoints = 400;
-                if (dailyChunk.length > maxPoints) {
-                    let modulus = Math.ceil(dailyChunk.length / maxPoints);
-                    dailyChunk = dailyChunk.filter((summaryLine, index) => index % modulus === 0);
-                }
 
                 let days = !dailyChunk.length ? 0 :
                     (Math.round((dailyChunk[dailyChunk.length - 1].snapshot - dailyChunk[0].snapshot) / MS_DAY) + 1);
                 if (days >= minDays && dailyChunk.length >= minPoints) {
-                    showPriceChart(dailyChunk, timeWindow, false);
+                    showPriceChart(dailyChunk, '', false);
                 }
             };
-            showDailyChart('Recent', 365, 15);
-            showDailyChart('Deep', 365 * 3, 366);
+            showDailyChart(15);
 
             // Quantity calc
             if (itemState.auctions.length) {
@@ -4830,8 +4859,8 @@ new function () {
         const df = document.createElement('span');
         df.style.whiteSpace = 'nowrap';
         coppers = Math.abs(coppers);
-        const silver = Math.floor(coppers / 100) % 100;
-        const gold = Math.floor(coppers / 10000);
+        const silver = Math.floor(coppers / COPPER_SILVER) % COPPER_SILVER;
+        const gold = Math.floor(coppers / COPPER_GOLD);
 
         if (gold > 0) {
             let goldSpan = document.createElement('span');
