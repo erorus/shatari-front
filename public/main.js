@@ -2233,6 +2233,7 @@ new function () {
                 };
 
                 Highcharts.stockChart(highchartParent, {
+                    accessibility: {enabled: false},
                     chart: {
                         backgroundColor: 'rgba(0,0,0,0)',
                         height: withTimes ? 325 : 400,
