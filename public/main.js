@@ -2116,17 +2116,19 @@ new function () {
             /**
              * Renders a chart of summary lines.
              *
-             * @param {SummaryLine[]} snapshotList
-             * @param {string}        frameTitle
-             * @param {boolean}       withTimes    True if the snapshot list includes hourly data, false for daily data.
+             * @param {SummaryLine[]}          snapshotList
+             * @param {Object<string, string>} strings
+             * @param {boolean}                withTimes        True if the snapshot list includes hourly data, false for daily data.
+             * @param {HTMLDivElement}         [chartContainer]
              */
-            let showPriceChart = function (snapshotList, frameTitle, withTimes) {
+            let showPriceChart = function (snapshotList, strings, withTimes, chartContainer) {
                 // Chart container
-                const chartContainer = ce('div', {
-                    className: 'highcharts-container framed',
-                });
-                scroller.appendChild(chartContainer);
-                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(frameTitle)));
+                if (!chartContainer) {
+                    chartContainer = ce('div');
+                    scroller.appendChild(chartContainer);
+                }
+                chartContainer.classList.add('highcharts-container', 'framed');
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(strings.title)));
 
                 // Highchart parent.
                 const highchartParent = ce('div', {className: 'chart-wrapper'});
@@ -2191,7 +2193,7 @@ new function () {
                             },
                         },
                     },
-                    name: withTimes ? 'Lowest Price' : 'Price at Max Quantity',
+                    name: strings.price,
                     type: 'area',
                     zIndex: 5,
                 };
@@ -2205,7 +2207,7 @@ new function () {
                             },
                         },
                     },
-                    name: withTimes ? 'Total Quantity' : 'Max Quantity',
+                    name: strings.quantity,
                     type: 'line',
                     yAxis: 1,
                     zIndex: 10,
@@ -2310,7 +2312,7 @@ new function () {
                                 result.appendChild(ce(
                                     'span',
                                     {style: {color: '#8888FF'}},
-                                    ct((withTimes ? 'Lowest Price' : 'Price at Max Qty') + ': ')
+                                    ct((strings.priceTooltip || strings.price) + ': ')
                                 ));
                                 result.appendChild(ct((this.points[1].y / COPPER_GOLD).toFixed(2) + 'g'));
                             }
@@ -2319,7 +2321,7 @@ new function () {
                             result.appendChild(ce(
                                 'span',
                                 {style: {color: '#DD6666'}},
-                                ct((withTimes ? 'Total Quantity' : 'Max Quantity') + ': ')
+                                ct((strings.quantityTooltip || strings.quantity) + ': ')
                             ));
                             result.appendChild(ct(this.points[0].y.toLocaleString()));
 
@@ -2363,7 +2365,7 @@ new function () {
                             style: {
                                 color: '#8888FF',
                             },
-                            text: addAxisLabels ? (withTimes ? 'Lowest Price' : 'Price at Max Quantity') : undefined,
+                            text: addAxisLabels ? strings.price : undefined,
                         },
                     }, {
                         gridLineWidth: 0,
@@ -2382,7 +2384,7 @@ new function () {
                             style: {
                                 color: '#BB5555',
                             },
-                            text: addAxisLabels ? (withTimes ? 'Total Quantity' : 'Max Quantity') : undefined,
+                            text: addAxisLabels ? strings.quantity : undefined,
                         },
                     }],
                 });
@@ -2390,19 +2392,28 @@ new function () {
 
             // Price charts
             if (itemState.snapshots.length >= MIN_SNAPSHOT_COUNT) {
-                showPriceChart(itemState.snapshots, 'Snapshots', true);
+                showPriceChart(itemState.snapshots, {
+                    title: `Snapshots for ${realmName}`,
+                    price: 'Lowest Price',
+                    quantity: 'Total Quantity',
+                }, true);
             }
-            {
+            const showDailyChart = (data, strings, target) => {
                 let minDays = 15;
                 let minPoints = MIN_SNAPSHOT_COUNT;
-                let data = itemState.daily;
 
                 let days = !data.length ? 0 :
                     (Math.round((data[data.length - 1].snapshot - data[0].snapshot) / MS_DAY) + 1);
                 if (days >= minDays && data.length >= minPoints) {
-                    showPriceChart(data, 'Daily History', false);
+                    showPriceChart(data, strings, false, target);
                 }
             }
+            showDailyChart(itemState.daily, {
+                title: `Daily History for ${realmName}`,
+                price: 'Price at Max Quantity',
+                priceTooltip: 'Price at Max Qty',
+                quantity: 'Max Quantity',
+            });
 
             // Quantity calc
             if (itemState.auctions.length) {
@@ -2489,6 +2500,9 @@ new function () {
                 return;
             }
 
+            const regionalDailyHistoryContainer = ce('div');
+            scroller.appendChild(regionalDailyHistoryContainer);
+
             // Create the "Current Regional Prices" bar chart area and data list.
             let otherRealmsChart;
             (() => {
@@ -2499,7 +2513,7 @@ new function () {
                 scroller.appendChild(topContainer);
 
                 // Add a title above this bar chart.
-                topContainer.appendChild(ce('span', {className: 'frame-title'}, ct('Current Regional Prices')));
+                topContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`Current Regional Prices for ${regionName}`)));
 
                 // Create the bar chart.
                 otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'});
@@ -2639,6 +2653,7 @@ new function () {
                 let prices = [];
                 let lowestAvailablePrice;
                 let chartData = [];
+                let regionDailyHistory = {};
 
                 otherRealms.forEach(itemState => {
                     // Collect stats for the base stats summary at the top.
@@ -2686,6 +2701,17 @@ new function () {
                         price: itemState.price,
                         quantity: itemState.quantity,
                     });
+
+                    // Scan all daily data, add nonzero quantities to regionDailyHistory.
+                    itemState.daily.filter(summaryLine => summaryLine.quantity > 0).forEach(summaryLine => {
+                        regionDailyHistory[summaryLine.snapshot] = regionDailyHistory[summaryLine.snapshot] || {
+                            quantitySum: 0,
+                            prices: [],
+                        };
+
+                        regionDailyHistory[summaryLine.snapshot].quantitySum += summaryLine.quantity;
+                        regionDailyHistory[summaryLine.snapshot].prices.push(summaryLine.price);
+                    });
                 });
 
                 // The table has finished being filled, now sort it.
@@ -2701,6 +2727,25 @@ new function () {
                     regionElements.median.appendChild(priceElement(statistics.median));
                     regionElements.mean.appendChild(priceElement(statistics.mean));
                 }
+
+                // Fill out the Regional Daily History chart.
+                /** @type {SummaryLine[]} */
+                showDailyChart(
+                    Object.keys(regionDailyHistory)
+                        .map(key => parseInt(key))
+                        .sort((a, b) => a - b)
+                        .map(snapshot => ({
+                            snapshot: snapshot,
+                            quantity: regionDailyHistory[snapshot].quantitySum,
+                            price: getStatistics(regionDailyHistory[snapshot].prices).mean,
+                        })),
+                    {
+                        title: `Regional Daily History for ${regionName}`,
+                        price: 'Average Price',
+                        quantity: 'Total Quantity',
+                    },
+                    regionalDailyHistoryContainer,
+                );
 
                 // Fill out the Current Regional Prices chart.
                 {
