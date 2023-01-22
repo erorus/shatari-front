@@ -2133,6 +2133,8 @@ new function () {
                 const highchartParent = ce('div', {className: 'chart-wrapper'});
                 chartContainer.appendChild(highchartParent);
 
+                const addAxisLabels = highchartParent.clientWidth >= 600;
+
                 // Determine scaling
                 let maxPrice = 0;
                 let maxQuantity = 0;
@@ -2181,10 +2183,41 @@ new function () {
                     timeZone: 'UTC',
                 });
 
-                Highcharts.chart(highchartParent, {
+                const priceSeries = {
+                    data: priceData,
+                    fillColor: 'rgba(136,136,255,0.5)',
+                    lineColor: '#8888FF',
+                    marker: {
+                        states: {
+                            hover: {
+                                fillColor: '#8888FF',
+                            },
+                        },
+                    },
+                    name: withTimes ? 'Lowest Price' : 'Price at Max Quantity',
+                    type: 'area',
+                    zIndex: 5,
+                };
+                const quantitySeries = {
+                    data: quantityData,
+                    lineColor: '#BB5555',
+                    marker: {
+                        states: {
+                            hover: {
+                                fillColor: '#FF8888',
+                            },
+                        },
+                    },
+                    name: withTimes ? 'Total Quantity' : 'Max Quantity',
+                    type: 'line',
+                    yAxis: 1,
+                    zIndex: 10,
+                };
+
+                Highcharts.stockChart(highchartParent, {
                     chart: {
                         backgroundColor: 'rgba(0,0,0,0)',
-                        height: '38.196%',
+                        height: withTimes ? 325 : 400,
                         style: {
                             fontFamily: 'inherit',
                             fontSize: 'inherit',
@@ -2197,6 +2230,18 @@ new function () {
                         },
                     },
                     legend: {enabled: false},
+                    navigator: {
+                        enabled: !withTimes,
+                        outlineWidth: 0,
+                        series: priceSeries,
+                        xAxis: {
+                            visible: false,
+                        },
+                        yAxis: {
+                            max: maxPrice,
+                            min: 0,
+                        },
+                    },
                     plotOptions: {
                         series: {
                             lineWidth: 2,
@@ -2216,33 +2261,43 @@ new function () {
                             },
                         },
                     },
-                    series: [{
-                        data: priceData,
-                        fillColor: 'rgba(136,136,255,0.5)',
-                        lineColor: '#8888FF',
-                        marker: {
-                            states: {
-                                hover: {
-                                    fillColor: '#8888FF',
-                                },
-                            },
+                    rangeSelector: {
+                        buttons: [
+                            {type: 'week', count: 2, text: '2w'},
+                            {type: 'month', count: 1, text: '1m'},
+                            {type: 'month', count: 3, text: '3m'},
+                            {type: 'month', count: 6, text: '6m'},
+                            {type: 'year', count: 1, text: '1y'},
+                            {type: 'all', text: 'All'},
+                        ],
+                        enabled: !withTimes,
+                        inputStyle: {
+                            color: '#CCCCCC',
                         },
-                        name: withTimes ? 'Lowest Price' : 'Price at Max Quantity',
-                        type: 'area',
-                    }, {
-                        data: quantityData,
-                        lineColor: '#BB5555',
-                        marker: {
-                            states: {
-                                hover: {
-                                    fillColor: '#FF8888',
-                                },
-                            },
-                        },
-                        name: withTimes ? 'Total Quantity' : 'Max Quantity',
-                        type: 'line',
-                        yAxis: 1,
-                    }],
+                        selected: withTimes ? 5 : 4,
+                    },
+                    scrollbar: {
+                        // middle button
+                        barBackgroundColor: '#4a4644',
+                        barBorderRadius: 4,
+                        barBorderWidth: 0,
+
+                        // Left/right arrow buttons
+                        buttonArrowColor: 'rgba(0,0,0,0)',
+                        buttonBackgroundColor: 'rgba(0,0,0,0)',
+                        buttonBorderWidth: 0,
+
+                        rifleColor: 'rgba(0,0,0,0)',
+
+                        //showFull: false,
+
+                        // under all buttons
+                        trackBackgroundColor: 'rgba(0,0,0,0)',
+                        trackBorderColor: '#393433',
+                        trackBorderRadius: 4,
+                        trackBorderWidth: 1,
+                    },
+                    series: [quantitySeries, priceSeries],
                     time: {useUTC: !withTimes},
                     title: {text: undefined},
                     tooltip: {
@@ -2253,14 +2308,14 @@ new function () {
                             const result = ce('div');
                             result.appendChild(ct(dateFormatter.format(new Date(this.x))));
 
-                            if (this.points[0].y) {
+                            if (this.points[1].y) {
                                 result.appendChild(ce('br'));
                                 result.appendChild(ce(
                                     'span',
                                     {style: {color: '#8888FF'}},
                                     ct((withTimes ? 'Lowest Price' : 'Price at Max Qty') + ': ')
                                 ));
-                                result.appendChild(ct((this.points[0].y / COPPER_GOLD).toFixed(2) + 'g'));
+                                result.appendChild(ct((this.points[1].y / COPPER_GOLD).toFixed(2) + 'g'));
                             }
 
                             result.appendChild(ce('br'));
@@ -2269,7 +2324,7 @@ new function () {
                                 {style: {color: '#DD6666'}},
                                 ct((withTimes ? 'Total Quantity' : 'Max Quantity') + ': ')
                             ));
-                            result.appendChild(ct(this.points[1].y.toLocaleString()));
+                            result.appendChild(ct(this.points[0].y.toLocaleString()));
 
                             return result.innerHTML;
                         },
@@ -2290,13 +2345,14 @@ new function () {
                         },
                         lineColor: '#393433',
                         lineWidth: 1,
-                        maxZoom: 4 * MS_HOUR,
+                        minRange: 4 * MS_HOUR,
                         tickColor: '#393433',
                         type: 'datetime',
                     },
                     yAxis: [{
                         gridLineColor: '#393433',
                         labels: {
+                            enabled: addAxisLabels,
                             formatter: priceFormatter,
                             style: {
                                 color: '#CCCCCC',
@@ -2305,15 +2361,18 @@ new function () {
                         },
                         max: maxPrice,
                         min: 0,
+                        opposite: false,
                         title: {
                             style: {
                                 color: '#8888FF',
                             },
-                            text: withTimes ? 'Lowest Price' : 'Price at Max Quantity',
+                            text: addAxisLabels ? (withTimes ? 'Lowest Price' : 'Price at Max Quantity') : undefined,
                         },
                     }, {
                         gridLineWidth: 0,
                         labels: {
+                            enabled: addAxisLabels,
+                            formatter: point => point.value.toLocaleString(),
                             style: {
                                 color: '#CCCCCC',
                                 fontSize: 'inherit',
@@ -2326,7 +2385,7 @@ new function () {
                             style: {
                                 color: '#BB5555',
                             },
-                            text: withTimes ? 'Total Quantity' : 'Max Quantity',
+                            text: addAxisLabels ? (withTimes ? 'Total Quantity' : 'Max Quantity') : undefined,
                         },
                     }],
                 });

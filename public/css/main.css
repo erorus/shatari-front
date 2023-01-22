@@ -734,8 +734,6 @@ body {
               visibility: visible; }
             .main .main-result .item .panels > div.details .highcharts-container {
               font: 15.2px "Arial Narrow", sans-serif; }
-              .main .main-result .item .panels > div.details .highcharts-container .chart-wrapper {
-                padding: 10px 0; }
             .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars {
               align-items: stretch;
               display: flex;
