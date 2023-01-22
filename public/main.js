@@ -2169,7 +2169,27 @@ new function () {
                     maxPrice = Math.min(maxPrice, q3 * 1.25);
                 }
 
-                const priceFormatter = point => (point.value / COPPER_GOLD).toFixed(2) + 'g';
+                const priceFormatter = point => {
+                    let money = point.value / COPPER_SILVER;
+                    let suffix = 's';
+                    if (money >= (COPPER_GOLD / COPPER_SILVER)) {
+                        money /= (COPPER_GOLD / COPPER_SILVER);
+                        suffix = 'g';
+                    }
+                    if (money > 1000) {
+                        money /= 1000;
+                        suffix = 'k';
+                    }
+                    if (money > 1000) {
+                        money /= 1000;
+                        suffix = 'm';
+                    }
+                    if (suffix !== 's' && money < 10) {
+                        return money.toPrecision(2) + suffix;
+                    } else {
+                        return Math.round(money) + suffix;
+                    }
+                };
                 const dateFormatter = new Intl.DateTimeFormat([], withTimes ? {
                     weekday: 'short',
                     month: 'short',
