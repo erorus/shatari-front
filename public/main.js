@@ -2489,21 +2489,26 @@ new function () {
                 return;
             }
 
-            // Other realms
+            // Create the "Current Regional Prices" bar chart area and data list.
             let otherRealmsChart;
             (() => {
+                // Both the bar chart and the list are in this topContainer.
                 const topContainer = ce('div', {
                     className: 'other-realms-container framed',
                 });
                 scroller.appendChild(topContainer);
+
+                // Add a title above this bar chart.
                 topContainer.appendChild(ce('span', {className: 'frame-title'}, ct('Current Regional Prices')));
 
+                // Create the bar chart.
                 otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'});
                 topContainer.appendChild(otherRealmsChart);
                 otherRealmsChart.appendChild(ce('div', {className: 'bar-section price-bars'}));
                 otherRealmsChart.appendChild(ce('div', {className: 'bar-section quantity-bars'}));
                 otherRealmsChart.appendChild(ce('div', {className: 'bar-section links'}));
 
+                // Create the list container header. ("Include Connected Realms")
                 const otherRealmsContainer = ce('div', {className: 'check-container'});
                 topContainer.appendChild(otherRealmsContainer);
                 const otherRealmsLabel = ce('label', {}, ct('Include Connected Realms'));
@@ -2511,6 +2516,7 @@ new function () {
                 const otherRealmsControl = ce('input', {type: 'checkbox'});
                 otherRealmsLabel.appendChild(otherRealmsControl);
 
+                // Create the list.
                 const list = ce('div', {
                     className: 'list',
                 });
@@ -2635,6 +2641,7 @@ new function () {
                 let chartData = [];
 
                 otherRealms.forEach(itemState => {
+                    // Collect stats for the base stats summary at the top.
                     quantitySum += itemState.quantity;
                     if (itemState.price) {
                         prices.push(itemState.price);
@@ -2643,6 +2650,7 @@ new function () {
                         }
                     }
 
+                    // Add rows to the current regional prices table.
                     const connectedRealm = Realms.getConnectedRealm(itemState.realm);
                     /** @var {Realm[]} ourRealms */
                     const ourRealms = [connectedRealm.canonical].concat(connectedRealm.secondary);
@@ -2672,6 +2680,7 @@ new function () {
                         regionElements.listTable.appendChild(tr);
                     }
 
+                    // Add an entry for the current regional prices bar chart.
                     chartData.push({
                         realm: itemState.realm,
                         price: itemState.price,
@@ -2679,8 +2688,10 @@ new function () {
                     });
                 });
 
+                // The table has finished being filled, now sort it.
                 regionElements.afterList();
 
+                // Update the base stats summary.
                 regionElements.quantity.appendChild(ct(quantitySum.toLocaleString()));
                 if (lowestAvailablePrice) {
                     regionElements.current.appendChild(priceElement(lowestAvailablePrice));
@@ -2691,6 +2702,7 @@ new function () {
                     regionElements.mean.appendChild(priceElement(statistics.mean));
                 }
 
+                // Fill out the Current Regional Prices chart.
                 {
                     chartData.sort((a, b) =>
                         b.price - a.price ||
