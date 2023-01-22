@@ -2117,17 +2117,16 @@ new function () {
              * Renders a chart of summary lines.
              *
              * @param {SummaryLine[]} snapshotList
-             * @param {string}        timeWindow   How much time this data represents. Only used for the frame title.
+             * @param {string}        frameTitle
              * @param {boolean}       withTimes    True if the snapshot list includes hourly data, false for daily data.
              */
-            let showPriceChart = function (snapshotList, timeWindow, withTimes) {
+            let showPriceChart = function (snapshotList, frameTitle, withTimes) {
                 // Chart container
                 const chartContainer = ce('div', {
                     className: 'highcharts-container framed',
                 });
                 scroller.appendChild(chartContainer);
-                let adjective = withTimes ? 'Hourly' : 'Daily';
-                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`${timeWindow} ${adjective} History`)));
+                chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(frameTitle)));
 
                 // Highchart parent.
                 const highchartParent = ce('div', {className: 'chart-wrapper'});
@@ -2391,19 +2390,19 @@ new function () {
 
             // Price charts
             if (itemState.snapshots.length >= MIN_SNAPSHOT_COUNT) {
-                showPriceChart(itemState.snapshots, `${days}-Day`, true);
+                showPriceChart(itemState.snapshots, 'Snapshots', true);
             }
-            let showDailyChart = (minDays) => {
-                let dailyChunk = itemState.daily;
+            {
+                let minDays = 15;
                 let minPoints = MIN_SNAPSHOT_COUNT;
+                let data = itemState.daily;
 
-                let days = !dailyChunk.length ? 0 :
-                    (Math.round((dailyChunk[dailyChunk.length - 1].snapshot - dailyChunk[0].snapshot) / MS_DAY) + 1);
-                if (days >= minDays && dailyChunk.length >= minPoints) {
-                    showPriceChart(dailyChunk, '', false);
+                let days = !data.length ? 0 :
+                    (Math.round((data[data.length - 1].snapshot - data[0].snapshot) / MS_DAY) + 1);
+                if (days >= minDays && data.length >= minPoints) {
+                    showPriceChart(data, 'Daily History', false);
                 }
-            };
-            showDailyChart(15);
+            }
 
             // Quantity calc
             if (itemState.auctions.length) {
