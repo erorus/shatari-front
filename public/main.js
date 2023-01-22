@@ -1386,16 +1386,8 @@ new function () {
 
             {
                 let thisRealm = realm || Realms.getCurrentRealm();
-                let realmHash = Realms.getRealmHash(thisRealm);
-
-                let itemHash = Items.stringifyKeyParts(
-                    item.id,
-                    item.bonusLevel,
-                    item.bonusSuffix,
-                );
-
                 Hash.set(
-                    `${realmHash}/${itemHash}`,
+                    Hash.getItemDetailHash(item, thisRealm),
                     `[${item.name}] - ${thisRealm.name} ${thisRealm.region.toUpperCase()}`,
                 );
             }
@@ -2886,6 +2878,25 @@ new function () {
         // ------ //
 
         /**
+         * Returns the hash we use for the detail page for the given item on the given realm.
+         *
+         * @param {Item} item
+         * @param {Realm} [realm]
+         * @return {string}
+         */
+        this.getItemDetailHash = function (item, realm) {
+            let realmHash = Realms.getRealmHash(realm || Realms.getCurrentRealm());
+
+            let itemHash = Items.stringifyKeyParts(
+                item.id,
+                item.bonusLevel,
+                item.bonusSuffix,
+            );
+
+            return `${realmHash}/${itemHash}`;
+        };
+
+        /**
          * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes
          * are silently ignored.
          */
@@ -4353,7 +4364,11 @@ new function () {
                         }
                     }
                 }
-                rowLink.addEventListener('click', Detail.show.bind(null, item, null));
+                rowLink.href = '#' + Hash.getItemDetailHash(item);
+                rowLink.addEventListener('click', event => {
+                    event.preventDefault();
+                    Detail.show(item, null);
+                });
                 td.appendChild(rowLink);
             }
 
