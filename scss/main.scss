@@ -978,6 +978,24 @@ body {
               font: $fontSizeArial * 0.8 $fontArial;
             }
 
+            .heat-container {
+              .table-wrapper {
+                background-color: $background15;
+                border: $bevel solid;
+                border-color: $background00 $background10 $background40;
+                border-radius: $borderRadius;
+                font: $fontSizeArial * 0.8 $fontArial;
+                max-width: 100%;
+                overflow-x: auto;
+
+                &[data-type="quantity"] {margin-top: $marginStep * 2}
+              }
+              table {border-spacing: 1px 2px; width: 100%;
+                td {padding: 2px; text-align: right}
+                td:first-child {text-align: left}
+              }
+            }
+
             .other-realms-container {
               .other-realms-bars {
                 align-items: stretch;
@@ -1143,7 +1161,7 @@ body {
               }
             }
 
-            .charts-container, .highcharts-container, .other-realms-container {
+            .charts-container, .highcharts-container, .other-realms-container, .heat-container {
               .caption {
                 font: $fontSizeArial * 0.8 $fontArial;
                 padding: 5px 20px 10px;

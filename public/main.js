@@ -184,6 +184,8 @@ new function () {
     const MS_HOUR = 60 * MS_MINUTE;
     const MS_DAY = 24 * MS_HOUR;
 
+    const NBSP = '\u00A0';
+
     const SIDE_ALLIANCE = 1;
     const SIDE_HORDE = 2;
 
@@ -2360,7 +2362,7 @@ new function () {
                                     week: labelFormatter.day.format(new Date(context.value)),
                                     month: labelFormatter.month.format(new Date(context.value)),
                                     year: Highcharts.dateFormat('%Y', context.value),
-                                }[context.tickPositionInfo.unitName].replace(/\s/g, '\u00A0')),
+                                }[context.tickPositionInfo.unitName].replace(/\s/g, NBSP)),
                             style: {
                                 color: '#CCCCCC',
                                 fontSize: 'inherit',
@@ -2422,6 +2424,163 @@ new function () {
                     price: 'Lowest Price',
                     quantity: 'Total Quantity',
                 }, true);
+
+                // Heat Map
+                {
+                    let mapContainer = ce('div', {className: 'heat-container framed'});
+                    scroller.appendChild(mapContainer);
+
+                    mapContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`Hourly Heat Maps for ${houseName}`)));
+
+                    let startFrom = new Date();
+                    startFrom.setDate(startFrom.getDate() - 7);
+                    startFrom.setHours(0, 0, 0, 0);
+
+                    mapContainer.appendChild(ce('div', {className: 'caption'}, ct(`These heat maps show the lowest price and total quantity available of ${itemName} on ${houseName} each hour for the past week. Using your browser's time zone of ` +
+                        (new Intl.DateTimeFormat([], {year: 'numeric', timeZoneName: 'short'})).format(startFrom).replace(new RegExp('\\W*' + startFrom.getFullYear() + '\\W*'), '') + '.')));
+
+                    let dayFormatter = new Intl.DateTimeFormat([], {day: 'numeric', weekday: 'short'});
+
+                    let day = new Date(startFrom);
+                    let now = new Date();
+                    let days = [];
+                    let dayIndexes = {};
+                    while (day < now) {
+                        days.push({
+                            name: dayFormatter.format(day),
+                            date: day.getDate(),
+                            prices: [].fill(undefined, 0, 23),
+                            quantities: [].fill(undefined, 0, 23),
+                        });
+                        dayIndexes[day.getDate()] = days.length - 1;
+                        day.setDate(day.getDate() + 1);
+                    }
+                    itemState.snapshots.filter(summaryLine => summaryLine.snapshot >= startFrom).forEach(summaryLine => {
+                        let now = new Date(summaryLine.snapshot);
+                        let dayIndex = dayIndexes[now.getDate()];
+                        if (dayIndex != null) {
+                            days[dayIndex].prices[now.getHours()] = summaryLine.price;
+                            days[dayIndex].quantities[now.getHours()] = summaryLine.quantity;
+                        }
+                    });
+
+                    let prices = [];
+                    let quantities = [];
+                    days.forEach(day => {
+                        day.prices.filter(amount => amount > 0).forEach(amount => prices.push(amount));
+                        day.quantities.filter(amount => amount > 0).forEach(amount => quantities.push(amount));
+                    });
+                    prices.sort((a, b) => a - b);
+                    quantities.sort((a, b) => a - b);
+                    let priceMin = prices.length ? prices[Math.floor(prices.length * 0.15)] : undefined;
+                    let priceMax = prices.length ? prices[Math.floor(prices.length * 0.85)] : undefined;
+                    let quantityMin = quantities.length ? quantities[Math.floor(quantities.length * 0.15)] : undefined;
+                    let quantityMax = quantities.length ? quantities[Math.floor(quantities.length * 0.85)] : undefined;
+
+                    {
+                        let tableWrapper = ce('div', {className: 'table-wrapper'});
+                        mapContainer.appendChild(tableWrapper);
+
+                        let table = ce('table');
+                        tableWrapper.appendChild(table);
+
+                        let cellProperties = {};
+                        days.forEach(day => {
+                            let tr = ce('tr', {}, ce('td', {}, ct(day.name.replace(/\s+/g, NBSP))));
+                            table.appendChild(tr);
+                            for (let hour = 0; hour < 24; hour++) {
+                                let text = '';
+                                let copper = day.prices[hour];
+                                if (copper) {
+                                    let percentage = 1;
+                                    if (priceMin !== priceMax) {
+                                        percentage = (copper - priceMin) / (priceMax - priceMin);
+                                        percentage = Math.min(1, Math.max(0, percentage));
+                                    }
+                                    cellProperties = {style: {backgroundColor: 'rgba(136, 136, 255, ' + (percentage * 0.5 + 0.1) + ')'}};
+
+                                    let money = copper / COPPER_SILVER;
+                                    let suffix = 's';
+                                    if (money >= (COPPER_GOLD / COPPER_SILVER)) {
+                                        money /= (COPPER_GOLD / COPPER_SILVER);
+                                        suffix = 'g';
+                                    }
+                                    if (money > 1000) {
+                                        money /= 1000;
+                                        suffix = 'k';
+                                    }
+                                    if (money > 1000) {
+                                        money /= 1000;
+                                        suffix = 'm';
+                                    }
+                                    if (suffix !== 's' && money < 10) {
+                                        text = money.toPrecision(2) + suffix;
+                                    } else {
+                                        text = Math.round(money) + suffix;
+                                    }
+                                }
+                                tr.appendChild(ce('td', cellProperties, ct(text)));
+                            }
+                        });
+
+                        let timeFormatter = Intl.DateTimeFormat([], {hour: 'numeric', timeZone: 'UTC'});
+                        let tr = ce('tr', {}, ce('td'));
+                        table.appendChild(tr);
+                        for (let hour = 0; hour < 24; hour++) {
+                            tr.appendChild(ce('td', {}, ct(timeFormatter.format(new Date(hour * MS_HOUR)).toLowerCase().replace(/\s+/g, ''))));
+                        }
+                    }
+
+                    {
+                        let tableWrapper = ce('div', {className: 'table-wrapper', dataset: {type: 'quantity'}});
+                        mapContainer.appendChild(tableWrapper);
+
+                        let table = ce('table');
+                        tableWrapper.appendChild(table);
+
+                        let cellProperties = {};
+                        days.forEach(day => {
+                            let tr = ce('tr', {}, ce('td', {}, ct(day.name.replace(/\s+/g, NBSP))));
+                            table.appendChild(tr);
+                            for (let hour = 0; hour < 24; hour++) {
+                                let text = '';
+                                let amount = day.quantities[hour];
+                                if (amount !== undefined) {
+                                    let percentage = 1;
+                                    if (quantityMin !== quantityMax) {
+                                        percentage = (amount - quantityMin) / (quantityMax - quantityMin);
+                                        percentage = Math.min(1, Math.max(0, percentage));
+                                    }
+                                    cellProperties = {style: {backgroundColor: 'rgba(255, 136, 136, ' + (percentage * 0.5 + 0.1) + ')'}};
+
+                                    let scaled = amount;
+                                    let suffix = '';
+                                    if (scaled > 1000) {
+                                        scaled /= 1000;
+                                        suffix = 'k';
+                                    }
+                                    if (scaled > 1000) {
+                                        scaled /= 1000;
+                                        suffix = 'm';
+                                    }
+                                    if (suffix !== '' && scaled < 10) {
+                                        text = scaled.toPrecision(2) + suffix;
+                                    } else {
+                                        text = Math.round(scaled) + suffix;
+                                    }
+                                }
+                                tr.appendChild(ce('td', cellProperties, ct(text)));
+                            }
+                        });
+
+                        let timeFormatter = Intl.DateTimeFormat([], {hour: 'numeric', timeZone: 'UTC'});
+                        let tr = ce('tr', {}, ce('td'));
+                        table.appendChild(tr);
+                        for (let hour = 0; hour < 24; hour++) {
+                            tr.appendChild(ce('td', {}, ct(timeFormatter.format(new Date(hour * MS_HOUR)).toLowerCase().replace(/\s+/g, ''))));
+                        }
+                    }
+                }
             }
             const showDailyChart = (data, strings, target) => {
                 let minDays = 15;

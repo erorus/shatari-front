@@ -734,6 +734,24 @@ body {
               visibility: visible; }
             .main .main-result .item .panels > div.details .highcharts-container {
               font: 15.2px "Arial Narrow", sans-serif; }
+            .main .main-result .item .panels > div.details .heat-container .table-wrapper {
+              background-color: #201b1a;
+              border: 2px solid;
+              border-color: #060100 #161211 #4a4644;
+              border-radius: 8px;
+              font: 15.2px "Arial Narrow", sans-serif;
+              max-width: 100%;
+              overflow-x: auto; }
+              .main .main-result .item .panels > div.details .heat-container .table-wrapper[data-type="quantity"] {
+                margin-top: 16px; }
+            .main .main-result .item .panels > div.details .heat-container table {
+              border-spacing: 1px 2px;
+              width: 100%; }
+              .main .main-result .item .panels > div.details .heat-container table td {
+                padding: 2px;
+                text-align: right; }
+              .main .main-result .item .panels > div.details .heat-container table td:first-child {
+                text-align: left; }
             .main .main-result .item .panels > div.details .other-realms-container .other-realms-bars {
               align-items: stretch;
               display: flex;
@@ -859,7 +877,7 @@ body {
             .main .main-result .item .panels > div.details .other-realms-container .silver {
               display: inline-block;
               width: 1.75em; }
-            .main .main-result .item .panels > div.details .charts-container .caption, .main .main-result .item .panels > div.details .highcharts-container .caption, .main .main-result .item .panels > div.details .other-realms-container .caption {
+            .main .main-result .item .panels > div.details .charts-container .caption, .main .main-result .item .panels > div.details .highcharts-container .caption, .main .main-result .item .panels > div.details .other-realms-container .caption, .main .main-result .item .panels > div.details .heat-container .caption {
               font: 15.2px "Arial Narrow", sans-serif;
               padding: 5px 20px 10px; }
           .main .main-result .item .panels > div.auctions {
