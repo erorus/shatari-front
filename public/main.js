@@ -2361,7 +2361,7 @@ new function () {
                                     week: labelFormatter.day.format(new Date(context.value)),
                                     month: labelFormatter.month.format(new Date(context.value)),
                                     year: Highcharts.dateFormat('%Y', context.value),
-                                }[context.tickPositionInfo.unitName]),
+                                }[context.tickPositionInfo.unitName].replace(/\s/g, '\u00A0')),
                             style: {
                                 color: '#CCCCCC',
                                 fontSize: 'inherit',
