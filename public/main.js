@@ -2160,11 +2160,9 @@ new function () {
                     }
 
                     prices.sort((a, b) => a - b);
-                    let q1 = prices[Math.floor(prices.length * 0.25)];
                     let q3 = prices[Math.floor(prices.length * 0.75)];
-                    let iqr = q3 - q1;
 
-                    maxPrice = Math.min(maxPrice, q3 + iqr * 1.5);
+                    maxPrice = Math.min(maxPrice, q3 * 1.25);
                 }
 
                 const priceFormatter = point => (point.value / COPPER_GOLD).toFixed(2) + 'g';
