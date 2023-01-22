@@ -1420,7 +1420,7 @@ new function () {
             const itemState = await Auctions.getItem(item, realm);
 
             populateAuctions(item, itemState);
-            populateDetails(item, itemState);
+            await populateDetails(item, itemState);
         }
 
         /**
@@ -1924,11 +1924,13 @@ new function () {
          * @param {PricedItem} item
          * @param {ItemState} itemState
          */
-        function populateDetails(item, itemState) {
+        async function populateDetails(item, itemState) {
             const parent = qs('.main .main-result .item .details');
             const scroller = ce('div', {className: 'scroller'});
             parent.appendChild(scroller);
             scroller.scrollTop = 0;
+
+            await waitForHighstock();
 
             const MIN_SNAPSHOT_COUNT = 6;
 
@@ -5253,6 +5255,18 @@ new function () {
 
             ele.appendChild(ct(timeString));
         });
+    }
+
+    /**
+     * Waits for Highstock to be loaded.
+     */
+    async function waitForHighstock() {
+        let tag = document.getElementById('highstock-script');
+        if (!tag.dataset.loaded) {
+            await new Promise(resolve => {
+                tag.addEventListener('load', () => resolve());
+            });
+        }
     }
 
     //      //
