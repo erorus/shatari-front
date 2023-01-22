@@ -2182,6 +2182,22 @@ new function () {
                     timeZone: 'UTC',
                 });
 
+                const labelFormatter = {
+                    minute: new Intl.DateTimeFormat([], {
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: 'numeric',
+                    }),
+                    day: new Intl.DateTimeFormat([], {
+                        month: 'short',
+                        day: 'numeric',
+                    }),
+                    month: new Intl.DateTimeFormat([], {
+                        year: 'numeric',
+                        month: 'short',
+                    }),
+                };
+
                 const priceSeries = {
                     data: priceData,
                     fillColor: 'rgba(136,136,255,0.5)',
@@ -2337,6 +2353,15 @@ new function () {
                     },
                     xAxis: {
                         labels: {
+                            formatter: context => ({
+                                    second: labelFormatter.minute.format(new Date(context.value)),
+                                    minute: labelFormatter.minute.format(new Date(context.value)),
+                                    hour: labelFormatter.minute.format(new Date(context.value)),
+                                    day: labelFormatter.day.format(new Date(context.value)),
+                                    week: labelFormatter.day.format(new Date(context.value)),
+                                    month: labelFormatter.month.format(new Date(context.value)),
+                                    year: Highcharts.dateFormat('%Y', context.value),
+                                }[context.tickPositionInfo.unitName]),
                             style: {
                                 color: '#CCCCCC',
                                 fontSize: 'inherit',
