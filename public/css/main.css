@@ -859,6 +859,9 @@ body {
             .main .main-result .item .panels > div.details .other-realms-container .silver {
               display: inline-block;
               width: 1.75em; }
+            .main .main-result .item .panels > div.details .charts-container .caption, .main .main-result .item .panels > div.details .highcharts-container .caption, .main .main-result .item .panels > div.details .other-realms-container .caption {
+              font: 15.2px "Arial Narrow", sans-serif;
+              padding: 5px 20px 10px; }
           .main .main-result .item .panels > div.auctions {
             background-color: #161211;
             flex: 6 1;

@@ -1945,7 +1945,10 @@ new function () {
             const realmName = itemState.realm.name;
             const regionName = itemState.realm.region.toUpperCase();
 
+            const houseName = item.stack > 1 ? `${regionName} realms` : realmName;
+
             // Name panel
+            let itemName;
             {
                 let wowheadParams = [];
 
@@ -1977,7 +1980,7 @@ new function () {
                     icon.addEventListener('mouseout', WH.Tooltips.hide);
                 }
 
-                let itemName = item.name;
+                itemName = item.name;
                 if (item.bonusSuffix) {
                     let suffix = Items.getSuffix(item.id, item.bonusSuffix);
                     if (suffix) {
@@ -2031,13 +2034,13 @@ new function () {
 
                 table.appendChild(tr = ce('tr', {className: 'header'}));
                 tr.appendChild(ce('td'));
-                tr.appendChild(ce('td', {}, ct(realmName)));
-                tr.appendChild(ce('td', {}, ct(regionName)));
+                tr.appendChild(ce('td', {}, ct(houseName)));
+                tr.appendChild(ce('td', {}, ct(`${regionName} realms`)));
 
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Available')));
                 tr.appendChild(ce('td', {
-                    dataset: {simpleTooltip: 'Total quantity for sale in ' + realmName + ' right now.'}
+                    dataset: {simpleTooltip: `Total quantity for sale on ${houseName} right now.`}
                 }, ct(item.quantity.toLocaleString())));
                 tr.appendChild(regionElements.quantity = ce('td', {
                     dataset: {simpleTooltip: 'Total quantity for sale in all ' + regionName + ' realms right now.'}
@@ -2053,7 +2056,7 @@ new function () {
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Current')));
                 tr.appendChild(ce('td', {
-                    dataset: {simpleTooltip: 'Lowest price in ' + realmName + ' right now.'}
+                    dataset: {simpleTooltip: `Lowest price on ${houseName} right now.`}
                 }, item.price ? priceElement(item.price) : null));
                 tr.appendChild(regionElements.current = ce('td', {
                     dataset: {simpleTooltip: 'Lowest price among all ' + regionName + ' realms right now.'}
@@ -2072,7 +2075,7 @@ new function () {
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Median')));
                 tr.appendChild(realmElements.median = ce('td', {
-                    dataset: {simpleTooltip: 'Median price in ' + realmName + ' over the past ' + days + ' days.'}
+                    dataset: {simpleTooltip: `Median price on ${houseName} over the past ${days} days.`}
                 }));
                 tr.appendChild(regionElements.median = ce('td', {
                     dataset: {simpleTooltip: 'Median price among all ' + regionName + ' realms right now.'}
@@ -2081,7 +2084,7 @@ new function () {
                 table.appendChild(tr = ce('tr'));
                 tr.appendChild(ce('td', {}, ct('Mean')));
                 tr.appendChild(realmElements.mean = ce('td', {
-                    dataset: {simpleTooltip: 'Mean (average) price in ' + realmName + ' over the past ' + days + ' days.'}
+                    dataset: {simpleTooltip: `Mean (average) price on ${houseName} over the past ${days} days.`}
                 }));
                 tr.appendChild(regionElements.mean = ce('td', {
                     dataset: {simpleTooltip: 'Mean (average) price among all ' + regionName + ' realms right now.'}
@@ -2129,6 +2132,10 @@ new function () {
                 }
                 chartContainer.classList.add('highcharts-container', 'framed');
                 chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(strings.title)));
+
+                if (strings.caption) {
+                    chartContainer.appendChild(ce('div', {className: 'caption'}, ct(strings.caption)));
+                }
 
                 // Highchart parent.
                 const highchartParent = ce('div', {className: 'chart-wrapper'});
@@ -2418,7 +2425,8 @@ new function () {
             // Price charts
             if (itemState.snapshots.length >= MIN_SNAPSHOT_COUNT) {
                 showPriceChart(itemState.snapshots, {
-                    title: `Snapshots for ${realmName}`,
+                    title: `Snapshots for ${houseName}`,
+                    caption: `This shows the lowest price and total quantity available of ${itemName} on ${houseName} every hour for the past few weeks.`,
                     price: 'Lowest Price',
                     quantity: 'Total Quantity',
                 }, true);
@@ -2434,7 +2442,8 @@ new function () {
                 }
             }
             showDailyChart(itemState.daily, {
-                title: `Daily History for ${realmName}`,
+                title: `Daily History for ${houseName}`,
+                caption: `This shows the maximum observed available quantity, and the lowest price at that time, of ${itemName} on ${houseName} each day.`,
                 price: 'Price at Max Quantity',
                 priceTooltip: 'Price at Max Qty',
                 quantity: 'Max Quantity',
@@ -2538,7 +2547,9 @@ new function () {
                 scroller.appendChild(topContainer);
 
                 // Add a title above this bar chart.
-                topContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`Current Regional Prices for ${regionName}`)));
+                topContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`Current Regional Prices for ${regionName} realms`)));
+
+                topContainer.appendChild(ce('div', {className: 'caption'}, ct(`This chart, and the following list, show the current price and available quantity of ${itemName} on each ${regionName} realm. The dashed line shows ${realmName}.`)));
 
                 // Create the bar chart.
                 otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'});
@@ -2765,7 +2776,8 @@ new function () {
                             price: getStatistics(regionDailyHistory[snapshot].prices).mean,
                         })),
                     {
-                        title: `Regional Daily History for ${regionName}`,
+                        title: `Regional Daily History for ${regionName} realms`,
+                        caption: `This shows the total daily max available quantity, and the average daily price, of ${itemName} from all ${regionName} realms.`,
                         price: 'Average Price',
                         quantity: 'Total Quantity',
                     },
