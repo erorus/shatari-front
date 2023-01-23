@@ -461,14 +461,14 @@ body {
                 visibility: visible !important; }
             body.no-row-backgrounds .main .main-result .search-result table tbody tr:hover {
               background: rgba(128, 128, 255, 0.6); } }
-          .main .main-result .search-result table tbody tr:not(.message):nth-child(n+500) {
-            display: none; }
-          .main .main-result .search-result table tbody tr.message td {
-            padding: 16px;
-            text-align: center; }
-          @media (hover: hover) {
-            .main .main-result .search-result table tbody tr.message:hover {
-              background: unset; } }
+          .main .main-result .search-result table tbody tr.message {
+            cursor: default; }
+            .main .main-result .search-result table tbody tr.message td {
+              padding: 16px;
+              text-align: center; }
+            @media (hover: hover) {
+              .main .main-result .search-result table tbody tr.message:hover {
+                background: unset; } }
         .main .main-result .search-result table tbody td {
           padding: 2px 8px; }
           .main .main-result .search-result table tbody td.price {

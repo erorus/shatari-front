@@ -4491,6 +4491,7 @@ new function () {
             }
 
             const favorites = self.getFavorites();
+            // Note: only the first message row stays at the top. Any other message rows are pushed to the bottom.
             const afterNode = tbody.querySelector('tr.message');
             for (let x = Math.min(MAX_RESULTS_SHOWN, my.rows.length) - 1; x >= 0; x--) {
                 let tr = my.rows[x][0];
@@ -4766,7 +4767,7 @@ new function () {
         }
 
         /**
-         * Given an pricing-hydrated list of items, show it in the UI.
+         * Given a pricing-hydrated list of items, show it in the UI.
          *
          * @param {PricedItem[]} itemsList
          * @param {boolean}      includeNeverSeen
@@ -4882,7 +4883,11 @@ new function () {
                 tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
                 td.appendChild(ct('No results found. Double-check your category and filter settings.'));
             } else {
+                tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
+                    'Click an entry for more information.',
+                ))));
                 if (my.rows.length > MAX_RESULTS_SHOWN) {
+                    // Note: this second message will always be at the bottom of the list.
                     tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
                         my.rows.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
                     ))));
