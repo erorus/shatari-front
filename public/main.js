@@ -3095,9 +3095,7 @@ new function () {
                 // Didn't recognize realm.
                 return;
             }
-            if (!Realms.getCurrentRealm()) {
-                Realms.setCurrentRealm(realm);
-            }
+            Realms.setCurrentRealm(realm);
 
             let match = /^\d+(?:-\d+(?:-\d+)?)?$/.exec(hashParts[1]);
             if (match) {
@@ -4033,12 +4031,6 @@ new function () {
                 return;
             }
 
-            try {
-                localStorage.setItem('realm', realmId);
-            } catch (e) {
-                // Ignore
-            }
-
             return self.getRealm(parseInt(realmId));
         };
 
@@ -4106,6 +4098,24 @@ new function () {
 
             Locales.registerCallback(onLocaleChange);
         };
+
+        /**
+         * Saves the current/given realm to localstorage as the preferred realm.
+         *
+         * @param {Realm} [realm]
+         */
+        this.savePreferredRealm = function (realm) {
+            realm = realm || self.getCurrentRealm();
+            if (!realm) {
+                return;
+            }
+
+            try {
+                localStorage.setItem('realm', realm.id);
+            } catch (e) {
+                // Ignore
+            }
+        }
 
         /**
          * Changes the currently-selected realm to the given realm.
@@ -4382,6 +4392,7 @@ new function () {
 
             Detail.hide();
             emptyItemList();
+            Realms.savePreferredRealm();
 
             const searchBox = qs('.main .search-bar input[type="text"]');
             const hasSearchText = /\S/.test(searchBox.value);
