@@ -1359,6 +1359,14 @@ new function () {
         }
 
         // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = {
+            everScrolled: false,
+        };
+
+        // ********************* //
         // ***** FUNCTIONS ***** //
         // ********************* //
 
@@ -1931,6 +1939,17 @@ new function () {
             scroller.scrollTop = 0;
 
             await waitForHighstock();
+
+            if (!my.everScrolled) {
+                let indicator = makeScrollIndicator();
+                scroller.appendChild(indicator);
+                let hideIndicator = () => {
+                    indicator.dataset.hidden = 1;
+                    my.everScrolled = true;
+                    scroller.removeEventListener('scroll', hideIndicator);
+                };
+                scroller.addEventListener('scroll', hideIndicator);
+            }
 
             const MIN_SNAPSHOT_COUNT = 6;
 
@@ -3009,6 +3028,20 @@ new function () {
                     });
                 }
             });
+        }
+
+        /**
+         * Returns an element for the scroll indicator to appear at the bottom of the scrollable panel.
+         *
+         * @return {HTMLElement}
+         */
+        function makeScrollIndicator() {
+            let result = ce('div', {className: 'scroll-indicator'});
+            result.appendChild(ce('div', {className: 'chevron'}));
+            result.appendChild(ce('div', {className: 'chevron'}));
+            result.appendChild(ce('div', {className: 'chevron'}));
+
+            return result;
         }
 
         /**

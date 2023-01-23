@@ -599,6 +599,17 @@ body {
             position: absolute;
             right: 4px;
             top: 4px; }
+            .main .main-result .item .panels > div .scroller .scroll-indicator {
+              background: linear-gradient(to bottom, transparent, transparent 25%, rgba(0, 0, 0, 0.666) 83%, transparent);
+              bottom: -2rem;
+              height: 12rem;
+              pointer-events: none;
+              position: absolute;
+              transition: opacity 0.5s;
+              width: 100%;
+              z-index: 100; }
+              .main .main-result .item .panels > div .scroller .scroll-indicator[data-hidden] {
+                opacity: 0; }
           .main .main-result .item .panels > div.details {
             background-color: #282322;
             flex: 14 1; }
@@ -943,6 +954,48 @@ body {
       margin-left: 2em;
       text-align: right; }
 
+.scroll-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center; }
+  .scroll-indicator .chevron {
+    position: absolute;
+    width: 2.1rem;
+    height: 0.48rem;
+    opacity: 0;
+    transform: scale(0.3);
+    animation: move-chevron 3s ease-out infinite; }
+  .scroll-indicator .chevron:first-child {
+    animation: move-chevron 3s ease-out 1s infinite; }
+  .scroll-indicator .chevron:nth-child(2) {
+    animation: move-chevron 3s ease-out 2s infinite; }
+  .scroll-indicator .chevron:before,
+  .scroll-indicator .chevron:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    background: #aaa; }
+  .scroll-indicator .chevron:before {
+    left: 0;
+    transform: skewY(30deg); }
+  .scroll-indicator .chevron:after {
+    right: 0;
+    width: 50%;
+    transform: skewY(-30deg); }
+@keyframes move-chevron {
+  25% {
+    opacity: 1; }
+  33.3% {
+    opacity: 1;
+    transform: translateY(2.28rem); }
+  66.6% {
+    opacity: 1;
+    transform: translateY(3.12rem); }
+  100% {
+    opacity: 0;
+    transform: translateY(4.8rem) scale(0.5); } }
 .main .gold, .main .silver, .main .copper, .shatari-tooltip .gold, .shatari-tooltip .silver, .shatari-tooltip .copper {
   background-position: right top;
   background-repeat: no-repeat;
