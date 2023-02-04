@@ -929,6 +929,7 @@ new function () {
          *  subClassId: SubclassID|undefined,
          *  subClassIds: SubclassID[]|undefined,
          *  detailColumn: DetailColumn|undefined,
+         *  hashCode: string|undefined,
          *  categories: Category[],
          *  battlePetTypes: Object.<number, string>,
          *  }}
@@ -942,6 +943,7 @@ new function () {
             invTypes: undefined,
             subClassId: undefined,
             subClassIds: undefined,
+            hashCode: undefined,
 
             detailColumn: undefined,
         };
@@ -971,7 +973,7 @@ new function () {
          */
         this.getClassId = function () {
             return my.classId;
-        }
+        };
 
         /**
          * Returns the detail column to show in the item list, based on the selected category.
@@ -987,7 +989,7 @@ new function () {
             co(result, my.detailColumn);
 
             return result;
-        }
+        };
 
         /**
          * Returns extra filter IDs to use in search filtering, or undefined for none.
@@ -996,7 +998,16 @@ new function () {
          */
         this.getExtraFilters = function () {
             return my.extraFilters && my.extraFilters.slice(0);
-        }
+        };
+
+        /**
+         * Returns the hash code of the currently-selected category/subcategory/subsubcategory.
+         *
+         * @return {string}
+         */
+        this.getHashCode = function () {
+            return my.hashCode || '';
+        };
 
         /**
          * Returns the inventory type IDs to use in search filtering, or undefined for none.
@@ -1005,7 +1016,7 @@ new function () {
          */
         this.getInvTypes = function () {
             return my.invTypes && my.invTypes.slice(0);
-        }
+        };
 
         /**
          * Returns the subclass IDs to use in search filtering, or undefined for none.
@@ -1016,7 +1027,7 @@ new function () {
             return my.subClassIds && my.subClassIds.slice(0) ||
                 my.subClassId !== undefined && [my.subClassId] ||
                 undefined;
-        }
+        };
 
         /**
          * Returns the name of the WoW Token in the current locale, since it's a BoP item (and not included in our item
@@ -1045,6 +1056,26 @@ new function () {
             const categoriesParent = qs('.main .categories');
             ee(categoriesParent);
 
+            /**
+             * Sets a unique hash code dataset property, based on other dataset properties of the given div.
+             *
+             * @param {HTMLElement} catDiv
+             */
+            let setHashCode = function (catDiv) {
+                let hashCode = catDiv.dataset.classId + '.';
+                if (catDiv.dataset.subClassId) {
+                    hashCode += catDiv.dataset.subClassId;
+                } else if (catDiv.dataset.subClassIds) {
+                    hashCode += catDiv.dataset.subClassIds.replace(/,/g, '_');
+                }
+                hashCode += '.';
+                hashCode += (catDiv.dataset.invTypes || '').replace(/,/g, '_') + '.';
+                hashCode += (catDiv.dataset.extraFilters || '').replace(/,/g, '_');
+                hashCode = hashCode.replace(/\.+$/, '');
+
+                catDiv.dataset.hashCode = hashCode;
+            };
+
             data.forEach(function (cat) {
                 const catDiv = ce(
                     'div',
@@ -1052,12 +1083,14 @@ new function () {
                         className: 'category',
                         dataset: {
                             classId: cat['class'],
+                            detailColumn: JSON.stringify(cat.detailColumn),
                         },
                     },
                     getNameNode(cat.name)
                 );
+                setHashCode(catDiv);
                 categoriesParent.appendChild(catDiv);
-                catDiv.addEventListener('click', clickCategory.bind(null, catDiv, cat));
+                catDiv.addEventListener('click', clickCategory.bind(null, catDiv));
                 if (cat['class'] === Items.CLASS_WOW_TOKEN) {
                     catDiv.classList.add('q8');
                 }
@@ -1091,6 +1124,7 @@ new function () {
                     if (subcat.hasOwnProperty('extraFilters')) {
                         subcatDiv.dataset.extraFilters = subcat.extraFilters.join(',');
                     }
+                    setHashCode(subcatDiv);
                     categoriesParent.appendChild(subcatDiv);
                     subcatDiv.addEventListener('click', clickSubCategory.bind(null, subcatDiv));
 
@@ -1122,6 +1156,7 @@ new function () {
                         if (subsubcat.hasOwnProperty('extraFilters')) {
                             subsubcatDiv.dataset.extraFilters = subsubcat.extraFilters.join(',');
                         }
+                        setHashCode(subsubcatDiv);
                         categoriesParent.appendChild(subsubcatDiv);
                         subsubcatDiv.addEventListener('click', clickSubSubCategory.bind(null, subsubcatDiv));
                     });
@@ -1129,7 +1164,67 @@ new function () {
             });
 
             Locales.registerCallback(onLocaleChange);
-        }
+        };
+
+        /**
+         * Resets all category selections, then selects the category leaf matching the given hash code.
+         *
+         * @param {string} hashCode
+         */
+        this.setHashCode = function (hashCode) {
+            deselectAll();
+
+            hashCode = hashCode.replace(/[^-\d._]/g, '');
+            if (!hashCode) {
+                return;
+            }
+
+            let node = qs('.main .categories > div[data-hash-code="' + hashCode + '"]');
+            if (!node) {
+                return;
+            }
+
+            let subsubCatDiv;
+            let subCatDiv;
+            let catDiv;
+            if (node.classList.includes('subsubcategory')) {
+                subsubCatDiv = node;
+
+                {
+                    let selector = '.main .categories .subcategory';
+                    selector += '[data-parent-class="' + subsubCatDiv.dataset.parentClass + '"]';
+                    selector += '[data-sub-category-index="' + subsubCatDiv.dataset.parentSubCategory + '"]';
+
+                    subCatDiv = qs(selector);
+                }
+
+                {
+                    let selector = '.main .categories .category';
+                    selector += '[data-class-id="' + subsubCatDiv.dataset.parentClass + '"]';
+                    catDiv = qs(selector);
+                }
+            } else if (node.classList.includes('subcategory')) {
+                subCatDiv = node;
+
+                {
+                    let selector = '.main .categories .category';
+                    selector += '[data-class-id="' + subCatDiv.dataset.parentClass + '"]';
+                    catDiv = qs(selector);
+                }
+            } else if (node.classList.includes('category')) {
+                catDiv = node;
+            }
+
+            if (catDiv) {
+                clickCategory(catDiv);
+            }
+            if (subCatDiv) {
+                clickSubCategory(subCatDiv);
+            }
+            if (subsubCatDiv) {
+                clickSubSubCategory(subsubCatDiv);
+            }
+        };
 
         // ------- //
         // PRIVATE //
@@ -1139,30 +1234,20 @@ new function () {
          * Event handler for clicking a primary category.
          *
          * @param {HTMLElement} catDiv
-         * @param {Category} cat
          */
-        function clickCategory(catDiv, cat) {
+        function clickCategory(catDiv) {
             const classId = parseInt(catDiv.dataset.classId);
             const wasSelected = !!catDiv.dataset.selected;
             const oldClassId = my.classId;
 
-            // De-select everything.
-            qsa('.main .categories > div').forEach(function (node) {
-                delete node.dataset.selected;
-                delete node.dataset.visible;
-            });
-            my.classId = undefined;
-            my.subClassId = undefined;
-            my.subClassIds = undefined;
-            my.invTypes = undefined;
-            my.extraFilters = undefined;
-            my.detailColumn = undefined;
+            deselectAll();
 
             if (!wasSelected) {
                 // Select this category.
                 catDiv.dataset.selected = 1;
                 my.classId = classId;
-                my.detailColumn = cat.detailColumn;
+                my.detailColumn = JSON.parse(catDiv.dataset.detailColumn);
+                my.hashCode = catDiv.dataset.hashCode;
 
                 // Show any subcategories under this category.
                 qsa('.main .categories .subcategory[data-parent-class="' + classId + '"]').forEach(function (node) {
@@ -1214,6 +1299,7 @@ new function () {
                     subCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
                 my.extraFilters = subCatDiv.dataset.hasOwnProperty('extraFilters') &&
                     subCatDiv.dataset.extraFilters.split(',').map(value => parseInt(value)) || undefined;
+                my.hashCode = subCatDiv.dataset.hashCode;
 
                 // Show any subsubcategories under this subcategory.
                 let selector = '.main .categories .subsubcategory';
@@ -1229,6 +1315,11 @@ new function () {
                 my.subClassIds = undefined;
                 my.invTypes = undefined;
                 my.extraFilters = undefined;
+
+                let selector = '.main .categories .category';
+                selector += '[data-class-id="' + subCatDiv.dataset.parentClass + '"]';
+                const catDiv = qs(selector);
+                my.hashCode = catDiv ? catDiv.dataset.hashCode : subCatDiv.dataset.parentClass;
             }
         }
 
@@ -1257,6 +1348,7 @@ new function () {
                     subsubCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
                 my.extraFilters = subsubCatDiv.dataset.hasOwnProperty('extraFilters') &&
                     subsubCatDiv.dataset.extraFilters.split(',').map(value => parseInt(value)) || undefined;
+                my.hashCode = subsubCatDiv.dataset.hashCode;
             } else {
                 // De-select this subsubcategory, reverting back to the parent subcategory criteria.
                 let selector = '.main .categories .subcategory';
@@ -1267,6 +1359,23 @@ new function () {
                 delete subCatDiv.dataset.selected;
                 clickSubCategory(subCatDiv);
             }
+        }
+
+        /**
+         * De-selects all categories, returning to the initial state.
+         */
+        function deselectAll() {
+            qsa('.main .categories > div').forEach(function (node) {
+                delete node.dataset.selected;
+                delete node.dataset.visible;
+            });
+            my.classId = undefined;
+            my.subClassId = undefined;
+            my.subClassIds = undefined;
+            my.invTypes = undefined;
+            my.extraFilters = undefined;
+            my.detailColumn = undefined;
+            my.hashCode = undefined;
         }
 
         /**
@@ -1379,7 +1488,7 @@ new function () {
          */
         this.hide = function () {
             delete qs('.main .main-result').dataset.detailMode;
-            Hash.set('', '');
+            Search.setHash();
         }
 
         /**
@@ -3112,6 +3221,16 @@ new function () {
         };
 
         /**
+         * Returns the hash we use for the current search criteria.
+         */
+        this.getSearchHash = function () {
+            let realmHash = Realms.getRealmHash(Realms.getCurrentRealm());
+            let categoryHash = Categories.getHashCode();
+
+            return `${realmHash}/search/${categoryHash}`;
+        };
+
+        /**
          * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes
          * are silently ignored.
          */
@@ -4370,6 +4489,8 @@ new function () {
         // ********************* //
 
         const my = {
+            hash: undefined,
+            hashRealm: undefined,
             rows: [],
         };
 
@@ -4416,7 +4537,8 @@ new function () {
                 qs('.main .categories .category[data-class-id="' + Items.CLASS_WOW_TOKEN + '"]').dispatchEvent(new MouseEvent('click'));
             }
 
-            if (!Realms.getCurrentRealm()) {
+            const thisRealm = Realms.getCurrentRealm();
+            if (!thisRealm) {
                 alert('Please select a realm in the top left corner.');
                 qs('.main .search-bar select').focus();
 
@@ -4426,6 +4548,9 @@ new function () {
             Detail.hide();
             emptyItemList();
             Realms.savePreferredRealm();
+            my.hash = Hash.getSearchHash();
+            my.hashRealm = thisRealm;
+            self.setHash();
 
             const searchBox = qs('.main .search-bar input[type="text"]');
             const hasSearchText = /\S/.test(searchBox.value);
@@ -4439,6 +4564,17 @@ new function () {
             }
 
             await showItemList(itemsList, hasSearchText);
+        };
+
+        /**
+         * Sets the location bar hash for the current search parameters.
+         */
+        this.setHash = function () {
+            if (!my.hash || !my.hashRealm) {
+                Hash.set('', '');
+            } else {
+                Hash.set(my.hash, `Search - ${my.hashRealm.name} ${my.hashRealm.region.toUpperCase()}`);
+            }
         };
 
         // ------- //
@@ -4704,6 +4840,9 @@ new function () {
             qs('.main .welcome').style.display = 'none';
             ee(qs('.main .search-result-target'));
             my.rows = [];
+            my.hash = undefined;
+            my.hashRealm = undefined;
+            self.setHash();
         }
 
         /**
