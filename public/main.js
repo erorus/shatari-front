@@ -3229,9 +3229,76 @@ new function () {
          */
         this.getSearchHash = function (searchTypeName) {
             let realmHash = Realms.getRealmHash(Realms.getCurrentRealm());
-            let categoryHash = Categories.getHashCode();
 
-            return `${realmHash}/${searchTypeName}/${categoryHash}`.replace(/\/+$/, '');
+            let result = `${realmHash}/${searchTypeName}`;
+
+            {
+                const categoryHash = Categories.getHashCode();
+                if (categoryHash) {
+                    result += `/cat=${categoryHash}`
+                }
+            }
+
+            {
+                let minLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-min"]').value) || [])[0];
+                let maxLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-max"]').value) || [])[0];
+                if (minLevel !== undefined) {
+                    result += `/lmin=${minLevel}`;
+                }
+                if (maxLevel !== undefined) {
+                    result += `/lmax=${maxLevel}`;
+                }
+            }
+
+            {
+                const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]');
+                const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]');
+                const minRarity = parseInt(rarityFrom.options[rarityFrom.selectedIndex].value);
+                const maxRarity = parseInt(rarityTo.options[rarityTo.selectedIndex].value);
+
+                if (minRarity !== 0) {
+                    result += `/rmin=${minRarity}`;
+                }
+                if (maxRarity !== 5) {
+                    result += `/rmax=${maxRarity}`;
+                }
+            }
+
+            {
+                const expansionSelect = qs('.main .filter select.expansion');
+                if (expansionSelect.selectedIndex !== 0) {
+                    result += `/era=${expansionSelect.options[expansionSelect.selectedIndex].value}`;
+                }
+            }
+
+            {
+                const transmogMode = qs('.main .search-bar .filter [name="transmog-mode"]').checked;
+                const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
+                const outOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
+
+                if (transmogMode) {
+                    result += '/opt=transmog-mode';
+                }
+                if (vendorFlip) {
+                    result += '/opt=vendor-flip';
+                }
+                if (!outOfStock) {
+                    result += '/opt=in-stock';
+                }
+            }
+
+            {
+                const searchBox = qs('.main .search-bar input[type="text"]');
+                let searchText = searchBox.value.replace(/^\s+|\s+$/, '');
+                if (searchText !== '') {
+                    result += '/' + encodeURIComponent(searchText).replace(
+                        /[!'()*]/g,
+                        c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+                    );
+                }
+            }
+
+            return result;
         };
 
         /**
@@ -3271,8 +3338,7 @@ new function () {
                 case 'search':
                 case 'favorites':
                 case 'deals':
-                    Categories.setHashCode(hashParts[2] || '');
-                    await Search.perform(hashParts[1] === 'favorites', hashParts[1] === 'deals');
+                    await performSearch(hashParts[1], hashParts.slice(2));
                     break;
             }
         };
@@ -3313,12 +3379,113 @@ new function () {
         // ------- //
 
         /**
-         * Returns the current location hash, without leading #, percent-decoded.
+         * Returns the current location hash, without leading #.
          *
          * @return {string}
          */
         function getHash() {
-            return decodeURIComponent(location.hash.replace(/^#+/, ''));
+            return location.hash.replace(/^#+/, '');
+        }
+
+        /**
+         * Performs a search of the given type.
+         *
+         * @param {string}   searchType
+         * @param {string[]} params     The additional hash components between slashes.
+         */
+        async function performSearch(searchType, params) {
+            let catHash = '';
+            let rmin = 0;
+            let rmax = 5;
+            let lmin = '';
+            let lmax = '';
+            let expansion = '';
+            let transmogMode = false;
+            let vendorFlip = false;
+            let outOfStock = true;
+            let searchText = '';
+
+            params.forEach(param => {
+                if (param.indexOf('=') < 0) {
+                    searchText = decodeURIComponent(param);
+
+                    return;
+                }
+
+                let [name, value] = param.split('=', 2);
+                let intValue = parseInt(value);
+
+                switch (name) {
+                    case 'cat':
+                        catHash = value;
+                        break;
+                    case 'rmin':
+                        if (!isNaN(intValue) && intValue >= 0 && intValue <= 5) {
+                            rmin = intValue;
+                        }
+                        break;
+                    case 'rmax':
+                        if (!isNaN(intValue) && intValue >= 0 && intValue <= 5) {
+                            rmax = intValue;
+                        }
+                        break;
+                    case 'lmin':
+                        if (!isNaN(intValue)) {
+                            lmin = intValue;
+                        }
+                        break;
+                    case 'lmax':
+                        if (!isNaN(intValue)) {
+                            lmax = intValue;
+                        }
+                        break;
+                    case 'era':
+                        if (!isNaN(intValue)) {
+                            expansion = intValue;
+                        }
+                        break;
+                    case 'opt':
+                        switch (value) {
+                            case 'transmog-mode':
+                                transmogMode = true;
+                                break;
+                            case 'vendor-flip':
+                                vendorFlip = true;
+                                break;
+                            case 'in-stock':
+                                outOfStock = false;
+                                break;
+                        }
+                        break;
+                }
+            });
+            if (rmax < rmin) {
+                rmax = rmin;
+            }
+
+            Categories.setHashCode(catHash);
+            qs(`.main .search-bar .filter select.expansion`).selectedIndex = 0;
+            [
+                ['.rarity[name="rarity-from"]', rmin],
+                ['.rarity[name="rarity-to"]', rmax],
+                ['.expansion', expansion],
+            ].forEach(([selector, value]) => {
+                const sel = qs(`.main .search-bar .filter select${selector}`);
+                Array.from(sel.options).forEach((opt, index) => {
+                    if (opt.value == value) {
+                        sel.selectedIndex = index;
+                    }
+                });
+                sel.dispatchEvent(new Event('change'));
+            });
+            qs('.main .search-bar input[name="level-min"]').value = lmin;
+            qs('.main .search-bar input[name="level-max"]').value = lmax;
+            qs('.main .search-bar .filter [name="transmog-mode"]').checked = transmogMode;
+            qs('.main .search-bar .filter [name="vendor-flip"]').checked = vendorFlip;
+            qs('.main .search-bar .filter [name="out-of-stock"]').checked = outOfStock;
+            qs('.main .search-bar input[type="text"]').value = searchText;
+
+            await Search.perform(searchType === 'favorites', searchType === 'deals');
         }
 
         window.addEventListener('hashchange', () => self.read());
