@@ -1083,11 +1083,13 @@ new function () {
                         className: 'category',
                         dataset: {
                             classId: cat['class'],
-                            detailColumn: JSON.stringify(cat.detailColumn),
                         },
                     },
                     getNameNode(cat.name)
                 );
+                if (cat.detailColumn) {
+                    catDiv.dataset.detailColumn = JSON.stringify(cat.detailColumn);
+                }
                 setHashCode(catDiv);
                 categoriesParent.appendChild(catDiv);
                 catDiv.addEventListener('click', clickCategory.bind(null, catDiv));
@@ -1187,7 +1189,7 @@ new function () {
             let subsubCatDiv;
             let subCatDiv;
             let catDiv;
-            if (node.classList.includes('subsubcategory')) {
+            if (node.classList.contains('subsubcategory')) {
                 subsubCatDiv = node;
 
                 {
@@ -1203,7 +1205,7 @@ new function () {
                     selector += '[data-class-id="' + subsubCatDiv.dataset.parentClass + '"]';
                     catDiv = qs(selector);
                 }
-            } else if (node.classList.includes('subcategory')) {
+            } else if (node.classList.contains('subcategory')) {
                 subCatDiv = node;
 
                 {
@@ -1211,7 +1213,7 @@ new function () {
                     selector += '[data-class-id="' + subCatDiv.dataset.parentClass + '"]';
                     catDiv = qs(selector);
                 }
-            } else if (node.classList.includes('category')) {
+            } else if (node.classList.contains('category')) {
                 catDiv = node;
             }
 
@@ -1246,7 +1248,7 @@ new function () {
                 // Select this category.
                 catDiv.dataset.selected = 1;
                 my.classId = classId;
-                my.detailColumn = JSON.parse(catDiv.dataset.detailColumn);
+                my.detailColumn = catDiv.dataset.detailColumn ? JSON.parse(catDiv.dataset.detailColumn) : undefined;
                 my.hashCode = catDiv.dataset.hashCode;
 
                 // Show any subcategories under this category.
@@ -3222,12 +3224,14 @@ new function () {
 
         /**
          * Returns the hash we use for the current search criteria.
+         *
+         * @param {string} searchTypeName
          */
-        this.getSearchHash = function () {
+        this.getSearchHash = function (searchTypeName) {
             let realmHash = Realms.getRealmHash(Realms.getCurrentRealm());
             let categoryHash = Categories.getHashCode();
 
-            return `${realmHash}/search/${categoryHash}`;
+            return `${realmHash}/${searchTypeName}/${categoryHash}`.replace(/\/+$/, '');
         };
 
         /**
@@ -3237,7 +3241,7 @@ new function () {
         this.read = async function () {
             let hash = getHash();
             let hashParts = hash.split('/');
-            if (hashParts.length !== 2) {
+            if (hashParts.length < 2) {
                 // Didn't recognize hash format.
                 return;
             }
@@ -3261,6 +3265,15 @@ new function () {
                 }
 
                 return;
+            }
+
+            switch (hashParts[1]) {
+                case 'search':
+                case 'favorites':
+                case 'deals':
+                    Categories.setHashCode(hashParts[2] || '');
+                    await Search.perform(hashParts[1] === 'favorites', hashParts[1] === 'deals');
+                    break;
             }
         };
 
@@ -4548,7 +4561,11 @@ new function () {
             Detail.hide();
             emptyItemList();
             Realms.savePreferredRealm();
-            my.hash = Hash.getSearchHash();
+
+            let searchTypeName = 'search';
+            if (favoritesOnly) searchTypeName = 'favorites';
+            if (dealsOnly) searchTypeName = 'deals';
+            my.hash = Hash.getSearchHash(searchTypeName);
             my.hashRealm = thisRealm;
             self.setHash();
 
