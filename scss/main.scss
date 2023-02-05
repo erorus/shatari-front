@@ -279,7 +279,7 @@ body {
         display: block;
       }
     }
-    button, > div.filter, > div.small-button {
+    button, > a.filter, > a.small-button {
       @include button();
 
       max-width: 10em;

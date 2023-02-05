@@ -5703,8 +5703,8 @@ new function () {
         ]);
 
         qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false, false));
-        qs('.main .search-bar > div.filter').addEventListener('mouseup', (event) => {
-            const div = qs('.main .search-bar > div.filter div');
+        qs('.main .search-bar > .filter').addEventListener('mouseup', (event) => {
+            const div = qs('.main .search-bar > .filter div');
             if (div.style.display === 'block') {
                 return;
             }
