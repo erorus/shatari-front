@@ -56,13 +56,15 @@ body {
     border-radius: 10px;
     max-width: 10em;
     overflow: hidden;
-    padding: 1px; }
+    padding: 1px;
+    perspective: 100px;
+    perspective-origin: bottom left; }
     .main .button-border button {
       box-sizing: border-box;
       height: 100%;
       width: 100%; }
       .main .button-border button:active {
-        translate: -2px 1px; }
+        transform: translateZ(-2px); }
   .main .search-bar {
     display: flex;
     margin: 8px 8px 0; }

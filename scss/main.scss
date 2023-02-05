@@ -180,6 +180,8 @@ body {
     max-width: 10em;
     overflow: hidden;
     padding: 1px;
+    perspective: 100px;
+    perspective-origin: bottom left;
 
     button {
       box-sizing: border-box;
@@ -187,7 +189,7 @@ body {
       width: 100%;
 
       &:active {
-        translate: -2px 1px;
+        transform: translateZ(-2px);
       }
     }
   }
