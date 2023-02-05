@@ -975,6 +975,42 @@ body {
       color: #EEE;
       font: 12.8px "Friz Quadrata TT", sans-serif;
       padding: 0 4px; }
+    .main .bottom-bar .progress {
+      align-items: center;
+      display: flex;
+      flex: 1 1 auto;
+      margin: 0 2em; }
+      .main .bottom-bar .progress-spinner {
+        position: relative;
+        height: 1.5em;
+        width: 1.5em; }
+        .main .bottom-bar .progress-spinner-inner {
+          width: 100%;
+          height: 100%;
+          border: 3px solid transparent;
+          border-top-color: #ff6;
+          border-bottom-color: #ff6;
+          border-radius: 50%;
+          position: absolute;
+          box-sizing: border-box;
+          animation: loader-rotate 1s linear infinite; }
+@keyframes loader-rotate {
+  0% {
+    transform: rotate(0); }
+  100% {
+    transform: rotate(360deg); } }
+      .main .bottom-bar .progress-bar {
+        flex: 1 1 auto;
+        height: 50%;
+        margin-left: 2em;
+        background-color: #282322;
+        border: 1px solid #161211; }
+        .main .bottom-bar .progress-bar-value {
+          background-color: #393433;
+          height: 100%;
+          width: 75%; }
+      .main .bottom-bar .progress:not([data-shown]) > * {
+        display: none; }
     .main .bottom-bar .last-updated {
       margin-left: 2em;
       text-align: right; }

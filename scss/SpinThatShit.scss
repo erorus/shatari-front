@@ -1,0 +1,37 @@
+$loader-color:              #0052ec !default;
+$loader-size:                  56px !default;
+$loader-height:                20px !default;
+$loader-border-size:            8px !default;
+$loader-gap:                   12px !default;
+$loader-animation-duration:      1s !default;
+
+@mixin loader-rotate {
+  @keyframes loader-rotate {
+    0% {
+      transform: rotate(0);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+@mixin loader03(
+  $size: $loader-size,
+  $color: $loader-color,
+  $border-size: $loader-border-size,
+  $duration: $loader-animation-duration
+) {
+  width: $size;
+  height: $size;
+  border: $border-size solid transparent;
+  border-top-color: $color;
+  border-bottom-color: $color;
+  border-radius: 50%;
+  position: absolute;
+  box-sizing: border-box;
+  animation: loader-rotate $duration linear infinite;
+
+  @include loader-rotate;
+}

@@ -1,3 +1,5 @@
+@import 'SpinThatShit';
+
 $background00: #060100;
 $background10: #161211;
 $background15: #201b1a;
@@ -1302,6 +1304,37 @@ body {
       color: $text10;
       font: $fontSizeFriz * 0.8 $fontFriz;
       padding: 0 $marginStep / 2;
+    }
+
+    .progress {
+      align-items: center;
+      display: flex;
+      flex: 1 1 auto;
+      margin: 0 2em;
+
+      &-spinner {
+        position: relative;
+        height: 1.5em;
+        width: 1.5em;
+
+        &-inner {@include loader03($color: $highlightBorderColor, $size: 100%, $border-size: 3px)}
+      }
+
+      &-bar {
+        flex: 1 1 auto;
+        height: 50%;
+        margin-left: 2em;
+        background-color: $background20;
+        border: 1px solid $background10;
+
+        &-value {
+          background-color: $background30;
+          height: 100%;
+          width: 75%;
+        }
+      }
+
+      &:not([data-shown]) > * {display: none}
     }
 
     .last-updated {

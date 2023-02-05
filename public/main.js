@@ -261,7 +261,7 @@ new function () {
             result.region = realm.region;
 
             const url = 'data/global/deals-' + realm.region + '.bin';
-            const response = await fetch(url, {mode: 'same-origin'});
+            const response = await Progress.fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return result;
             }
@@ -384,7 +384,7 @@ new function () {
             result.region = realm.region;
 
             const url = 'data/global/token-' + realm.region + '.bin';
-            const response = await fetch(url, {mode: 'same-origin'});
+            const response = await Progress.fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return result;
             }
@@ -480,7 +480,7 @@ new function () {
                 return my.lastSnapshotList.data;
             }
 
-            const response = await fetch('data/global/state.bin', {mode: 'same-origin'});
+            const response = await Progress.fetch('data/global/state.bin', {mode: 'same-origin'});
             if (!response.ok) {
                 throw "Unable to get global state";
             }
@@ -575,7 +575,7 @@ new function () {
                 item.id === ITEM_PET_CAGE ? (item.bonusLevel & 0xFF) : (item.id & 0xFF),
                 basename + '.bin'
             ].filter(v => v !== '').join('/');
-            const response = await fetch(url, {mode: 'same-origin'});
+            const response = await Progress.fetch(url, {mode: 'same-origin'});
             if (!response.ok) {
                 return {
                     realm: realm,
@@ -745,7 +745,7 @@ new function () {
                 return my[lastStateKey].data;
             }
 
-            const response = await fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'});
+            const response = await Progress.fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'});
             if (!response.ok) {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
@@ -1391,7 +1391,7 @@ new function () {
             }
 
             const locale = Locales.getCurrent();
-            const response = await fetch('json/categories.' + locale + '.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/categories.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of categories!';
             }
@@ -4055,7 +4055,7 @@ new function () {
          * @param {string} locale
          */
         async function fetchBattlePetNames(locale) {
-            const response = await fetch('json/battlepets.' + locale + '.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/battlepets.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of battle pet names!';
             }
@@ -4067,7 +4067,7 @@ new function () {
          * Fetches the list of battle pets and stores it locally.
          */
         async function fetchBattlePets() {
-            const response = await fetch('json/battlepets.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/battlepets.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of battle pets!';
             }
@@ -4085,7 +4085,7 @@ new function () {
          * Fetches the list of item IDs and stores it locally.
          */
         async function fetchItemIds() {
-            const response = await fetch('json/items.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/items.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of item IDs!';
             }
@@ -4113,7 +4113,7 @@ new function () {
          * @param {string} locale
          */
         async function fetchItemNames(locale) {
-            const response = await fetch('json/names.' + locale + '.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/names.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of item names!';
             }
@@ -4127,7 +4127,7 @@ new function () {
          * @param {string} locale
          */
         async function fetchItemSuffixes(locale) {
-            const response = await fetch('json/name-suffixes.' + locale + '.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/name-suffixes.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get list of item suffixes!';
             }
@@ -4139,7 +4139,7 @@ new function () {
          * Fetches the list of vendor sell data and stores it locally.
          */
         async function fetchVendor() {
-            const response = await fetch('json/vendor.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/vendor.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Cannot get vendor pricing data!';
             }
@@ -4297,6 +4297,91 @@ new function () {
             }
 
             my.changeCallbacks.forEach(f => f(self.getCurrent()));
+        }
+    };
+
+    /**
+     * Manages a progress bar during HTTP fetch operations.
+     */
+    const Progress = new function () {
+        const self = this;
+
+        // ********************* //
+        // ***** VARIABLES ***** //
+        // ********************* //
+
+        const my = Object.seal({
+            runningFetchCount: 0,
+            totalFetchCount: 0,
+
+            area: qs('.main .progress'),
+            bar: qs('.main .progress .progress-bar-value'),
+        });
+
+        // ********************* //
+        // ***** FUNCTIONS ***** //
+        // ********************* //
+
+        // ------ //
+        // PUBLIC //
+        // ------ //
+
+        /**
+         * Returns a Response promise from fetch() but monitors the download progress in the UI.
+         *
+         * @param {string|Request} resource
+         * @param {object}         options
+         * @returns {Promise<Response>}
+         */
+        this.fetch = async function (resource, options) {
+            my.totalFetchCount++;
+            my.runningFetchCount++;
+            updateDisplay();
+
+            const response = await fetch(resource, options);
+            if (!response.ok || !response.body) {
+                my.runningFetchCount--;
+                updateDisplay();
+
+                return response;
+            }
+
+            return new Response(new ReadableStream({
+                start: async function (controller) {
+                    const reader = response.body.getReader();
+                    while (true) {
+                        let { done, value } = await reader.read();
+                        if (done) {
+                            controller.close();
+
+                            my.runningFetchCount--;
+                            updateDisplay();
+
+                            break;
+                        }
+                        controller.enqueue(value);
+                    }
+                }
+            }));
+        }
+
+        // ------- //
+        // PRIVATE //
+        // ------- //
+
+        /**
+         * Updates the UI to reflect how many fetches are in progress and how many have finished.
+         */
+        function updateDisplay() {
+            if (my.runningFetchCount === 0 || my.totalFetchCount === 0) {
+                my.totalFetchCount = 0;
+                delete my.area.dataset.shown;
+                return;
+            }
+
+            let finishedCount = my.totalFetchCount - my.runningFetchCount;
+            my.bar.style.width = (finishedCount / my.totalFetchCount * 100) + '%';
+            my.area.dataset.shown = 1;
         }
     };
 
@@ -4527,8 +4612,8 @@ new function () {
             const localeCode = Locales.getCurrent();
 
             const responses = await Promise.all([
-                fetch('json/realms/realm-list.json', {mode:'same-origin'}),
-                fetch('json/realms/realm-names.' + localeCode + '.json', {mode:'same-origin'}),
+                Progress.fetch('json/realms/realm-list.json', {mode:'same-origin'}),
+                Progress.fetch('json/realms/realm-names.' + localeCode + '.json', {mode:'same-origin'}),
             ]);
 
             if (!responses[0].ok) {
@@ -4548,7 +4633,7 @@ new function () {
          * @param {string} locale
          */
         async function onLocaleChange(locale) {
-            const response = await fetch('json/realms/realm-names.' + locale + '.json', {mode:'same-origin'});
+            const response = await Progress.fetch('json/realms/realm-names.' + locale + '.json', {mode:'same-origin'});
             if (!response.ok) {
                 throw 'Could not load realm names in locale ' + locale;
             }
