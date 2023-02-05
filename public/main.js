@@ -1518,8 +1518,8 @@ new function () {
                 itemDiv.appendChild(backBar);
 
                 const backButton = ce('button', {}, ct('Back'));
-                backBar.appendChild(backButton);
                 backButton.addEventListener('click', self.hide);
+                backBar.appendChild(ce('div', {className: 'button-border'}, backButton));
 
                 if (realm && realm.id !== Realms.getCurrentRealm().id) {
                     backBar.appendChild(ce('span', {className: 'alt-realm'}, ct('Viewing Realm ' + realm.name)));
@@ -5703,8 +5703,10 @@ new function () {
         ]);
 
         qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false, false));
-        qs('.main .search-bar > .filter').addEventListener('mouseup', (event) => {
-            const div = qs('.main .search-bar > .filter div');
+
+        const filterButton = qs('.main .search-bar .filter');
+        filterButton.addEventListener('mouseup', (event) => {
+            const div = filterButton.querySelector('div');
             if (div.style.display === 'block') {
                 return;
             }

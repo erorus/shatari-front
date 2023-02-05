@@ -49,6 +49,20 @@ body {
   @media screen and (max-width: 600px) {
     .main {
       max-height: none; } }
+  .main .button-border {
+    background-color: black;
+    border: 2px solid;
+    border-color: #4a4644 #282322 #282322;
+    border-radius: 10px;
+    max-width: 10em;
+    overflow: hidden;
+    padding: 1px; }
+    .main .button-border button {
+      box-sizing: border-box;
+      height: 100%;
+      width: 100%; }
+      .main .button-border button:active {
+        translate: -2px 1px; }
   .main .search-bar {
     display: flex;
     margin: 8px 8px 0; }
@@ -136,7 +150,7 @@ body {
             width: 16px; }
       .main .search-bar div.text-container[data-with-focus] .datalist[data-with-items] {
         display: block; }
-    .main .search-bar button, .main .search-bar > a.filter, .main .search-bar > a.small-button {
+    .main .search-bar button, .main .search-bar a.filter, .main .search-bar a.small-button {
       background-color: #282322;
       border: 2px solid;
       border-color: #393433 #312c2a #161211;
@@ -146,30 +160,34 @@ body {
       text-shadow: 1px 1px 2px #000;
       max-width: 10em; }
       @media (hover: hover) {
-        .main .search-bar button:hover, .main .search-bar > a.filter:hover, .main .search-bar > a.small-button:hover {
+        .main .search-bar button:hover, .main .search-bar a.filter:hover, .main .search-bar a.small-button:hover {
           background-color: #8080ff;
-          box-shadow: inset 0 0 10px 10px #282322; } }
-      .main .search-bar button.favorite, .main .search-bar > a.filter.favorite, .main .search-bar > a.small-button.favorite {
+          box-shadow: inset 0 0 10px 5px #282322; } }
+      .main .search-bar button.favorite, .main .search-bar a.filter.favorite, .main .search-bar a.small-button.favorite {
         background-image: url("../images/favorite-star-off.png");
         background-position: center center;
         background-repeat: no-repeat;
         background-size: calc(100% - 2px); }
-        .main .search-bar button.favorite[data-enabled], .main .search-bar > a.filter.favorite[data-enabled], .main .search-bar > a.small-button.favorite[data-enabled] {
+        .main .search-bar button.favorite[data-enabled], .main .search-bar a.filter.favorite[data-enabled], .main .search-bar a.small-button.favorite[data-enabled] {
           background-image: url("../images/favorite-star.png"); }
-      .main .search-bar button.deals, .main .search-bar > a.filter.deals, .main .search-bar > a.small-button.deals {
+      .main .search-bar button.deals, .main .search-bar a.filter.deals, .main .search-bar a.small-button.deals {
         background-image: url("../images/goldclover.png");
         background-position: center center;
         background-repeat: no-repeat;
         background-size: calc(100% - 4px); }
-      .main .search-bar button.small-button, .main .search-bar > a.filter.small-button, .main .search-bar > a.small-button.small-button {
+      .main .search-bar button.small-button, .main .search-bar a.filter.small-button, .main .search-bar a.small-button.small-button {
         flex: 0 0 auto;
         width: 2em;
         height: 2em; }
         @media (hover: hover) {
-          .main .search-bar button.small-button:hover, .main .search-bar > a.filter.small-button:hover, .main .search-bar > a.small-button.small-button:hover {
+          .main .search-bar button.small-button:hover, .main .search-bar a.filter.small-button:hover, .main .search-bar a.small-button.small-button:hover {
             background-color: #282322;
             box-shadow: none; } }
-      .main .search-bar button.search, .main .search-bar > a.filter.search, .main .search-bar > a.small-button.search {
+        .main .search-bar button.small-button:active, .main .search-bar a.filter.small-button:active, .main .search-bar a.small-button.small-button:active {
+          translate: -1px 1px; }
+      .main .search-bar button.favorite:not([data-enabled]):active, .main .search-bar a.filter.favorite:not([data-enabled]):active, .main .search-bar a.small-button.favorite:not([data-enabled]):active {
+        translate: none; }
+      .main .search-bar button.search, .main .search-bar a.filter.search, .main .search-bar a.small-button.search {
         background-color: #282322;
         border: 2px solid;
         border-color: #393433 #312c2a #161211;
@@ -182,26 +200,27 @@ body {
         color: #ffd100;
         font-size: 17.6px; }
         @media (hover: hover) {
-          .main .search-bar button.search:hover, .main .search-bar > a.filter.search:hover, .main .search-bar > a.small-button.search:hover {
+          .main .search-bar button.search:hover, .main .search-bar a.filter.search:hover, .main .search-bar a.small-button.search:hover {
             background-color: #8080ff;
-            box-shadow: inset 0 0 10px 10px #282322; } }
+            box-shadow: inset 0 0 10px 5px #282322; } }
         @media (hover: hover) {
-          .main .search-bar button.search:hover, .main .search-bar > a.filter.search:hover, .main .search-bar > a.small-button.search:hover {
-            background-color: #6c0d0d;
-            box-shadow: none;
+          .main .search-bar button.search:hover, .main .search-bar a.filter.search:hover, .main .search-bar a.small-button.search:hover {
+            background-color: #CC0C00;
+            box-shadow: inset 0 0 10px 5px #640000;
             color: #EEE; } }
-      .main .search-bar button.filter, .main .search-bar > a.filter.filter, .main .search-bar > a.small-button.filter {
+      .main .search-bar button.filter, .main .search-bar a.filter.filter, .main .search-bar a.small-button.filter {
         align-items: center;
         display: flex;
         justify-content: center;
         line-height: 2;
         min-width: 5em;
         padding-right: 1em;
-        position: relative; }
+        position: relative;
+        z-index: 20; }
         @media screen and (max-height: 500px) {
-          .main .search-bar button.filter, .main .search-bar > a.filter.filter, .main .search-bar > a.small-button.filter {
+          .main .search-bar button.filter, .main .search-bar a.filter.filter, .main .search-bar a.small-button.filter {
             line-height: 1; } }
-        .main .search-bar button.filter::after, .main .search-bar > a.filter.filter::after, .main .search-bar > a.small-button.filter::after {
+        .main .search-bar button.filter::after, .main .search-bar a.filter.filter::after, .main .search-bar a.small-button.filter::after {
           background-image: url("../images/triangle-arrow.png");
           background-size: contain;
           background-position: center center;
@@ -212,7 +231,7 @@ body {
           right: 4px;
           top: 0;
           width: 0.666em; }
-        .main .search-bar button.filter div, .main .search-bar > a.filter.filter div, .main .search-bar > a.small-button.filter div {
+        .main .search-bar button.filter > div, .main .search-bar a.filter.filter > div, .main .search-bar a.small-button.filter > div {
           background-color: rgba(1, 7, 33, 0.8);
           border: 1px solid;
           border-color: #cfcfcf #777 #7f7f7f;
@@ -227,11 +246,11 @@ body {
           text-align: left;
           top: calc(100% + 4px);
           width: calc(200% + 4px); }
-          .main .search-bar button.filter div input, .main .search-bar > a.filter.filter div input, .main .search-bar > a.small-button.filter div input {
+          .main .search-bar button.filter > div input, .main .search-bar a.filter.filter > div input, .main .search-bar a.small-button.filter > div input {
             margin: 0;
             position: relative;
             top: 2px; }
-          .main .search-bar button.filter div input[type="number"], .main .search-bar > a.filter.filter div input[type="number"], .main .search-bar > a.small-button.filter div input[type="number"] {
+          .main .search-bar button.filter > div input[type="number"], .main .search-bar a.filter.filter > div input[type="number"], .main .search-bar a.small-button.filter > div input[type="number"] {
             background-color: #282322;
             border: 2px solid;
             border-color: #060100 #060100 #4a4644;
@@ -240,8 +259,12 @@ body {
             padding: 0 0.5em;
             text-align: right;
             width: 3em; }
-          .main .search-bar button.filter div table.rarity td:first-child, .main .search-bar > a.filter.filter div table.rarity td:first-child, .main .search-bar > a.small-button.filter div table.rarity td:first-child {
+          .main .search-bar button.filter > div table.rarity td:first-child, .main .search-bar a.filter.filter > div table.rarity td:first-child, .main .search-bar a.small-button.filter > div table.rarity td:first-child {
             text-align: right; }
+    .main .search-bar > .button-border {
+      margin: 5px 8px; }
+      .main .search-bar > .button-border button {
+        max-width: unset; }
     @media screen and (max-width: 700px) {
       .main .search-bar {
         flex-flow: row wrap; }
@@ -375,7 +398,7 @@ body {
         @media (hover: hover) {
           .main .main-result .welcome .full-screen button:hover {
             background-color: #8080ff;
-            box-shadow: inset 0 0 10px 10px #282322; } }
+            box-shadow: inset 0 0 10px 5px #282322; } }
       .main .main-result .welcome .maintenance {
         display: none; }
       .main .main-result .welcome[data-maintenance] div {
@@ -447,7 +470,7 @@ body {
             @media (hover: hover) {
               .main .main-result .search-result table thead td:hover {
                 background-color: #8080ff;
-                box-shadow: inset 0 0 10px 10px #282322; } }
+                box-shadow: inset 0 0 10px 8px #282322; } }
         .main .main-result .search-result table tbody tr {
           cursor: pointer; }
           .main .main-result .search-result table tbody tr.vendor-flip {
@@ -557,11 +580,11 @@ body {
         @media (hover: hover) {
           .main .main-result .item button:hover {
             background-color: #8080ff;
-            box-shadow: inset 0 0 10px 10px #282322; } }
+            box-shadow: inset 0 0 10px 5px #282322; } }
         @media (hover: hover) {
           .main .main-result .item button:hover {
-            background-color: #6c0d0d;
-            box-shadow: none;
+            background-color: #CC0C00;
+            box-shadow: inset 0 0 10px 5px #640000;
             color: #EEE; } }
       .main .main-result .item .back-bar {
         align-items: flex-end;
