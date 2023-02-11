@@ -4044,9 +4044,7 @@ new function () {
          * @return {string}
          */
         function escapeRegExp(string) {
-            return string
-                .replace(/[.*+\-?^${}()|\\]/g, '\\$&') // $& means the whole matched string
-                .replace(/[\[\]]/g, '\\$&?'); // Square brackets may be there or be ignored.
+            return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
         }
 
         /**
