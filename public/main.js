@@ -3756,11 +3756,32 @@ new function () {
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
-            searchBox.value.replace(/^\s+|\s+$/, '').split(/\s+/).forEach(function (word) {
-                if (word) {
-                    wordExpressions.push(new RegExp('(?:^|\\s)' + escapeRegExp(word), 'i'));
-                }
-            });
+
+            let query = searchBox.value;
+            // Trim whitespace.
+            query = query.replace(/^\s+|\s+$/g, '');
+            if (/^\[[\w\W]+\]$/.test(query)) {
+                // Query was wrapped in brackets, like in a displayed itemlink. Remove the brackets.
+                query = query.slice(1, -1);
+
+                // Remove some simple UI escape sequences: textures, texture atlas, protected strings.
+                query = query.replace(/\|[TAK][^|]*?\|./g, '');
+
+                // Remove coloring.
+                query = query.replace(/\|c[0-9A-Fa-f]{8}/g, '');
+                query = query.replace(/\|cn[^|:]+?:/g, '');
+                query = query.replace(/\|r/g, '');
+
+                // Remove word wrap hints.
+                query = query.replace(/\|[Ww]/g, '');
+
+                // Trim whitespace again.
+                query = query.replace(/^\s+|\s+$/g, '');
+            }
+            // Split the query by whitespace, add a regex for each non-empty word string.
+            query.split(/\s+/)
+                .filter(word => word.length > 0)
+                .forEach(word => wordExpressions.push(new RegExp('(?:^|\\s)' + escapeRegExp(word), 'i')));
 
             const validRarity = [];
             {
