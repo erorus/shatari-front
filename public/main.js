@@ -4979,6 +4979,8 @@ new function () {
             }
 
             let tr = document.createElement('tr');
+            tr.addEventListener('mouseenter', onRowEnter);
+            tr.addEventListener('mouseleave', onRowLeave);
             let td;
 
             //
@@ -5031,6 +5033,7 @@ new function () {
                 if (suffix) {
                     itemName += ' ' + suffix.name;
                 }
+                tr.dataset.copyName = itemName;
                 if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                     itemName += ' (' + item.bonusLevel + ')';
                 }
@@ -5178,6 +5181,24 @@ new function () {
             }
 
             return categorySorts[categoryClass];
+        }
+
+        /**
+         * Sets a data attribute on the event target to indicate that it's being hovered by the mouse.
+         *
+         * @param {MouseEvent} event
+         */
+        function onRowEnter(event) {
+            event.target.dataset.hover = 1;
+        }
+
+        /**
+         * Removes a data attribute on the event target indicating that it was being hovered by the mouse.
+         *
+         * @param {MouseEvent} event
+         */
+        function onRowLeave(event) {
+            delete event.target.dataset.hover;
         }
 
         /**
@@ -5411,6 +5432,24 @@ new function () {
         });
 
         qs('.main .search-bar .deals').addEventListener('click', () => self.perform(false, true));
+
+        /**
+         * Pressing Ctrl-C while hovering over a search result row will copy that result's name to the clipboard.
+         *
+         * @param {KeyboardEvent} event
+         */
+        const copyNameToClipboard = function (event) {
+            if (event.isComposing || event.keyCode === 229) {
+                return;
+            }
+            if (event.ctrlKey && event.key.toLowerCase() === 'c') {
+                let hoveredRow = qs('.main .search-result-target tr[data-hover][data-copy-name]');
+                if (hoveredRow) {
+                    navigator.clipboard.writeText(hoveredRow.dataset.copyName);
+                }
+            }
+        };
+        document.addEventListener('keyup', copyNameToClipboard);
     }
 
     /** Manages the search suggestions list. */
