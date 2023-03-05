@@ -5267,16 +5267,21 @@ new function () {
             const thead = ce('thead');
             table.appendChild(thead);
 
+            let colSpan = 0;
             thead.appendChild(tr = ce('tr'));
             tr.appendChild(td = ce('td', {}, ct('Price')));
+            colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
             tr.appendChild(td = ce('td', {}, ct('Name')));
+            colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, true));
             if (detailColumn) {
                 tr.appendChild(td = ce('td', {}, ct(detailColumn.name)));
+                colSpan++;
                 td.addEventListener('click', columnSort.bind(null, td, false));
             }
             tr.appendChild(td = ce('td', {}, ct(itemsList.length && itemsList[0].regionMedian ? '% Region Median' :'Available')));
+            colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
 
             my.rows = [];
@@ -5361,15 +5366,15 @@ new function () {
             }
 
             if (my.rows.length === 0) {
-                tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: detailColumn ? 4 : 3})));
+                tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: colSpan})));
                 td.appendChild(ct('No results found. Double-check your category and filter settings.'));
             } else {
-                tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
+                tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: colSpan}, ct(
                     'Click an entry for more information.',
                 ))));
                 if (my.rows.length > MAX_RESULTS_SHOWN) {
                     // Note: this second message will always be at the bottom of the list.
-                    tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: detailColumn ? 4 : 3}, ct(
+                    tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: colSpan}, ct(
                         my.rows.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
                     ))));
                 }
