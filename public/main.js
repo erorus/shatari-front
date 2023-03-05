@@ -1964,7 +1964,7 @@ new function () {
         }
 
         /**
-         * Given an array of numbers, return the median and mean.
+         * Returns the median and mean of a sorted list of numbers.
          *
          * @param {number[]} values
          * @return {{median: number, mean: number}}
@@ -3172,6 +3172,7 @@ new function () {
                     regionElements.current.appendChild(priceElement(lowestAvailablePrice));
                 }
                 if (prices.length >= 5) {
+                    prices.sort((a, b) => a - b);
                     let statistics = getStatistics(prices);
                     regionElements.median.appendChild(priceElement(statistics.median));
                     regionElements.mean.appendChild(priceElement(statistics.mean));
