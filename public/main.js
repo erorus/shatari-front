@@ -39,15 +39,10 @@ new function () {
 
     /**
      * @typedef {Object} ConnectedRealm
-     * @property {string} region  "us" or "eu"
+     * @property {Region} region
      * @property {ConnectedRealmID} id
      * @property {Realm} canonical
      * @property {Realm[]} secondary
-     */
-
-    /**
-     * @typedef {PricedItem} DealItem
-     * @property {Money} regionMedian
      */
 
     /**
@@ -106,12 +101,13 @@ new function () {
      * @typedef {Item} PricedItem
      * @property {Money}     price
      * @property {number}    quantity
+     * @property {Money}     [regionMedian]
      * @property {Timestamp} snapshot
      */
 
     /**
      * @typedef {Object} Realm
-     * @property {string} region  "us" or "eu"
+     * @property {Region} region
      * @property {string} name
      * @property {string} category
      * @property {string} slug
@@ -132,6 +128,14 @@ new function () {
      * @property {Object.<BattlePetSpeciesID, Array<ItemKeyString>>} speciesVariants
      */
 
+    /** @typedef {string} Region "us" or "eu", etc. */
+
+    /**
+     * @typedef {object} RegionState
+     * @property {Region} region
+     * @property {Object<ItemKeyString, Money>} items
+     */
+
     /** @typedef {number} SubclassID */
 
     /**
@@ -145,7 +149,7 @@ new function () {
 
     /**
      * @typedef {object} TokenState
-     * @property {string}        region
+     * @property {Region}        region
      * @property {Money}         price
      * @property {Timestamp}     snapshot   When the token price last changed
      * @property {SummaryLine[]} snapshots  An array of prices, order by snapshot ascending
@@ -201,7 +205,7 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
-        // Realm IDs used by commodity realms for each region.
+        /** @type {Object<Region, ConnectedRealmID>} Realm IDs used by commodity realms for each region. */
         const COMMODITY_REALMS = {
             'us': 0x7F00,
             'eu': 0x7F01,
@@ -218,6 +222,7 @@ new function () {
         const VERSION_GLOBAL_STATE = 2;
         const VERSION_ITEM_STATE = 5;
         const VERSION_REALM_STATE = 3;
+        const VERSION_REGION_STATE = 1;
         const VERSION_TOKEN_STATE = 1;
 
         // ********************* //
@@ -227,6 +232,7 @@ new function () {
         const my = {
             lastCommodityRealmState: {},
             lastRealmState: {},
+            lastRegionState: {},
 
             lastSnapshotList: {},
         };
@@ -434,7 +440,17 @@ new function () {
          * @return {Promise<PricedItem[]>}
          */
         this.hydrateList = async function (items, realm) {
-            const realmState = await getRealmState(realm || Realms.getCurrentRealm());
+            realm = realm || Realms.getCurrentRealm();
+
+            /** @type {RealmState} */
+            let realmState;
+            /** @type {RegionState} */
+            let regionState;
+
+            await Promise.all([
+                (async () => realmState = await getRealmState(realm))(),
+                (async () => regionState = await getRegionState(realm.region))(),
+            ]);
 
             const result = [];
 
@@ -450,6 +466,11 @@ new function () {
                     pricedItem.price = cur.price;
                     pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
                     pricedItem.snapshot = cur.snapshot;
+
+                    let regionMedian = regionState.items[keyString];
+                    if (regionMedian) {
+                        pricedItem.regionMedian = regionMedian;
+                    }
                 } else {
                     pricedItem.price = 0;
                     pricedItem.quantity = 0;
@@ -543,7 +564,7 @@ new function () {
         /**
          * Returns a fake Realm object for the commodity realm used by the given region.
          *
-         * @param {string} region
+         * @param {Region} region
          * @return {Realm}
          */
         function getCommodityRealm(region) {
@@ -745,7 +766,20 @@ new function () {
                 return my[lastStateKey].data;
             }
 
-            const response = await Progress.fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'});
+            let response;
+            let commodityRealmState;
+            let promises = [
+                (async () => {
+                    response = await Progress.fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'});
+                })(),
+            ];
+            if (!isCommodityRealm) {
+                promises.push((async () => {
+                    commodityRealmState = await getRealmState(getCommodityRealm(realm.region));
+                })());
+            }
+            await Promise.all(promises);
+
             if (!response.ok) {
                 throw "Unable to get realm state for " + realm.connectedId;
             }
@@ -821,11 +855,86 @@ new function () {
             }
 
             if (!isCommodityRealm) {
-                mergeCommodityData(result, await getRealmState(getCommodityRealm(realm.region)));
+                mergeCommodityData(result, commodityRealmState);
             }
 
             my[lastStateKey] = {
                 id: realm.connectedId,
+                modified: response.headers.get('last-modified'),
+                checked: Date.now(),
+                data: result,
+            };
+
+            return result;
+        }
+
+        /**
+         * Returns the region state for the given region. May return a cached object shared between calls.
+         *
+         * @param {Region} region
+         * @return {Promise<RegionState>}
+         */
+        async function getRegionState(region) {
+            if (
+                my.lastRegionState.data &&
+                my.lastRegionState.region === region &&
+                my.lastRegionState.checked > Date.now() - REALM_STATE_CACHE_DURATION
+            ) {
+                return my.lastRegionState.data;
+            }
+
+            const response = await Progress.fetch(`data/global/region-${region}.bin`, {mode: 'same-origin'});
+            if (!response.ok) {
+                throw `Unable to get region state for ${region}`;
+            }
+
+            if (
+                my.lastRegionState.data &&
+                my.lastRegionState.region === region &&
+                my.lastRegionState.modified === response.headers.get('last-modified')
+            ) {
+                my.lastRegionState.checked = Date.now();
+
+                return my.lastRegionState.data;
+            }
+
+            const buffer = await response.arrayBuffer();
+            const view = new DataView(buffer);
+
+            let offset = 0;
+            const read = function (byteCount) {
+                let result = offset;
+                offset += byteCount;
+
+                return result;
+            };
+
+            let version = view.getUint8(read(1));
+            switch (version) {
+                case VERSION_REGION_STATE:
+                    // no op
+                    break;
+                default:
+                    throw `Unknown data version for region state for ${region}.`;
+            }
+
+            /** @type {RegionState} result */
+            const result = {};
+            result.region = region;
+            result.items = {};
+            let lastItemId = 0;
+            for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
+                let itemId = lastItemId + view.getUint16(read(2), true);
+                let itemLevel = view.getUint16(read(2), true);
+                let itemSuffix = view.getUint16(read(2), true);
+                let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+
+                result.items[itemKeyString] = view.getUint32(read(4), true) * COPPER_SILVER;
+                lastItemId = itemId;
+            }
+
+            my.lastRegionState = {
+                region: region,
                 modified: response.headers.get('last-modified'),
                 checked: Date.now(),
                 data: result,
@@ -1885,7 +1994,7 @@ new function () {
          * Returns an array of item states for the given item for all realms in the given region.
          *
          * @param {PricedItem} item
-         * @param {string} region
+         * @param {Region} region
          * @return {Promise<ItemState[]>}
          */
         async function fetchOtherRealms(item, region) {
@@ -4414,11 +4523,12 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
-        this.REGION_US = 'us';
-        this.REGION_EU = 'eu';
-        this.REGION_TW = 'tw';
-        this.REGION_KR = 'kr';
+        /** @type {Region} */ this.REGION_US = 'us';
+        /** @type {Region} */ this.REGION_EU = 'eu';
+        /** @type {Region} */ this.REGION_TW = 'tw';
+        /** @type {Region} */ this.REGION_KR = 'kr';
 
+        /** @type {Region[]} */
         const REGIONS = [this.REGION_US, this.REGION_EU, this.REGION_TW, this.REGION_KR];
 
         // ********************* //
@@ -4509,7 +4619,7 @@ new function () {
         /**
          * Returns a sorted array of connected realms for the given region.
          *
-         * @param {string} region
+         * @param {Region} region
          * @return {ConnectedRealm[]}
          */
         this.getRegionConnectedRealms = function (region) {
@@ -4575,7 +4685,7 @@ new function () {
         /**
          * Returns the connected realms for a region, keyed by connected realm ID.
          *
-         * @param {string} region
+         * @param {Region} region
          * @return {Object.<ConnectedRealmID, ConnectedRealm>}
          */
         function getConnectedRealmsForRegion(region) {
@@ -4851,7 +4961,7 @@ new function () {
                 itemsList = await findDeals(itemsList);
             }
 
-            await showItemList(itemsList, hasSearchText);
+            await showItemList(itemsList, hasSearchText, dealsOnly);
         };
 
         /**
@@ -4969,10 +5079,18 @@ new function () {
          * @param {HTMLTableSectionElement} tbody
          * @param {DetailColumn|undefined} detailColumn
          * @param {boolean} vendorFlip
+         * @param {boolean} showingDeals
          * @param {ItemKeyString[]} favorites
          * @return {HTMLTableRowElement}
          */
-        function createRow(item, tbody, detailColumn, vendorFlip, favorites) {
+        function createRow(
+            item,
+            tbody,
+            detailColumn,
+            vendorFlip,
+            showingDeals,
+            favorites
+        ) {
             let suffix;
             if (item.bonusSuffix) {
                 suffix = Items.getSuffix(item.id, item.bonusSuffix);
@@ -5094,7 +5212,7 @@ new function () {
             //
             // QUANTITY / PERCENTAGE
             //
-            if (item.regionMedian) {
+            if (showingDeals) {
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'price-percentage'
                 td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
@@ -5140,7 +5258,7 @@ new function () {
          * Returns a list of items which are deals from the given list of priced items.
          *
          * @param {PricedItem[]} itemsList
-         * @return {Promise<DealItem[]>}
+         * @return {Promise<PricedItem[]>}
          */
         async function findDeals(itemsList) {
             // Items must be in stock, and must not be commodities.
@@ -5154,6 +5272,8 @@ new function () {
                     return false;
                 }
 
+                // Normally, the region median is taken from realms which currently have quantity > 0. This region
+                // median comes from all realms which ever offered the item, including those with 0 quantity.
                 item.regionMedian = dealsData.items[itemKey].regionMedian;
 
                 return true;
@@ -5252,8 +5372,9 @@ new function () {
          *
          * @param {PricedItem[]} itemsList
          * @param {boolean}      includeNeverSeen
+         * @param {boolean}      showingDeals
          */
-        async function showItemList(itemsList, includeNeverSeen) {
+        async function showItemList(itemsList, includeNeverSeen, showingDeals) {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
@@ -5280,7 +5401,7 @@ new function () {
                 colSpan++;
                 td.addEventListener('click', columnSort.bind(null, td, false));
             }
-            tr.appendChild(td = ce('td', {}, ct(itemsList.length && itemsList[0].regionMedian ? '% Region Median' :'Available')));
+            tr.appendChild(td = ce('td', {}, ct(showingDeals ? '% Region Median' :'Available')));
             colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
 
@@ -5310,7 +5431,7 @@ new function () {
                 }
 
                 const sortRow = [
-                    createRow.bind(self, item, tbody, detailColumn, vendorFlip),
+                    createRow.bind(self, item, tbody, detailColumn, vendorFlip, showingDeals),
                 ];
                 my.rows.push(sortRow);
 
@@ -5353,7 +5474,7 @@ new function () {
                 //
                 // QUANTITY / PERCENTAGE
                 //
-                if (item.regionMedian) {
+                if (showingDeals) {
                     sortRow.push(item.price / item.regionMedian);
                 } else {
                     const quantity = item.quantity || 0;
