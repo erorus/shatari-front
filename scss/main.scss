@@ -592,6 +592,10 @@ body {
         width: calc(100% - #{$marginStep});
         height: 100%;
         max-width: 800px;
+
+        &[data-with-median] {
+          max-width: 1000px;
+        }
       }
 
       .search-result-border {
@@ -610,6 +614,11 @@ body {
 
       @media screen and (max-width:750px) {
         font-size: 80%;
+      }
+
+      @media screen and (max-width:1100px) {
+        thead td[data-col-name="median"] {display: none}
+        tbody td.median {display: none}
       }
 
       table {
@@ -715,6 +724,11 @@ body {
                 right: 0;
                 top: unset;
                 z-index:5;
+              }
+
+              &.median {
+                font-size: 80%;
+                width: $priceWidth * 0.8;
               }
             }
 

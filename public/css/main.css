@@ -423,6 +423,8 @@ body {
         width: calc(100% - 8px);
         height: 100%;
         max-width: 800px; }
+        .main .main-result .search-result .search-result-limits[data-with-median] {
+          max-width: 1000px; }
       .main .main-result .search-result .search-result-border {
         border: 1px solid #393433;
         border-top: 0;
@@ -438,6 +440,11 @@ body {
       @media screen and (max-width: 750px) {
         .main .main-result .search-result {
           font-size: 80%; } }
+      @media screen and (max-width: 1100px) {
+        .main .main-result .search-result thead td[data-col-name="median"] {
+          display: none; }
+        .main .main-result .search-result tbody td.median {
+          display: none; } }
       .main .main-result .search-result table {
         border-radius: 8px 8px 0 0;
         border-spacing: 0;
@@ -513,6 +520,9 @@ body {
               right: 0;
               top: unset;
               z-index: 5; }
+            .main .main-result .search-result table tbody td.price.median {
+              font-size: 80%;
+              width: 140px; }
           .main .main-result .search-result table tbody td.name {
             max-width: 0;
             overflow: hidden;

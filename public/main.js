@@ -4993,15 +4993,10 @@ new function () {
 
             const headerTr = headerTd.parentNode;
             const tbody = headerTr.parentNode.parentNode.querySelector('tbody');
-            const headerTds = headerTr.querySelectorAll('td');
-            let columnPos = 0;
-            for (let x = 0; x < headerTds.length; x++) {
-                delete headerTds[x].dataset.sort;
-                if (headerTds[x] === headerTd) {
-                    columnPos = x + 1;
-                }
-            }
+            const columnPos = parseInt(headerTd.dataset.colPos);
+            const hasDetail = !!headerTr.querySelector('td[data-col-name="detail"]');
 
+            headerTr.querySelectorAll('td[data-sort]').forEach(td => delete td.dataset.sort);
             setPreferredSort(columnPos * (dir === 'asc' ? 1 : -1));
 
             headerTd.dataset.sort = dir;
@@ -5040,7 +5035,7 @@ new function () {
                     }
                 }
 
-                if (headerTds.length > 3 && columnPos !== COL_DETAIL) {
+                if (hasDetail && columnPos !== COL_DETAIL) {
                     const aDetail = a[COL_DETAIL];
                     const bDetail = b[COL_DETAIL];
 
@@ -5080,6 +5075,7 @@ new function () {
          * @param {DetailColumn|undefined} detailColumn
          * @param {boolean} vendorFlip
          * @param {boolean} showingDeals
+         * @param {boolean} hasRegionMedian
          * @param {ItemKeyString[]} favorites
          * @return {HTMLTableRowElement}
          */
@@ -5089,6 +5085,7 @@ new function () {
             detailColumn,
             vendorFlip,
             showingDeals,
+            hasRegionMedian,
             favorites
         ) {
             let suffix;
@@ -5100,6 +5097,17 @@ new function () {
             tr.addEventListener('mouseenter', onRowEnter);
             tr.addEventListener('mouseleave', onRowLeave);
             let td;
+
+            //
+            // REGION MEDIAN
+            //
+            if (hasRegionMedian) {
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'price median';
+                if (item.regionMedian) {
+                    td.appendChild(priceElement(item.regionMedian));
+                }
+            }
 
             //
             // PRICE
@@ -5389,19 +5397,39 @@ new function () {
             table.appendChild(thead);
 
             let colSpan = 0;
+            let detailColumnOffset = detailColumn ? 1 : 0;
+            const hasRegionMedian = itemsList.some(pricedItem => pricedItem.hasOwnProperty('regionMedian'));
+
             thead.appendChild(tr = ce('tr'));
-            tr.appendChild(td = ce('td', {}, ct('Price')));
-            colSpan++;
-            td.addEventListener('click', columnSort.bind(null, td, false));
-            tr.appendChild(td = ce('td', {}, ct('Name')));
-            colSpan++;
-            td.addEventListener('click', columnSort.bind(null, td, true));
-            if (detailColumn) {
-                tr.appendChild(td = ce('td', {}, ct(detailColumn.name)));
+
+            delete parent.parentNode.dataset.withMedian;
+            if (hasRegionMedian) {
+                parent.parentNode.dataset.withMedian = 1;
+                tr.appendChild(td = ce(
+                    'td',
+                    {dataset: {colPos: 4 + detailColumnOffset, colName: 'median'}},
+                    ct('Region Median'),
+                ));
                 colSpan++;
                 td.addEventListener('click', columnSort.bind(null, td, false));
             }
-            tr.appendChild(td = ce('td', {}, ct(showingDeals ? '% Region Median' :'Available')));
+
+            tr.appendChild(td = ce('td', {dataset: {colPos: COL_PRICE, colName: 'price'}}, ct('Price')));
+            colSpan++;
+            td.addEventListener('click', columnSort.bind(null, td, false));
+            tr.appendChild(td = ce('td', {dataset: {colPos: COL_NAME, colName: 'name'}}, ct('Name')));
+            colSpan++;
+            td.addEventListener('click', columnSort.bind(null, td, true));
+            if (detailColumn) {
+                tr.appendChild(td = ce('td', {dataset: {colPos: COL_DETAIL, colName: 'detail'}}, ct(detailColumn.name)));
+                colSpan++;
+                td.addEventListener('click', columnSort.bind(null, td, false));
+            }
+            tr.appendChild(td = ce(
+                'td',
+                {dataset: {colPos: 3 + detailColumnOffset, colName: 'quantity'}},
+                ct(showingDeals ? '% Region Median' :'Available')
+            ));
             colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
 
@@ -5431,7 +5459,7 @@ new function () {
                 }
 
                 const sortRow = [
-                    createRow.bind(self, item, tbody, detailColumn, vendorFlip, showingDeals),
+                    createRow.bind(self, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian),
                 ];
                 my.rows.push(sortRow);
 
@@ -5484,6 +5512,13 @@ new function () {
                         sortRow.push(quantity);
                     }
                 }
+
+                //
+                // REGION MEDIAN
+                //
+                if (hasRegionMedian) {
+                    sortRow.push(item.regionMedian || 0);
+                }
             }
 
             if (my.rows.length === 0) {
@@ -5500,8 +5535,9 @@ new function () {
                     ))));
                 }
 
-                const prefSort = getPreferredSort() || 1;
-                const sortTd = thead.querySelectorAll('td')[Math.abs(prefSort) - 1] || thead.querySelector('td');
+                const prefSort = getPreferredSort() || COL_PRICE;
+                const sortTd = thead.querySelector(`td[data-col-pos="${Math.abs(prefSort)}"]`) ||
+                    thead.querySelector(`td[data-col-pos="${COL_PRICE}"]`);
                 if (prefSort < 0) {
                     // Will flip to desc when we call the next sort.
                     sortTd.dataset.sort = 'asc';
