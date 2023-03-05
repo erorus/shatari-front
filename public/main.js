@@ -3107,11 +3107,9 @@ new function () {
                 otherRealms.forEach(itemState => {
                     // Collect stats for the base stats summary at the top.
                     quantitySum += itemState.quantity;
-                    if (itemState.price) {
+                    if (itemState.price && itemState.quantity) {
                         prices.push(itemState.price);
-                        if (itemState.quantity) {
-                            lowestAvailablePrice = Math.min(itemState.price, lowestAvailablePrice || itemState.price);
-                        }
+                        lowestAvailablePrice = Math.min(itemState.price, lowestAvailablePrice || itemState.price);
                     }
 
                     // Add rows to the current regional prices table.
