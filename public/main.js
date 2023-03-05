@@ -5099,17 +5099,6 @@ new function () {
             let td;
 
             //
-            // REGION MEDIAN
-            //
-            if (hasRegionMedian) {
-                tr.appendChild(td = document.createElement('td'));
-                td.className = 'price median';
-                if (item.regionMedian) {
-                    td.appendChild(priceElement(item.regionMedian));
-                }
-            }
-
-            //
             // PRICE
             //
             {
@@ -5234,6 +5223,17 @@ new function () {
                     span.className = 'delta-timestamp';
                     span.dataset.timestamp = item.snapshot;
                     td.appendChild(span);
+                }
+            }
+
+            //
+            // REGION MEDIAN
+            //
+            if (hasRegionMedian) {
+                tr.appendChild(td = document.createElement('td'));
+                td.className = 'price median';
+                if (item.regionMedian) {
+                    td.appendChild(priceElement(item.regionMedian));
                 }
             }
 
@@ -5402,18 +5402,6 @@ new function () {
 
             thead.appendChild(tr = ce('tr'));
 
-            delete parent.parentNode.dataset.withMedian;
-            if (hasRegionMedian) {
-                parent.parentNode.dataset.withMedian = 1;
-                tr.appendChild(td = ce(
-                    'td',
-                    {dataset: {colPos: 4 + detailColumnOffset, colName: 'median'}},
-                    ct('Region Median'),
-                ));
-                colSpan++;
-                td.addEventListener('click', columnSort.bind(null, td, false));
-            }
-
             tr.appendChild(td = ce('td', {dataset: {colPos: COL_PRICE, colName: 'price'}}, ct('Price')));
             colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
@@ -5432,6 +5420,18 @@ new function () {
             ));
             colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
+
+            delete parent.parentNode.dataset.withMedian;
+            if (hasRegionMedian) {
+                parent.parentNode.dataset.withMedian = 1;
+                tr.appendChild(td = ce(
+                    'td',
+                    {dataset: {colPos: 4 + detailColumnOffset, colName: 'median'}},
+                    ct('Region Median'),
+                ));
+                colSpan++;
+                td.addEventListener('click', columnSort.bind(null, td, false));
+            }
 
             my.rows = [];
             const tbody = ce('tbody');
