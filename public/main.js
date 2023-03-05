@@ -5416,7 +5416,7 @@ new function () {
             tr.appendChild(td = ce(
                 'td',
                 {dataset: {colPos: 3 + detailColumnOffset, colName: 'quantity'}},
-                ct(showingDeals ? '% Region Median' :'Available')
+                ct(showingDeals ? '% of Region' :'Available')
             ));
             colSpan++;
             td.addEventListener('click', columnSort.bind(null, td, false));
