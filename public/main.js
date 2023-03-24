@@ -5225,6 +5225,15 @@ new function () {
                 }
             }
 
+            let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
+            let favSpan = document.createElement('span');
+            favSpan.className = 'favorite';
+            if (favorites.includes(itemKey)) {
+                favSpan.dataset.favorite = 1;
+            }
+            favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
+            td.appendChild(favSpan);
+
             //
             // REGION MEDIAN
             //
@@ -5235,15 +5244,6 @@ new function () {
                     td.appendChild(priceElement(item.regionMedian));
                 }
             }
-
-            let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
-            let favSpan = document.createElement('span');
-            favSpan.className = 'favorite';
-            if (favorites.includes(itemKey)) {
-                favSpan.dataset.favorite = 1;
-            }
-            favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
-            td.appendChild(favSpan);
 
             return tr;
         }
