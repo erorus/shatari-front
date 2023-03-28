@@ -447,10 +447,11 @@ new function () {
             /** @type {RegionState} */
             let regionState;
 
-            await Promise.all([
-                (async () => realmState = await getRealmState(realm))(),
-                (async () => regionState = await getRegionState(realm.region))(),
-            ]);
+            let promises = [(async () => realmState = await getRealmState(realm))()];
+            if (Search.getRegionMedianControl().checked) {
+                promises.push((async () => regionState = await getRegionState(realm.region))());
+            }
+            await Promise.all(promises);
 
             const result = [];
 
@@ -467,7 +468,7 @@ new function () {
                     pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
                     pricedItem.snapshot = cur.snapshot;
 
-                    let regionMedian = regionState.items[keyString];
+                    let regionMedian = regionState && regionState.items[keyString];
                     if (regionMedian) {
                         pricedItem.regionMedian = regionMedian;
                     }
@@ -4912,6 +4913,15 @@ new function () {
         }
 
         /**
+         * Returns the checkbox for the option to show the region median price.
+         *
+         * @return {HTMLInputElement}
+         */
+        this.getRegionMedianControl = function () {
+            return qs('.main .search-bar .filter [name="show-region-median"]');
+        };
+
+        /**
          * Empties the item list.
          */
         this.hide = function () {
@@ -4941,6 +4951,15 @@ new function () {
             Detail.hide();
             emptyItemList();
             Realms.savePreferredRealm();
+            try {
+                if (self.getRegionMedianControl().checked) {
+                    localStorage.setItem('show-region-median', 1);
+                } else {
+                    localStorage.removeItem('show-region-median');
+                }
+            } catch (e) {
+                console.error('Could not update localStorage for show-region-median', e);
+            }
 
             let searchTypeName = 'search';
             if (favoritesOnly) searchTypeName = 'favorites';
@@ -5593,6 +5612,12 @@ new function () {
         });
 
         qs('.main .search-bar .deals').addEventListener('click', () => self.perform(false, true));
+
+        try {
+            self.getRegionMedianControl().checked = !!localStorage.getItem('show-region-median');
+        } catch (e) {
+            // Oh well.
+        }
 
         /**
          * Pressing Ctrl-C while hovering over a search result row will copy that result's name to the clipboard.
