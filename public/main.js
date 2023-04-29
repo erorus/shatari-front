@@ -126,6 +126,7 @@ new function () {
      * @property {Object.<ItemKeyString, SummaryLine>} summary
      * @property {Object.<ItemID, Array<ItemKeyString>>} variants
      * @property {Object.<BattlePetSpeciesID, Array<ItemKeyString>>} speciesVariants
+     * @property {Object.<StatID, Array<ItemKeyString>>} bonusStatItems
      */
 
     /** @typedef {string} Region "us" or "eu", etc. */
@@ -135,6 +136,8 @@ new function () {
      * @property {Region} region
      * @property {Object<ItemKeyString, Money>} items
      */
+
+    /** @typedef {number} StatID */
 
     /** @typedef {number} SubclassID */
 
@@ -221,7 +224,7 @@ new function () {
         const VERSION_DEALS_STATE = 1;
         const VERSION_GLOBAL_STATE = 2;
         const VERSION_ITEM_STATE = 5;
-        const VERSION_REALM_STATE = 3;
+        const VERSION_REALM_STATE = 4;
         const VERSION_REGION_STATE = 1;
         const VERSION_TOKEN_STATE = 1;
 
@@ -807,7 +810,11 @@ new function () {
             };
 
             let version = view.getUint8(read(1));
+            let hasBonusStatItems = true;
             switch (version) {
+                case 3:
+                    hasBonusStatItems = false;
+                    break;
                 case VERSION_REALM_STATE:
                     // no op
                     break;
@@ -853,6 +860,20 @@ new function () {
                     price: price,
                     quantity: quantity,
                 };
+            }
+            result.bonusStatItems = {};
+            if (hasBonusStatItems) {
+                for (let statCount = view.getUint8(read(1)); statCount > 0; statCount--) {
+                    const statId = view.getUint8(read(1));
+                    result.bonusStatItems[statId] = [];
+                    for (let keyCount = view.getUint16(read(2), true); keyCount > 0; keyCount--) {
+                        const itemId = view.getUint32(read(4), true);
+                        const itemLevel = view.getUint16(read(2), true);
+                        const itemSuffix = view.getUint16(read(2), true);
+                        const itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+                        result.bonusStatItems[statId].push(itemKeyString);
+                    }
+                }
             }
 
             if (!isCommodityRealm) {
@@ -1018,13 +1039,14 @@ new function () {
 
         /**
          * @typedef {Object} Subcategory
-         * @property {string}     name
-         * @property {ClassID}    class
-         * @property {number[]} [extraFilters]
+         * @property {string}          name
+         * @property {ClassID}         class
+         * @property {StatID}          [bonusStat]
+         * @property {number[]}        [extraFilters]
          * @property {InventoryType[]} [invTypes]
-         * @property {SubclassID} [subClass]
-         * @property {SubclassID[]} [subClasses]
-         * @property {Subcategory[]} [subcategories]
+         * @property {SubclassID}      [subClass]
+         * @property {SubclassID[]}    [subClasses]
+         * @property {Subcategory[]}   [subcategories]
          */
 
         // ********************* //
@@ -1033,6 +1055,7 @@ new function () {
 
         /**
          * @type {{
+         *  bonusStat: StatID|undefined,
          *  classId: ClassID|undefined,
          *  extraFilters: number[]|undefined,
          *  invTypes: InventoryType[]|undefined,
@@ -1049,6 +1072,7 @@ new function () {
             battlePetTypes: {},
 
             classId: undefined,
+            bonusStat: undefined,
             extraFilters: undefined,
             invTypes: undefined,
             subClassId: undefined,
@@ -1074,6 +1098,15 @@ new function () {
          */
         this.getBattlePetTypeName = function (typeId) {
             return my.battlePetTypes[typeId];
+        };
+
+        /**
+         * Returns bonus stat ID to use in search filtering, or undefined for none.
+         *
+         * @return {number[]}
+         */
+        this.getBonusStat = function () {
+            return my.bonusStat;
         };
 
         /**
@@ -1180,7 +1213,8 @@ new function () {
                 }
                 hashCode += '.';
                 hashCode += (catDiv.dataset.invTypes || '').replace(/,/g, '_') + '.';
-                hashCode += (catDiv.dataset.extraFilters || '').replace(/,/g, '_');
+                hashCode += (catDiv.dataset.extraFilters || '').replace(/,/g, '_') + '.';
+                hashCode += (catDiv.dataset.bonusStat || '');
                 hashCode = hashCode.replace(/\.+$/, '');
 
                 catDiv.dataset.hashCode = hashCode;
@@ -1195,7 +1229,7 @@ new function () {
                             classId: cat['class'],
                         },
                     },
-                    getNameNode(cat.name)
+                    getNameNode(cat)
                 );
                 if (cat.detailColumn) {
                     catDiv.dataset.detailColumn = JSON.stringify(cat.detailColumn);
@@ -1223,7 +1257,7 @@ new function () {
                                 subCategoryIndex: ++subCatIndex,
                             },
                         },
-                        getNameNode(subcat.name)
+                        getNameNode(subcat)
                     );
                     if (subcat.hasOwnProperty('subClass')) {
                         subcatDiv.dataset.subClassId = subcat.subClass;
@@ -1235,6 +1269,9 @@ new function () {
                     }
                     if (subcat.hasOwnProperty('extraFilters')) {
                         subcatDiv.dataset.extraFilters = subcat.extraFilters.join(',');
+                    }
+                    if (subcat.hasOwnProperty('bonusStat')) {
+                        subcatDiv.dataset.bonusStat = `${subcat.bonusStat}`;
                     }
                     setHashCode(subcatDiv);
                     categoriesParent.appendChild(subcatDiv);
@@ -1255,7 +1292,7 @@ new function () {
                                     classId: subsubcat['class'],
                                 },
                             },
-                            getNameNode(subsubcat.name)
+                            getNameNode(subsubcat)
                         );
                         if (subsubcat.hasOwnProperty('subClass')) {
                             subsubcatDiv.dataset.subClassId = subsubcat.subClass;
@@ -1267,6 +1304,9 @@ new function () {
                         }
                         if (subsubcat.hasOwnProperty('extraFilters')) {
                             subsubcatDiv.dataset.extraFilters = subsubcat.extraFilters.join(',');
+                        }
+                        if (subsubcat.hasOwnProperty('bonusStat')) {
+                            subsubcatDiv.dataset.bonusStat = `${subsubcat.bonusStat}`;
                         }
                         setHashCode(subsubcatDiv);
                         categoriesParent.appendChild(subsubcatDiv);
@@ -1411,6 +1451,8 @@ new function () {
                     subCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
                 my.extraFilters = subCatDiv.dataset.hasOwnProperty('extraFilters') &&
                     subCatDiv.dataset.extraFilters.split(',').map(value => parseInt(value)) || undefined;
+                my.bonusStat = subCatDiv.dataset.hasOwnProperty('bonusStat') &&
+                    parseInt(subCatDiv.dataset.bonusStat) || undefined;
                 my.hashCode = subCatDiv.dataset.hashCode;
 
                 // Show any subsubcategories under this subcategory.
@@ -1427,6 +1469,7 @@ new function () {
                 my.subClassIds = undefined;
                 my.invTypes = undefined;
                 my.extraFilters = undefined;
+                my.bonusStat = undefined;
 
                 let selector = '.main .categories .category';
                 selector += '[data-class-id="' + subCatDiv.dataset.parentClass + '"]';
@@ -1460,6 +1503,8 @@ new function () {
                     subsubCatDiv.dataset.invTypes.split(',').map(value => parseInt(value)) || undefined;
                 my.extraFilters = subsubCatDiv.dataset.hasOwnProperty('extraFilters') &&
                     subsubCatDiv.dataset.extraFilters.split(',').map(value => parseInt(value)) || undefined;
+                my.bonusStat = subsubCatDiv.dataset.hasOwnProperty('bonusStat') &&
+                    parseInt(subsubCatDiv.dataset.bonusStat) || undefined;
                 my.hashCode = subsubCatDiv.dataset.hashCode;
             } else {
                 // De-select this subsubcategory, reverting back to the parent subcategory criteria.
@@ -1486,6 +1531,7 @@ new function () {
             my.subClassIds = undefined;
             my.invTypes = undefined;
             my.extraFilters = undefined;
+            my.bonusStat = undefined;
             my.detailColumn = undefined;
             my.hashCode = undefined;
         }
@@ -1523,13 +1569,17 @@ new function () {
         /**
          * Parses the colors out of a name string and returns a node to use in the category div.
          *
-         * @param {string} nameString
+         * @param {Category|Subcategory} cat
          * @return {Node}
          */
-        function getNameNode(nameString) {
+        function getNameNode(cat) {
+            const nameString = cat.name;
             let match = /^\|c([0-9a-f]{2})([0-9a-f]{6})(.*)\|r$/.exec(nameString);
             if (match) {
                 return ce('span', {style: {color: '#' + match[2] + match[1]}}, ct(match[3]));
+            }
+            if (cat.bonusStat) {
+                return ce('span', {className: 'q2'}, ct(nameString));
             }
 
             return ct(nameString);
@@ -1549,6 +1599,7 @@ new function () {
             my.subClassIds = undefined;
             my.invTypes = undefined;
             my.extraFilters = undefined;
+            my.bonusStat = undefined;
             my.detailColumn = undefined;
 
             await Categories.init();
@@ -5404,6 +5455,13 @@ new function () {
             const detailColumn = Categories.getDetailColumn();
             const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
             const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
+            const bonusStat = Categories.getBonusStat();
+
+            let itemKeyAllowList;
+            if (bonusStat != null) {
+                const realmState = await Auctions.getRealmState();
+                itemKeyAllowList = realmState.bonusStatItems[bonusStat] || [];
+            }
 
             const parent = qs('.main .search-result-target');
 
@@ -5456,6 +5514,12 @@ new function () {
             table.appendChild(tbody);
             for (let itemIndex = 0; itemIndex < itemsList.length; itemIndex++) {
                 let item = itemsList[itemIndex];
+                if (itemKeyAllowList != null) {
+                    const itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
+                    if (!itemKeyAllowList.includes(itemKey)) {
+                        continue;
+                    }
+                }
                 if ((item.quantity || 0) === 0) {
                     if (!showOutOfStock) {
                         continue;
