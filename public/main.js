@@ -5130,8 +5130,11 @@ new function () {
                     tr = tr(favorites);
                     my.rows[x][0] = tr;
                 }
+                tr.dataset.sortedResult = 1;
                 tbody.insertBefore(tr, afterNode ? afterNode.nextSibling : tbody.firstChild);
             }
+            tbody.querySelectorAll('tr.result:not([data-sorted-result])').forEach(tr => tbody.removeChild(tr));
+            tbody.querySelectorAll('tr.result').forEach(tr => delete tr.dataset.sortedResult);
 
             updateDeltaTimestamps();
         }
@@ -5165,6 +5168,7 @@ new function () {
             let tr = document.createElement('tr');
             tr.addEventListener('mouseenter', onRowEnter);
             tr.addEventListener('mouseleave', onRowLeave);
+            tr.classList.add('result');
             let td;
 
             //
