@@ -3510,7 +3510,7 @@ new function () {
          * @param {string} title The page title fragment
          */
         this.set = function (newHash, title) {
-            document.title = (title ? `${title} - ` : '') + 'Oribos Exchange';
+            document.title = (title ? `${title} - ` : '') + 'Undermine Exchange';
 
             if (newHash === getHash()) {
                 return;
@@ -5941,8 +5941,8 @@ new function () {
          * Stuff to run on oribos.exchange for the migration.
          */
         function oribosPart() {
-            // TODO: my.abortInit = true;
-            // TODO: redirect to undermine.exchange, keeping the hash.
+            my.abortInit = true;
+            location.href = 'https://undermine.exchange/' + location.hash;
         }
 
         /**
