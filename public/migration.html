@@ -8,7 +8,7 @@
     </style>
     <script>
         (function () {
-            if (location.host !== 'oribos.exchange' || !window.opener) {
+            if (location.host !== 'oribos.exchange' || window.parent === window) {
                 location.href = 'https://oribos.exchange/';
 
                 return;
@@ -21,7 +21,7 @@
             }
 
             if (Object.values(data).length) {
-                window.opener.postMessage(
+                window.parent.postMessage(
                     {
                         action: 'migration',
                         storage: data,
