@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Oribos Exchange Migration</title>
+    <style>
+        body {background-color: black; color: #ccc; font-family: sans-serif}
+        div {text-align: center}
+    </style>
+    <script>
+        (function () {
+            if (location.host !== 'oribos.exchange' || !window.opener) {
+                location.href = 'https://oribos.exchange/';
+
+                return;
+            }
+
+            let data = {};
+            for (let index = localStorage.length - 1; index >= 0; index--) {
+                let key = localStorage.key(index);
+                data[key] = localStorage.getItem(key);
+            }
+
+            if (Object.values(data).length) {
+                window.opener.postMessage(
+                    {
+                        action: 'migration',
+                        storage: data,
+                    },
+                    'https://undermine.exchange',
+                );
+            }
+        })();
+    </script>
+</head>
+<body><div>This hidden frame helps to copy Oribos Exchange preferences to Undermine Exchange.</div></body>
