@@ -918,6 +918,10 @@ body {
                     z-index: 5; }
                 .main .main-result .item .panels > div.details .other-realms-container table tbody td:last-child {
                   padding-right: 8px; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td .delta-timestamp {
+                  font-size: 70%;
+                  padding-right: 1em;
+                  white-space: nowrap; }
               .main .main-result .item .panels > div.details .other-realms-container table:not([data-with-connected-realms]) tr[data-connected-realm] {
                 display: none; }
             .main .main-result .item .panels > div.details .other-realms-container .silver {

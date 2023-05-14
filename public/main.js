@@ -3069,8 +3069,11 @@ new function () {
                     }
                     let rows = Array.from(table.querySelectorAll('tbody tr'));
                     rows.sort(function (a, b) {
-                        const aVal = a.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
-                        const bVal = b.querySelector('td:nth-child(' + columnPos + ')').dataset.sortValue;
+                        const aTd = a.querySelector('td:nth-child(' + columnPos + ')');
+                        const bTd = b.querySelector('td:nth-child(' + columnPos + ')');
+
+                        const aVal = aTd.dataset.sortValue;
+                        const bVal = bTd.dataset.sortValue;
 
                         if (isString) {
                             return aVal.localeCompare(bVal);
@@ -3079,6 +3082,13 @@ new function () {
                         const valDiff = parseInt(aVal) - parseInt(bVal);
                         if (valDiff) {
                             return valDiff;
+                        }
+
+                        if (aTd.dataset.sortValue2) {
+                            const valDiff = parseInt(aTd.dataset.sortValue2) - parseInt(bTd.dataset.sortValue2);
+                            if (valDiff) {
+                                return valDiff;
+                            }
                         }
 
                         // Fallbacks.
@@ -3186,9 +3196,18 @@ new function () {
                         }
                         a.addEventListener('click', showOtherRealmItem.bind(self, item, itemState, realm));
                         tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
-                        tr.appendChild(td = ce('td', {dataset: {sortValue: itemState.quantity}}, ct(itemState.quantity.toLocaleString())));
+                        tr.appendChild(td = ce('td', {dataset: {
+                            sortValue: itemState.quantity,
+                            sortValue2: itemState.snapshot,
+                        }}, ct(itemState.quantity.toLocaleString())));
                         if (itemState.quantity === 0) {
                             td.classList.add('q0');
+                            if (itemState.snapshot) {
+                                td.insertBefore(
+                                    ce('span', {className: 'delta-timestamp', dataset: {timestamp: itemState.snapshot}}),
+                                    td.firstChild,
+                                );
+                            }
                         }
 
                         regionElements.listTable.appendChild(tr);
@@ -3199,6 +3218,7 @@ new function () {
                         realm: itemState.realm,
                         price: itemState.price,
                         quantity: itemState.quantity,
+                        lastSeen: itemState.snapshot,
                     });
 
                     // Scan all daily data, add nonzero quantities to regionDailyHistory.
@@ -3215,6 +3235,7 @@ new function () {
 
                 // The table has finished being filled, now sort it.
                 regionElements.afterList();
+                updateDeltaTimestamps();
 
                 // Update the base stats summary.
                 regionElements.quantity.appendChild(ct(quantitySum.toLocaleString()));
@@ -3285,6 +3306,13 @@ new function () {
                         quantityLine.appendChild(ce('td', {className: 'quantity'}, ct('Quantity')));
                         quantityLine.appendChild(ce('td', {}, ct(entry.quantity.toLocaleString())));
                         result.appendChild(quantityLine);
+
+                        if (entry.quantity === 0 && entry.lastSeen) {
+                            const dateLine = ce('tr');
+                            dateLine.appendChild(ce('td', {}, ct('Last Seen')));
+                            dateLine.appendChild(ce('td', {}, ct(timeString(entry.lastSeen))));
+                            result.appendChild(dateLine);
+                        }
 
                         let link = ce('a', {
                             className: 'link',
@@ -6099,6 +6127,41 @@ new function () {
     }
 
     /**
+     * Returns a string describing the timestamp relative to now. e.g. "2 hours ago".
+     *
+     * @param {number} timestamp
+     * @return {string}
+     */
+    function timeString(timestamp) {
+        let now = Date.now();
+        let delta = now - timestamp;
+        let sign = Math.sign(delta);
+        delta = Math.abs(delta);
+        let ago = sign > 0 ? 'ago' : 'away';
+
+        if (sign === 0) {
+            return 'now';
+        }
+        if (delta < 2 * MS_HOUR) {
+            return Math.round(delta / MS_MINUTE) + ' minutes ' + ago;
+        }
+        if (delta < 2 * MS_DAY) {
+            return Math.round(delta / MS_HOUR) + ' hours ' + ago;
+        }
+        if (delta < 14 * MS_DAY) {
+            return Math.round(delta / MS_DAY) + ' days ' + ago;
+        }
+
+        const shortFormatter = new Intl.DateTimeFormat([], {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+
+        return shortFormatter.format(new Date(timestamp));
+    }
+
+    /**
      * Updates all delta timestamp elements on the page with values for the current time.
      */
     function updateDeltaTimestamps() {
@@ -6112,12 +6175,6 @@ new function () {
             timeZoneName: 'short',
         });
 
-        const shortFormatter = new Intl.DateTimeFormat([], {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-
         qsa('.delta-timestamp[data-timestamp]').forEach(ele => {
             const timestamp = parseInt(ele.dataset.timestamp);
             ee(ele);
@@ -6129,25 +6186,7 @@ new function () {
             }
             ele.dataset.simpleTooltip = longFormatter.format(new Date(timestamp));
 
-            let now = Date.now();
-            let delta = now - timestamp;
-            let sign = Math.sign(delta);
-            delta = Math.abs(delta);
-            let ago = sign > 0 ? 'ago' : 'away';
-            let timeString = '';
-            if (sign === 0) {
-                timeString = 'now';
-            } else if (delta < 2 * MS_HOUR) {
-                timeString = Math.round(delta / MS_MINUTE) + ' minutes ' + ago;
-            } else if (delta < 2 * MS_DAY) {
-                timeString = Math.round(delta / MS_HOUR) + ' hours ' + ago;
-            } else if (delta < 14 * MS_DAY) {
-                timeString = Math.round(delta / MS_DAY) + ' days ' + ago;
-            } else {
-                timeString = shortFormatter.format(new Date(timestamp));
-            }
-
-            ele.appendChild(ct(timeString));
+            ele.appendChild(ct(timeString(timestamp)));
         });
     }
 

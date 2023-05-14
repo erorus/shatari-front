@@ -1209,6 +1209,12 @@ body {
                     &:last-child {
                       padding-right: $marginStep;
                     }
+
+                    .delta-timestamp {
+                      font-size: 70%;
+                      padding-right: 1em;
+                      white-space: nowrap;
+                    }
                   }
                 }
 
