@@ -4310,9 +4310,7 @@ new function () {
             }
             my.items = await unboundResponse.json();
             if (boundResponse.ok) {
-                for (const [key, value] of Object.entries(await boundResponse.json())) {
-                    my.items[key] = value;
-                }
+                Object.assign(my.items, await boundResponse.json());
             }
 
             for (let id in my.items) {
@@ -4354,9 +4352,7 @@ new function () {
 
             my.names = await unboundResponse.json();
             if (boundResponse.ok) {
-                for (const [key, value] of Object.entries(await boundResponse.json())) {
-                    my.names[key] = value;
-                }
+                Object.assign(my.names, await boundResponse.json());
             }
         }
 
