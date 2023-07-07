@@ -160,6 +160,7 @@ new function () {
 
     /**
      * @typedef {object} UnnamedItem
+     * @property {boolean} [bop]
      * @property {number} class
      * @property {number} [craftingQualityTier]
      * @property {number} [display]
@@ -4292,12 +4293,25 @@ new function () {
          * Fetches the list of item IDs and stores it locally.
          */
         async function fetchItemIds() {
-            const response = await Progress.fetch('json/items.json', {mode:'same-origin'});
-            if (!response.ok) {
+            let unboundResponse;
+            let boundResponse;
+
+            await Promise.all([
+                (async () => {
+                    unboundResponse = await Progress.fetch('json/items.unbound.json', {mode:'same-origin'});
+                })(),
+                (async () => {
+                    boundResponse = await Progress.fetch('json/items.bound.json', {mode:'same-origin'});
+                })(),
+            ]);
+
+            if (!unboundResponse.ok) {
                 throw 'Cannot get list of item IDs!';
             }
-
-            my.items = await response.json();
+            my.items = await unboundResponse.json();
+            if (boundResponse.ok) {
+                my.items = {...my.items, ...(await boundResponse.json())};
+            }
 
             for (let id in my.items) {
                 if (!my.items.hasOwnProperty(id)) {
@@ -4320,12 +4334,26 @@ new function () {
          * @param {string} locale
          */
         async function fetchItemNames(locale) {
-            const response = await Progress.fetch('json/names.' + locale + '.json', {mode:'same-origin'});
-            if (!response.ok) {
+            let unboundResponse;
+            let boundResponse;
+
+            await Promise.all([
+                (async () => {
+                    unboundResponse = await Progress.fetch(`json/names.unbound.${locale}.json`, {mode:'same-origin'});
+                })(),
+                (async () => {
+                    boundResponse = await Progress.fetch(`json/names.bound.${locale}.json`, {mode:'same-origin'});
+                })(),
+            ]);
+
+            if (!unboundResponse.ok) {
                 throw 'Cannot get list of item names!';
             }
 
-            my.names = await response.json();
+            my.names = await unboundResponse.json();
+            if (boundResponse.ok) {
+                my.names = {...my.names, ...(await boundResponse.json())};
+            }
         }
 
         /**
