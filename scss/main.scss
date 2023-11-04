@@ -115,6 +115,8 @@ $tooltipPadding: 8px;
 $scrollbarThumb: $background40;
 $scrollbarTrack: $background10;
 
+.wowhead-tooltip .whtt-extra {display: none}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: $scrollbarThumb $scrollbarTrack;

@@ -6244,6 +6244,19 @@ new function () {
             return;
         }
 
+        let hsTag = ce('script', {
+            src: 'highstock-10.3.3.js',
+            id: 'highstock-script',
+            integrity: 'sha256-ml2aGWjcVDL1HLWtBUkAflxypxdZ8aZVdPMB1V4zx8I=',
+        });
+        hsTag.addEventListener('load', () => hsTag.dataset.loaded = '1');
+        document.head.appendChild(hsTag);
+
+        document.head.appendChild(ce('script', {
+            src: 'power.js',
+            integrity: 'sha256-9+dk9J58su1ANrIyLXi13uYfDs84mLZC6asqiqgUVl8=',
+        }));
+
         if (!navigator.userAgentData &&
             navigator.userAgent.indexOf('Safari') > -1 &&
             navigator.userAgent.indexOf('Chrome') < 0 &&

@@ -4,6 +4,9 @@
 @font-face {
   font-family: "Friz Quadrata TT";
   src: url("../fonts/frizqt__.ttf") format("truetype"); }
+.wowhead-tooltip .whtt-extra {
+  display: none; }
+
 * {
   scrollbar-width: thin;
   scrollbar-color: #4a4644 #161211; }
