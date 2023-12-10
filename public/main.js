@@ -3573,7 +3573,7 @@ new function () {
          * @return {string}
          */
         function getHash() {
-            return location.hash.replace(/^#+/, '');
+            return decodeURIComponent(location.hash.replace(/^#+/, ''));
         }
 
         /**
