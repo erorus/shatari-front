@@ -5667,9 +5667,12 @@ new function () {
                 tbody.appendChild(ce('tr', {className: 'message'}, td = ce('td', {colSpan: colSpan})));
                 td.appendChild(ct('No results found. Double-check your category and filter settings.'));
             } else {
-                tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: colSpan}, ct(
-                    'Click an entry for more information.',
-                ))));
+                const td = ce('td', {colSpan: colSpan});
+                td.appendChild(ce('img', {src: 'images/line-chart-line.svg'}));
+                td.appendChild(ct('Click an entry for more information.'));
+                td.appendChild(ce('img', {src: 'images/line-chart-line.svg'}));
+
+                tbody.appendChild(ce('tr', {className: 'message'}, td));
                 if (my.rows.length > MAX_RESULTS_SHOWN) {
                     // Note: this second message will always be at the bottom of the list.
                     tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: colSpan}, ct(

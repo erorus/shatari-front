@@ -696,8 +696,15 @@ body {
             &.message {
               cursor: default;
               td {
+                font-size: 120%;
                 padding: $marginStep * 2;
                 text-align: center;
+
+                img {
+                  height: 1.2em;
+                  margin: 0 0.25em;
+                  vertical-align: text-bottom;
+                }
               }
               @media (hover: hover) {
                 &:hover {

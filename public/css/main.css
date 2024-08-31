@@ -499,8 +499,13 @@ body {
           .main .main-result .search-result table tbody tr.message {
             cursor: default; }
             .main .main-result .search-result table tbody tr.message td {
+              font-size: 120%;
               padding: 16px;
               text-align: center; }
+              .main .main-result .search-result table tbody tr.message td img {
+                height: 1.2em;
+                margin: 0 0.25em;
+                vertical-align: text-bottom; }
             @media (hover: hover) {
               .main .main-result .search-result table tbody tr.message:hover {
                 background: unset; } }
