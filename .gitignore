@@ -6,3 +6,5 @@ public/icons/
 public/json/realm-list*
 public/json/realms
 public/json/*.bound.*
+*.gz
+*.br
