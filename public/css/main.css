@@ -378,6 +378,7 @@ body {
       bottom: 4px;
       font: 16px "Friz Quadrata TT", sans-serif;
       left: 4px;
+      line-height: 1.33;
       overflow-y: auto;
       position: absolute;
       right: 4px;

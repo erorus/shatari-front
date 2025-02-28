@@ -6247,6 +6247,22 @@ new function () {
             return;
         }
 
+        {
+            const toReplace = qs('#contact-link');
+            if (toReplace) {
+                const df = document.createDocumentFragment();
+                df.appendChild(document.createTextNode('Report issues to '));
+                const address = `feedback@${location.hostname}`;
+                df.appendChild(ce('a', {href: `mailto:${address}`}, document.createTextNode(address)));
+                df.appendChild(document.createTextNode('.'));
+                df.appendChild(ce('br'));
+                df.appendChild(document.createTextNode('All messages are read, but replies are uncommon.'));
+                df.appendChild(ce('br'));
+                df.appendChild(ce('br'));
+                toReplace.parentNode.replaceChild(df, toReplace);
+            }
+        }
+
         let hsTag = ce('script', {
             src: 'highstock-10.3.3.js',
             id: 'highstock-script',
