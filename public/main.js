@@ -341,29 +341,17 @@ new function () {
 
             const updatedElement = qs('.main .bottom-bar .last-updated');
             ee(updatedElement);
-            updatedElement.appendChild(ct(realm.name + ' last updated '));
-            updatedElement.appendChild(ce('span', {
-                className: 'delta-timestamp',
-                dataset: {timestamp: realmState.snapshot}
-            }));
-            updatedElement.appendChild(ct('.'));
 
-            const now = Date.now();
-            const nextCheck = nextCheckTimestamp(realmState);
-            if (nextCheck < now) {
-                // Add nothing.
-            } else if (nextCheck - now < MS_MINUTE) {
-                updatedElement.appendChild(ct(' Next update: imminent.'))
-            } else {
-                updatedElement.appendChild(ct(' Next update: '))
+            if (Date.now() - realmState.snapshot > 2 * MS_HOUR) {
+                updatedElement.appendChild(ct(realm.name + ' last updated '));
                 updatedElement.appendChild(ce('span', {
                     className: 'delta-timestamp',
-                    dataset: {timestamp: nextCheck}
+                    dataset: {timestamp: realmState.snapshot}
                 }));
                 updatedElement.appendChild(ct('.'));
-            }
 
-            updateDeltaTimestamps();
+                updateDeltaTimestamps();
+            }
 
             return realmState;
         };
@@ -995,28 +983,6 @@ new function () {
                 itemData.snapshot = closestCache[itemData.snapshot] || getClosestSnapshot(itemData.snapshot);
                 realmState.summary[keyString] = itemData;
             }
-        }
-
-        /**
-         * Returns the timestamp of the next time we should check for a snapshot, given a realm state.
-         *
-         * @param {RealmState} realmState
-         * @return {number|undefined}
-         */
-        function nextCheckTimestamp(realmState) {
-            if (!realmState.lastCheck) {
-                // We never checked this realm before.
-                return;
-            }
-
-            const snapshots = realmState.snapshots || [];
-            let minInterval = MAX_SNAPSHOT_INTERVAL;
-            for (let x = Math.max(1, snapshots.length - SNAPSHOTS_FOR_INTERVAL); x < snapshots.length; x++) {
-                minInterval = Math.min(minInterval, snapshots[x] - snapshots[x - 1]);
-            }
-            const nextSnapshot = (realmState.snapshot || realmState.lastCheck) + minInterval;
-
-            return nextSnapshot + 2.5 * MS_MINUTE;
         }
     };
 
