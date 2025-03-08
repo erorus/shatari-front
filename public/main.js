@@ -5050,6 +5050,12 @@ new function () {
 
             const select = qs('.main .search-bar select');
 
+            if (!select.querySelector('optgroup')) {
+                REGIONS.forEach(region => {
+                    select.appendChild(ce('optgroup', {dataset: {region}, label: region.toUpperCase() + ' Realms'}));
+                });
+            }
+
             const sorted = [];
             for (let k in my.realms) {
                 if (!my.realms.hasOwnProperty(k)) {
@@ -5062,6 +5068,7 @@ new function () {
                 return a.name.localeCompare(b.name) || (REGIONS.indexOf(a.region) - REGIONS.indexOf(b.region));
             });
 
+            let og = select.querySelector('optgroup');
             const seenNames = {};
             sorted.forEach(realm => {
                 let o = select.querySelector('option[value="' + realm.id + '"]');
@@ -5091,7 +5098,11 @@ new function () {
                     o.selected = true;
                 }
 
-                select.appendChild(o);
+                if (og.dataset.region !== realm.region) {
+                    og = select.querySelector(`optgroup[data-region="${realm.region}"]`);
+                }
+
+                og.appendChild(o);
             });
         }
     }
