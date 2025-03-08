@@ -3029,6 +3029,12 @@ new function () {
                         }
                     }
 
+                    try {
+                        localStorage.setItem('other-realms-sort', `${columnPos * (dir === 'desc' ? -1 : 1)}`);
+                    } catch (e) {
+                        // Ignore
+                    }
+
                     headerTd.dataset.sort = dir;
                     let table = headerTr;
                     while (table.tagName !== 'TABLE') {
@@ -3101,8 +3107,7 @@ new function () {
                 thead.appendChild(tr);
 
                 let td;
-                let firstSortTd;
-                tr.appendChild(firstSortTd = td = ce('td', {}, ct('Realm')));
+                tr.appendChild(td = ce('td', {}, ct('Realm')));
                 td.addEventListener('click', columnSort.bind(null, td, true));
                 tr.appendChild(td = ce('td', {}, ct('Price')));
                 td.addEventListener('click', columnSort.bind(null, td, false));
@@ -3111,7 +3116,21 @@ new function () {
 
                 regionElements.listTable = tbody;
                 regionElements.afterList = () => {
-                    columnSort(firstSortTd, true);
+                    let sortNum = parseInt(localStorage.getItem('other-realms-sort'));
+                    if (isNaN(sortNum)) {
+                        sortNum = 1;
+                    }
+                    const desc = sortNum < 0;
+                    if (desc) {
+                        sortNum *= -1;
+                    }
+
+                    const col = tr.querySelector(`td:nth-child(${sortNum})`) || tr.querySelector('td');
+                    if (desc) {
+                        col.dataset.sort = 'asc';
+                    }
+
+                    col.click();
                 }
 
                 otherRealmsControl.addEventListener('click', () => {
