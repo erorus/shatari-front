@@ -1297,7 +1297,7 @@ new function () {
                         );
                         if (subsubcat.hasOwnProperty('subClass')) {
                             subsubcatDiv.dataset.subClassId = subsubcat.subClass;
-                        } else if (subcat.hasOwnProperty('subClasses')) {
+                        } else if (subsubcat.hasOwnProperty('subClasses')) {
                             subsubcatDiv.dataset.subClassIds = subsubcat.subClasses.join(',');
                         }
                         if (subsubcat.hasOwnProperty('invTypes')) {
