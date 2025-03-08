@@ -945,8 +945,45 @@ body {
                 line-height: 1.25em;
                 padding: 0 $marginStep;
                 position: absolute;
-                top: -0.625em;
+                top: -0.675em;
               }
+            }
+
+            .section-parent {
+              display: flex;
+              flex-flow: column nowrap;
+
+              & > [data-section-key] > .section-controls {
+                background-color: $panelBackground;
+                color: $text20;
+                font: $fontSizeArial * 0.8 $fontArial;
+                line-height: 1.25em;
+                padding: 0 $marginStep;
+                position: absolute;
+                right: 0;
+                top: -0.675em;
+
+                .move {cursor: pointer; filter: grayscale(1)}
+                .move:hover {filter: none}
+                .move::after {
+                  background-image: url("../images/sort-arrow.png");
+                  background-repeat: no-repeat;
+                  background-size: contain;
+                  content: "";
+                  display:inline-block;
+                  height: 1em;
+                  margin-left: 0.25em;
+                  position: relative;
+                  top: 2px;
+                  width: 1em;
+                }
+                .move[data-direction="up"]::after {
+                  transform:scaleY(-1);
+                }
+              }
+
+              & > [data-section-key][data-ordered="first"] > .section-controls .move[data-direction="up"] {display: none}
+              & > [data-section-key][data-ordered="last"] > .section-controls .move[data-direction="down"] {display: none}
             }
 
             .quantity-calc, .base-stats {

@@ -1583,7 +1583,7 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
-        /** @var {Object.<number, BattlePetStats>} */
+        /** @type {Object.<number, BattlePetStats>} */
         const BREED_STATS = {
             3:  {stamina: 0.5, power: 0.5, speed: 0.5},
             4:  {stamina: 0.0, power: 2.0, speed: 0.0},
@@ -1596,6 +1596,17 @@ new function () {
             11: {stamina: 0.4, power: 0.4, speed: 0.9},
             12: {stamina: 0.9, power: 0.4, speed: 0.4},
         }
+
+        /** @type {string[]} All the section keys, in default order. */
+        const SECTION_KEYS = [
+            'base-stats',
+            'snapshots',
+            'heat',
+            'daily',
+            'bulk',
+            'regional-daily',
+            'other-realms',
+        ];
 
         // ********************* //
         // ***** VARIABLES ***** //
@@ -2268,12 +2279,15 @@ new function () {
                 }
             }
 
+            const sectionParent = ce('div', {className: 'section-parent'});
+            scroller.appendChild(sectionParent);
+
             let regionElements = {};
 
             // Stats
             (() => {
-                const statsPanel = ce('div', {className: 'base-stats framed'});
-                scroller.appendChild(statsPanel);
+                const statsPanel = ce('div', {className: 'base-stats framed', dataset: {sectionKey: 'base-stats'}});
+                sectionParent.appendChild(statsPanel);
 
                 statsPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Base Stats')));
 
@@ -2377,12 +2391,13 @@ new function () {
              * @param {Object<string, string>} strings
              * @param {boolean}                withTimes        True if the snapshot list includes hourly data, false for daily data.
              * @param {HTMLDivElement}         [chartContainer]
+             * @return {HTMLDivElement} chartContainer
              */
             let showPriceChart = function (snapshotList, strings, withTimes, chartContainer) {
                 // Chart container
                 if (!chartContainer) {
                     chartContainer = ce('div');
-                    scroller.appendChild(chartContainer);
+                    sectionParent.appendChild(chartContainer);
                 }
                 chartContainer.classList.add('highcharts-container', 'framed');
                 chartContainer.appendChild(ce('span', {className: 'frame-title'}, ct(strings.title)));
@@ -2695,6 +2710,8 @@ new function () {
                         },
                     }],
                 });
+
+                return chartContainer;
             };
 
             // Price charts
@@ -2704,12 +2721,12 @@ new function () {
                     caption: `This shows the lowest price and total quantity available of ${itemName} on ${houseName} every hour for the past few weeks.`,
                     price: 'Lowest Price',
                     quantity: 'Total Quantity',
-                }, true);
+                }, true).dataset.sectionKey = 'snapshots';
 
                 // Heat Map
                 {
-                    let mapContainer = ce('div', {className: 'heat-container framed'});
-                    scroller.appendChild(mapContainer);
+                    let mapContainer = ce('div', {className: 'heat-container framed', dataset: {sectionKey: 'heat'}});
+                    sectionParent.appendChild(mapContainer);
 
                     mapContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`Hourly Heat Maps for ${houseName}`)));
 
@@ -2870,8 +2887,10 @@ new function () {
                 let days = !data.length ? 0 :
                     (Math.round((data[data.length - 1].snapshot - data[0].snapshot) / MS_DAY) + 1);
                 if (days >= minDays && data.length >= minPoints) {
-                    showPriceChart(data, strings, false, target);
+                    return showPriceChart(data, strings, false, target);
                 }
+
+                return ce('div');
             }
             showDailyChart(itemState.daily, {
                 title: `Daily History for ${houseName}`,
@@ -2879,12 +2898,12 @@ new function () {
                 price: 'Price at Max Quantity',
                 priceTooltip: 'Price at Max Qty',
                 quantity: 'Max Quantity',
-            });
+            }).dataset.sectionKey = 'daily';
 
             // Quantity calc
             if (itemState.auctions.length) {
-                const quantityPanel = ce('div', {className: 'quantity-calc framed'});
-                scroller.appendChild(quantityPanel);
+                const quantityPanel = ce('div', {className: 'quantity-calc framed', dataset: {sectionKey: 'bulk'}});
+                sectionParent.appendChild(quantityPanel);
 
                 quantityPanel.appendChild(ce('span', {className: 'frame-title'}, ct('Bulk Pricing')));
 
@@ -2963,11 +2982,13 @@ new function () {
             updateDeltaTimestamps();
 
             if (item.stack > 1) {
+                makeSectionControls(sectionParent);
+
                 return;
             }
 
-            const regionalDailyHistoryContainer = ce('div');
-            scroller.appendChild(regionalDailyHistoryContainer);
+            const regionalDailyHistoryContainer = ce('div', {dataset: {sectionKey: 'regional-daily'}});
+            sectionParent.appendChild(regionalDailyHistoryContainer);
 
             // Create the "Current Regional Prices" bar chart area and data list.
             let otherRealmsChart;
@@ -2975,8 +2996,9 @@ new function () {
                 // Both the bar chart and the list are in this topContainer.
                 const topContainer = ce('div', {
                     className: 'other-realms-container framed',
+                    dataset: {sectionKey: 'other-realms'},
                 });
-                scroller.appendChild(topContainer);
+                sectionParent.appendChild(topContainer);
 
                 // Add a title above this bar chart.
                 topContainer.appendChild(ce('span', {className: 'frame-title'}, ct(`Current Regional Prices for ${regionName} realms`)));
@@ -3313,6 +3335,8 @@ new function () {
                     });
                 }
             });
+
+            makeSectionControls(sectionParent);
         }
 
         /**
@@ -3327,6 +3351,126 @@ new function () {
             result.appendChild(ce('div', {className: 'chevron'}));
 
             return result;
+        }
+
+        /**
+         * Adds section control elements to all elements with section keys in the parent. Orders those sections to user
+         * preferences.
+         *
+         * @param {HTMLElement} parent
+         */
+        function makeSectionControls(parent) {
+            /**
+             * Returns an ordered list of section keys.
+             *
+             * @returns {string[]}
+             */
+            const getSectionOrder = () => {
+                const result = SECTION_KEYS;
+                try {
+                    const savedOrder = localStorage.getItem('detail-section-order').split(',');
+                    result.sort((a, b) => {
+                        const aSaved = savedOrder.indexOf(a);
+                        const bSaved = savedOrder.indexOf(b);
+                        if (aSaved >= 0 && bSaved >= 0) {
+                            return aSaved - bSaved;
+                        }
+
+                        return SECTION_KEYS.indexOf(a) - SECTION_KEYS.indexOf(b);
+                    });
+                } catch (e) {
+                    // Use default.
+                }
+
+                return result;
+            };
+
+            /**
+             * Sets the CSS order of the section elements in the DOM to match the given section order.
+             *
+             * @param {string[]} sectionOrder
+             */
+            const updateSections = sectionOrder => {
+                parent.childNodes.forEach(ele => {
+                    ele.style.order = sectionOrder.indexOf(ele.dataset.sectionKey) + 1;
+                    delete ele.dataset.ordered;
+                });
+                parent.childNodes.forEach(ele => {
+                    if (!getAdjacentSection(sectionOrder, ele.dataset.sectionKey, -1)) {
+                        ele.dataset.ordered = 'first';
+                    } else if (!getAdjacentSection(sectionOrder, ele.dataset.sectionKey, 1)) {
+                        ele.dataset.ordered = 'last';
+                    }
+                });
+            };
+
+            /**
+             * Returns the next node in the given direction starting at sectionKey.
+             *
+             * @param {string[]} sectionOrder
+             * @param {string}   sectionKey
+             * @param {number}   direction 1 or -1
+             * @returns {Node|undefined}
+             */
+            const getAdjacentSection = (sectionOrder, sectionKey, direction) => {
+                let index = sectionOrder.indexOf(sectionKey);
+                let nextKey;
+                do {
+                    index += direction;
+                    nextKey = sectionOrder[index];
+                    if (nextKey) {
+                        const node = parent.querySelector(`[data-section-key="${nextKey}"]`);
+                        if (node) {
+                            return node;
+                        }
+                    }
+                } while (nextKey);
+            };
+
+            /**
+             * Updates the section order to adjust sectionKey in the given direction.
+             *
+             * @param {string} sectionKey
+             * @param {number} direction 1 or -1
+             */
+            const move = (sectionKey, direction) => {
+                const sectionOrder = getSectionOrder();
+                const relativeNode = getAdjacentSection(sectionOrder, sectionKey, direction);
+                if (!relativeNode) {
+                    return;
+                }
+                const oldIndex = sectionOrder.indexOf(sectionKey);
+                sectionOrder.splice(oldIndex, 1);
+                const relativeIndex = sectionOrder.indexOf(relativeNode.dataset.sectionKey);
+                sectionOrder.splice(relativeIndex + Math.max(0, direction), 0, sectionKey);
+
+                try {
+                    localStorage.setItem('detail-section-order', sectionOrder.join(','));
+                } catch (e) {
+                    // do nothing.
+                }
+
+                updateSections(sectionOrder);
+                const sectionNode = parent.querySelector(`[data-section-key="${sectionKey}"]`);
+                const scroller = sectionNode.closest('.scroller');
+                scroller.scrollTop = Math.max(0, sectionNode.offsetTop - (scroller.offsetHeight / 2));
+            };
+
+            parent.querySelectorAll(':scope > [data-section-key]').forEach(section => {
+                const controls = ce('span', {className: 'section-controls'});
+                section.appendChild(controls);
+
+                [[-1, 'up'], [1, 'down']].forEach(([offset, name]) => {
+                    const control = ce('span', {className: 'move', dataset: {
+                        direction: name,
+                        simpleTooltip: `Move this section ${name}.`,
+                    }});
+                    control.addEventListener('click', () => move(section.dataset.sectionKey, offset));
+                    controls.appendChild(control);
+                });
+            });
+
+            updateSections(getSectionOrder());
         }
 
         /**

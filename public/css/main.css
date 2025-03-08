@@ -720,7 +720,41 @@ body {
                 line-height: 1.25em;
                 padding: 0 8px;
                 position: absolute;
-                top: -0.625em; }
+                top: -0.675em; }
+            .main .main-result .item .panels > div.details .section-parent {
+              display: flex;
+              flex-flow: column nowrap; }
+              .main .main-result .item .panels > div.details .section-parent > [data-section-key] > .section-controls {
+                background-color: #282322;
+                color: #DDD;
+                font: 15.2px "Arial Narrow", sans-serif;
+                line-height: 1.25em;
+                padding: 0 8px;
+                position: absolute;
+                right: 0;
+                top: -0.675em; }
+                .main .main-result .item .panels > div.details .section-parent > [data-section-key] > .section-controls .move {
+                  cursor: pointer;
+                  filter: grayscale(1); }
+                .main .main-result .item .panels > div.details .section-parent > [data-section-key] > .section-controls .move:hover {
+                  filter: none; }
+                .main .main-result .item .panels > div.details .section-parent > [data-section-key] > .section-controls .move::after {
+                  background-image: url("../images/sort-arrow.png");
+                  background-repeat: no-repeat;
+                  background-size: contain;
+                  content: "";
+                  display: inline-block;
+                  height: 1em;
+                  margin-left: 0.25em;
+                  position: relative;
+                  top: 2px;
+                  width: 1em; }
+                .main .main-result .item .panels > div.details .section-parent > [data-section-key] > .section-controls .move[data-direction="up"]::after {
+                  transform: scaleY(-1); }
+              .main .main-result .item .panels > div.details .section-parent > [data-section-key][data-ordered="first"] > .section-controls .move[data-direction="up"] {
+                display: none; }
+              .main .main-result .item .panels > div.details .section-parent > [data-section-key][data-ordered="last"] > .section-controls .move[data-direction="down"] {
+                display: none; }
             .main .main-result .item .panels > div.details .quantity-calc table, .main .main-result .item .panels > div.details .base-stats table {
               margin: 0 auto; }
               .main .main-result .item .panels > div.details .quantity-calc table td, .main .main-result .item .panels > div.details .base-stats table td {
