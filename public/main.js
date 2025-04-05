@@ -4099,7 +4099,7 @@ new function () {
             // Split the query by whitespace, add a regex for each non-empty word string.
             query.split(/\s+/)
                 .filter(word => word.length > 0)
-                .forEach(word => wordExpressions.push(new RegExp('(?:^|\\s)' + escapeRegExp(word), 'i')));
+                .forEach(word => wordExpressions.push(new RegExp('(?:^|\\s)\\W*' + escapeRegExp(word), 'iu')));
 
             const validRarity = [];
             {
