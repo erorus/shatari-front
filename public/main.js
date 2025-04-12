@@ -2269,6 +2269,12 @@ new function () {
                 } else {
                     nameLink.href = 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'item=' + item.id;
                 }
+                nameLink.href += '/' + item.name
+                    .replace(/%\w|['#]|^\s*|\s*$/g, '')
+                    .replace(/ \/ |_|[^\u00C0-\u1FFF\u2C00-\uD7FF\w]+/g, '-')
+                    .toLocaleLowerCase()
+                    .replace(/-{2,}/g, '-')
+                    .replace(/^-+|-+$/g, '');
                 if (wowheadParams.length) {
                     nameLink.dataset.wowhead = wowheadParams.join('&');
                 }
