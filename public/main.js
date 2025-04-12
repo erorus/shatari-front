@@ -107,12 +107,14 @@ new function () {
 
     /**
      * @typedef {Object} Realm
-     * @property {Region} region
-     * @property {string} name
-     * @property {string} category
-     * @property {string} slug
-     * @property {RealmID} id
+     * @property {string}           category
      * @property {ConnectedRealmID} connectedId
+     * @property {RealmID}          id
+     * @property {string}           name
+     * @property {number}           population
+     * @property {string}           populationName
+     * @property {Region}           region
+     * @property {string}           slug
      */
 
     /** @typedef {number} RealmID */
@@ -3026,8 +3028,8 @@ new function () {
                 });
                 topContainer.appendChild(list);
 
-                const COL_NAME = 1;
-                const COL_PRICE = 2;
+                const COL_POS_NAME = 1;
+                const COL_POS_PRICE = 3;
 
                 /**
                  * Sorts the result table by the given column.
@@ -3043,6 +3045,7 @@ new function () {
 
                     const headerTr = headerTd.parentNode;
                     const headerTds = headerTr.querySelectorAll('td');
+                    const sortCol = parseInt(headerTd.dataset.sortCol);
                     let columnPos = 0;
                     for (let x = 0; x < headerTds.length; x++) {
                         delete headerTds[x].dataset.sort;
@@ -3052,7 +3055,7 @@ new function () {
                     }
 
                     try {
-                        localStorage.setItem('other-realms-sort', `${columnPos * (dir === 'desc' ? -1 : 1)}`);
+                        localStorage.setItem('other-realms-sort', `${sortCol * (dir === 'desc' ? -1 : 1)}`);
                     } catch (e) {
                         // Ignore
                     }
@@ -3064,6 +3067,7 @@ new function () {
                     }
                     let rows = Array.from(table.querySelectorAll('tbody tr'));
                     rows.sort(function (a, b) {
+                        const reversed = dir === 'desc' ? -1 : 1;
                         const aTd = a.querySelector('td:nth-child(' + columnPos + ')');
                         const bTd = b.querySelector('td:nth-child(' + columnPos + ')');
 
@@ -3071,25 +3075,25 @@ new function () {
                         const bVal = bTd.dataset.sortValue;
 
                         if (isString) {
-                            return aVal.localeCompare(bVal);
+                            return reversed * aVal.localeCompare(bVal);
                         }
 
                         const valDiff = parseInt(aVal) - parseInt(bVal);
                         if (valDiff) {
-                            return valDiff;
+                            return reversed * valDiff;
                         }
 
                         if (aTd.dataset.sortValue2) {
                             const valDiff = parseInt(aTd.dataset.sortValue2) - parseInt(bTd.dataset.sortValue2);
                             if (valDiff) {
-                                return valDiff;
+                                return reversed * valDiff;
                             }
                         }
 
                         // Fallbacks.
-                        if (columnPos !== COL_PRICE) {
-                            const aPrice = a.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
-                            const bPrice = b.querySelector('td:nth-child(' + COL_PRICE + ')').dataset.sortValue;
+                        if (columnPos !== COL_POS_PRICE) {
+                            const aPrice = a.querySelector('td:nth-child(' + COL_POS_PRICE + ')').dataset.sortValue;
+                            const bPrice = b.querySelector('td:nth-child(' + COL_POS_PRICE + ')').dataset.sortValue;
 
                             const valDiff = parseInt(aPrice) - parseInt(bPrice);
                             if (valDiff) {
@@ -3097,9 +3101,9 @@ new function () {
                             }
                         }
 
-                        if (columnPos !== COL_NAME) {
-                            const aName = a.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
-                            const bName = b.querySelector('td:nth-child(' + COL_NAME + ')').dataset.sortValue;
+                        if (columnPos !== COL_POS_NAME) {
+                            const aName = a.querySelector('td:nth-child(' + COL_POS_NAME + ')').dataset.sortValue;
+                            const bName = b.querySelector('td:nth-child(' + COL_POS_NAME + ')').dataset.sortValue;
 
                             const valDiff = aName.localeCompare(bName);
                             if (valDiff) {
@@ -3110,9 +3114,6 @@ new function () {
                         return 0;
                     });
 
-                    if (dir === 'desc') {
-                        rows.reverse();
-                    }
                     rows.forEach(function (row) {
                         row.parentNode.appendChild(row);
                     });
@@ -3129,11 +3130,13 @@ new function () {
                 thead.appendChild(tr);
 
                 let td;
-                tr.appendChild(td = ce('td', {}, ct('Realm')));
+                tr.appendChild(td = ce('td', {dataset: {sortCol: '1'}}, ct('Realm')));
                 td.addEventListener('click', columnSort.bind(null, td, true));
-                tr.appendChild(td = ce('td', {}, ct('Price')));
+                tr.appendChild(td = ce('td', {dataset: {sortCol: '4'}}, ct('Pop')));
                 td.addEventListener('click', columnSort.bind(null, td, false));
-                tr.appendChild(td = ce('td', {}, ct('Quantity')));
+                tr.appendChild(td = ce('td', {dataset: {sortCol: '2'}}, ct('Price')));
+                td.addEventListener('click', columnSort.bind(null, td, false));
+                tr.appendChild(td = ce('td', {dataset: {sortCol: '3'}}, ct('Quantity')));
                 td.addEventListener('click', columnSort.bind(null, td, false));
 
                 regionElements.listTable = tbody;
@@ -3147,7 +3150,7 @@ new function () {
                         sortNum *= -1;
                     }
 
-                    const col = tr.querySelector(`td:nth-child(${sortNum})`) || tr.querySelector('td');
+                    const col = tr.querySelector(`td[data-sort-col="${sortNum}"]`) || tr.querySelector('td');
                     if (desc) {
                         col.dataset.sort = 'asc';
                     }
@@ -3195,7 +3198,11 @@ new function () {
                     for (let realm, index = 0; realm = ourRealms[index]; index++) {
                         const tr = ce('tr');
                         let td, a;
-                        tr.appendChild(td = ce('td', {dataset: {sortValue: realm.name}}, ct(realm.name)));
+                        tr.appendChild(td = ce('td', {className: 'text', dataset: {sortValue: realm.name}}, ct(realm.name)));
+                        tr.appendChild(td = ce('td', {
+                            className: 'text',
+                            dataset: {pop: realm.population, sortValue: realm.population},
+                        }, ct(realm.populationName)));
                         td.appendChild(a = ce('a', {
                             href: 'javascript:',
                         }));
@@ -4535,6 +4542,18 @@ new function () {
         // ***** CONSTANTS ***** //
         // ********************* //
 
+        const POPULATION_NAMES = {
+            enus: ['', 'New', 'New Players', 'Low', 'Medium', 'High', 'Full', 'Locked'],
+            dede: ['', 'Neu', 'Empfohlen', 'Niedrig', 'Mittel', 'Hoch', 'Voll', 'Verschl.'],
+            eses: ['', 'Nuevo', 'Jugadores nuevos', 'Bajo', 'Medio', 'Alto', 'Lleno', 'Bloqueado'],
+            frfr: ['', 'Nouveau', 'Recommandé', 'Faible', 'Moyenne', 'Élevée', 'Complet', 'Verrouillé'],
+            itit: ['', 'Nuovo', 'Nuovi giocatori', 'Bassa', 'Media', 'Alta', 'Saturo', 'Bloccato'],
+            ptbr: ['', 'Novo', 'Novos jogadores', 'Baixo', 'Médio', 'Alto', 'Completo', 'Trancado'],
+            ruru: ['', 'Новый', 'Новые игроки', 'Низкая', 'Средняя', 'Высокая', 'Нет мест', 'Доступ ограничен'],
+            zhtw: ['', '新', '新', '低', '中', '高', '滿', '已鎖定'],
+            kokr: ['', '신규', '신규 플레이어', '쾌적', '보통', '혼잡', '정원초과', '잠김'],
+        };
+
         const NAMES = {
             enus: 'English',
             dede: 'Deutsch',
@@ -4555,7 +4574,7 @@ new function () {
             itit: 'it',
             ptbr: 'pt',
             ruru: 'ru',
-            zhtw: 'cn',
+            zhtw: 'tw',
             kokr: 'ko',
         };
 
@@ -4585,6 +4604,13 @@ new function () {
         this.getCurrent = function () {
             return my.locale;
         };
+
+        /**
+         * Returns an ordered list of population names for the current locale.
+         *
+         * @return {string[]}
+         */
+        this.getPopulationNames = () => POPULATION_NAMES[my.locale];
 
         /**
          * Returns the Wowhead subdomain for the current locale.
@@ -5028,6 +5054,8 @@ new function () {
          * @param {Object.<number, {name: string, category: string}>} names
          */
         function setNames(names) {
+            const popNames = Locales.getPopulationNames();
+
             for (let id in my.realms) {
                 if (!my.realms.hasOwnProperty(id)) {
                     continue;
@@ -5035,6 +5063,7 @@ new function () {
                 let nameRec = names[my.realms[id].id] || {};
                 my.realms[id].name = nameRec.name || ('Realm ' + id);
                 my.realms[id].category = nameRec.category || '';
+                my.realms[id].populationName = popNames[my.realms[id].population] || '';
             }
         }
 

@@ -1236,14 +1236,25 @@ body {
                     text-overflow: ellipsis;
                     white-space: nowrap;
 
-                    &:first-child {
+                    &.text {
                       font: $fontSizeFriz $fontFriz;
                       text-align: left;
 
                       @media screen and (max-width:700px) {
                         font-size: $fontSizeFriz * 0.8;
                       }
+                    }
 
+                    &[data-pop] {
+                      font-size: $fontSizeFriz * 0.8;
+                      text-align: center;
+                    }
+                    &[data-pop="1"], &[data-pop="2"] {color: #00bff3}
+                    &[data-pop="3"] {color: #19ff19}
+                    &[data-pop="4"] {color: #ffd200}
+                    &[data-pop="5"], &[data-pop="6"], &[data-pop="7"] {color: #ff2020}
+
+                    &:first-child {
                       // Nonsense to handle the row-wide link.
                       > a {
                         height: 1.25em;

@@ -947,18 +947,29 @@ body {
                 text-align: right;
                 text-overflow: ellipsis;
                 white-space: nowrap; }
-                .main .main-result .item .panels > div.details .other-realms-container table tbody td:first-child {
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td.text {
                   font: 16px "Friz Quadrata TT", sans-serif;
                   text-align: left; }
                   @media screen and (max-width: 700px) {
-                    .main .main-result .item .panels > div.details .other-realms-container table tbody td:first-child {
+                    .main .main-result .item .panels > div.details .other-realms-container table tbody td.text {
                       font-size: 12.8px; } }
-                  .main .main-result .item .panels > div.details .other-realms-container table tbody td:first-child > a {
-                    height: 1.25em;
-                    left: 0;
-                    position: absolute;
-                    right: 0;
-                    z-index: 5; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop] {
+                  font-size: 12.8px;
+                  text-align: center; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="1"], .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="2"] {
+                  color: #00bff3; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="3"] {
+                  color: #19ff19; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="4"] {
+                  color: #ffd200; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="5"], .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="6"], .main .main-result .item .panels > div.details .other-realms-container table tbody td[data-pop="7"] {
+                  color: #ff2020; }
+                .main .main-result .item .panels > div.details .other-realms-container table tbody td:first-child > a {
+                  height: 1.25em;
+                  left: 0;
+                  position: absolute;
+                  right: 0;
+                  z-index: 5; }
                 .main .main-result .item .panels > div.details .other-realms-container table tbody td:last-child {
                   padding-right: 8px; }
                 .main .main-result .item .panels > div.details .other-realms-container table tbody td .delta-timestamp {
