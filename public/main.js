@@ -3205,10 +3205,6 @@ new function () {
                         const tr = ce('tr');
                         let td, a;
                         tr.appendChild(td = ce('td', {className: 'text', dataset: {sortValue: realm.name}}, ct(realm.name)));
-                        tr.appendChild(td = ce('td', {
-                            className: 'text',
-                            dataset: {pop: realm.population, sortValue: realm.population},
-                        }, ct(realm.populationName)));
                         td.appendChild(a = ce('a', {
                             href: 'javascript:',
                         }));
@@ -3216,6 +3212,10 @@ new function () {
                             tr.dataset.connectedRealm = 1;
                         }
                         a.addEventListener('click', showOtherRealmItem.bind(self, item, itemState, realm));
+                        tr.appendChild(td = ce('td', {
+                            className: 'text',
+                            dataset: {pop: realm.population, sortValue: realm.population},
+                        }, ct(realm.populationName)));
                         tr.appendChild(ce('td', {dataset: {sortValue: itemState.price}}, itemState.price ? priceElement(itemState.price) : undefined));
                         tr.appendChild(td = ce('td', {dataset: {
                             sortValue: itemState.quantity,
