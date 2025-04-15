@@ -6448,7 +6448,7 @@ new function () {
 
         document.head.appendChild(ce('script', {
             src: 'power.js',
-            integrity: 'sha256-9+dk9J58su1ANrIyLXi13uYfDs84mLZC6asqiqgUVl8=',
+            integrity: 'sha256-pSWlUmttpy3538XFRv0URDukrJmqGMWTqcB0WYn7Uio=',
         }));
 
         if (!navigator.userAgentData &&
