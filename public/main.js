@@ -6465,15 +6465,11 @@ new function () {
         let hsTag = ce('script', {
             src: 'highstock-10.3.3.js',
             id: 'highstock-script',
-            integrity: 'sha256-ml2aGWjcVDL1HLWtBUkAflxypxdZ8aZVdPMB1V4zx8I=',
         });
         hsTag.addEventListener('load', () => hsTag.dataset.loaded = '1');
         document.head.appendChild(hsTag);
 
-        document.head.appendChild(ce('script', {
-            src: 'power.js',
-            integrity: 'sha256-pSWlUmttpy3538XFRv0URDukrJmqGMWTqcB0WYn7Uio=',
-        }));
+        document.head.appendChild(ce('script', {src: 'power.js'}));
 
         if (!navigator.userAgentData &&
             navigator.userAgent.indexOf('Safari') > -1 &&
