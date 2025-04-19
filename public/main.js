@@ -5261,7 +5261,7 @@ new function () {
                 itemsList = await findDeals(itemsList);
             }
 
-            await showItemList(itemsList, hasSearchText, dealsOnly);
+            await showItemList(itemsList, hasSearchText || favoritesOnly, dealsOnly);
         };
 
         /**
