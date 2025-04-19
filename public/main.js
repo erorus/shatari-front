@@ -3046,6 +3046,7 @@ new function () {
 
                 const COL_POS_NAME = 1;
                 const COL_POS_PRICE = 3;
+                const COL_POS_QUANTITY = 4;
 
                 /**
                  * Sorts the result table by the given column.
@@ -3083,6 +3084,19 @@ new function () {
                     }
                     let rows = Array.from(table.querySelectorAll('tbody tr'));
                     rows.sort(function (a, b) {
+                        // **Always** sort 0-quantity rows at the end, except for realm name sort.
+                        if (columnPos !== COL_POS_NAME) {
+                            const aZero = a.querySelector(`td:nth-child(${COL_POS_QUANTITY})`).dataset.sortValue === '0';
+                            const bZero = b.querySelector(`td:nth-child(${COL_POS_QUANTITY})`).dataset.sortValue === '0';
+
+                            if (aZero && !bZero) {
+                                return 1;
+                            }
+                            if (!aZero && bZero) {
+                                return -1;
+                            }
+                        }
+
                         const reversed = dir === 'desc' ? -1 : 1;
                         const aTd = a.querySelector('td:nth-child(' + columnPos + ')');
                         const bTd = b.querySelector('td:nth-child(' + columnPos + ')');
