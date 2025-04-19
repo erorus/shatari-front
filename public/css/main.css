@@ -1035,7 +1035,18 @@ body {
                   display: inline-block;
                   width: 1.75em; }
                 .main .main-result .item .panels > div.auctions table td a {
-                  display: block; }
+                  align-items: center;
+                  display: flex;
+                  justify-content: flex-end; }
+                  .main .main-result .item .panels > div.auctions table td a:has(> :nth-child(2)) {
+                    justify-content: space-between; }
+                .main .main-result .item .panels > div.auctions table td span.icon {
+                  background-size: contain;
+                  background-position: center;
+                  background-repeat: no-repeat;
+                  height: 1em;
+                  margin-right: 0.25em;
+                  width: 1em; }
     .main .main-result[data-detail-mode] .item {
       display: flex; }
     .main .main-result[data-detail-mode] .search-result {

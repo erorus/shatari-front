@@ -1366,7 +1366,24 @@ body {
 
                 .silver {display: inline-block; width: $silverWidth}
 
-                a {display:block}
+                a {
+                  align-items: center;
+                  display: flex;
+                  justify-content: flex-end;
+
+                  &:has(> :nth-child(2)) {
+                    justify-content: space-between;
+                  }
+                }
+
+                span.icon {
+                  background-size: contain;
+                  background-position: center;
+                  background-repeat: no-repeat;
+                  height: 1em;
+                  margin-right: 0.25em;
+                  width: 1em;
+                }
               }
             }
           }

@@ -12,6 +12,7 @@ new function () {
      * @property {number[]} bonuses
      * @property {Object.<number, number>} modifiers
      * @property {Money} price
+     * @property {number[]} stats List of unique tertiary stat IDs
      */
 
     /** @typedef {number} BattlePetSpeciesID */
@@ -236,6 +237,7 @@ new function () {
         // ********************* //
 
         const my = {
+            bonusToStats: undefined,
             lastCommodityRealmState: {},
             lastRealmState: {},
             lastRegionState: {},
@@ -557,6 +559,25 @@ new function () {
         }
 
         /**
+         * Returns the map of bonus ID => tertiary stat IDs.
+         *
+         * @returns {Promise<Object.<number, number[]>>}
+         */
+        async function getBonusToStats() {
+            if (my.bonusToStats) {
+                return my.bonusToStats;
+            }
+
+            const response = await Progress.fetch('json/bonusToStats.json', {mode:'same-origin'});
+
+            if (!response.ok) {
+                throw 'Cannot get map of bonus to stats!';
+            }
+
+            return my.bonusToStats = await response.json();
+        }
+
+        /**
          * Returns a fake Realm object for the commodity realm used by the given region.
          *
          * @param {Region} region
@@ -651,6 +672,7 @@ new function () {
             }
             result.auctions.sort((a, b) => a.price - b.price);
 
+            const bonusToStats = await getBonusToStats();
             result.specifics = [];
             for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
                 let price = view.getUint32(read(4), true) * COPPER_SILVER;
@@ -672,10 +694,13 @@ new function () {
                     bonuses.push(view.getUint16(read(2), true));
                 }
                 bonuses.sort((a, b) => a - b);
+                let stats = new Set();
+                bonuses.forEach(bonus => bonusToStats[bonus]?.forEach(stat => stats.add(stat)));
                 result.specifics.push({
                     price: price,
                     modifiers: modifiers,
                     bonuses: bonuses,
+                    stats: Array.from(stats.values()),
                 });
             }
             result.specifics.sort((a, b) => a.price - b.price);
@@ -1610,6 +1635,14 @@ new function () {
             'other-realms',
         ];
 
+        /** @type {Object<number, string>} A map of stat ID to icon name. */
+        const STAT_TO_ICON = {
+            61: 'petbattle_speed',                    // Speed
+            62: 'rogue_leeching_poison',              // Leech
+            63: 'rogue_burstofspeed',                 // Avoidance
+            64: 'spell_magic_greaterblessingofkings', // Indestructible
+        };
+
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
@@ -2170,10 +2203,34 @@ new function () {
                     datasetParams.wowhead = wowheadParams.join('&');
                 }
 
-                const a = ce('a',
-                    {dataset: datasetParams},
-                    priceElement(specLine.price)
-                );
+                const a = ce('a', {dataset: datasetParams});
+
+                const statIcons = ce('span');
+                specLine.stats
+                    .sort((a, b) => a - b)
+                    .forEach(stat => {
+                        const iconName = STAT_TO_ICON[stat];
+                        if (!iconName) {
+                            return;
+                        }
+
+                        const icon = ce('span', {className: 'icon'});
+                        icon.style.backgroundImage = 'url("' + Items.getIconUrl(iconName, Items.ICON_SIZE.MEDIUM) + '")';
+
+                        statIcons.appendChild(icon);
+                    });
+                switch (statIcons.children.length) {
+                    case 0:
+                        break;
+                    case 1:
+                        a.appendChild(statIcons.firstChild);
+                        break;
+                    default:
+                        a.appendChild(statIcons);
+                }
+
+                a.appendChild(ce('span', {}, priceElement(specLine.price)));
+
                 td.appendChild(a);
             });
         }
