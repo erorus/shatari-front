@@ -666,7 +666,8 @@ body {
               display: flex;
               font: 28px "Friz Quadrata TT", sans-serif;
               margin: 16px;
-              padding: 16px; }
+              padding: 16px;
+              position: relative; }
               @media screen and (max-width: 700px) {
                 .main .main-result .item .panels > div.details .title {
                   font-size: 20px; } }
@@ -707,6 +708,19 @@ body {
                 height: 1.25em;
                 padding-left: 0.25em;
                 vertical-align: bottom; }
+              .main .main-result .item .panels > div.details .title span.favorite {
+                aspect-ratio: 1;
+                background-image: url("../images/favorite-star-off.png");
+                background-position: center center;
+                background-repeat: no-repeat;
+                background-size: contain;
+                cursor: pointer;
+                position: absolute;
+                right: 0.1em;
+                top: 0.1em;
+                width: 1em; }
+                .main .main-result .item .panels > div.details .title span.favorite[data-favorite] {
+                  background-image: url("../images/favorite-star.png"); }
             .main .main-result .item .panels > div.details .framed {
               border-top: 2px solid #393433;
               margin: 32px 8px;

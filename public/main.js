@@ -2285,6 +2285,16 @@ new function () {
                         src: `images/professions-chaticon-quality-tier${item.craftingQualityTier}.webp`,
                     }));
                 }
+
+                // Favstar
+                let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
+                let favSpan = document.createElement('span');
+                favSpan.className = 'favorite';
+                if (Search.getFavorites().includes(itemKey)) {
+                    favSpan.dataset.favorite = 1;
+                }
+                favSpan.addEventListener('click', Search.toggleFavorite.bind(self, itemKey, favSpan));
+                namePanel.appendChild(favSpan);
             }
 
             const sectionParent = ce('div', {className: 'section-parent'});
@@ -5275,6 +5285,29 @@ new function () {
             }
         };
 
+        /**
+         * Toggles whether the given item key string is in the favorites list.
+         *
+         * @param {ItemKeyString} itemKeyString
+         * @param {HTMLElement} favSpan
+         */
+        this.toggleFavorite = function (itemKeyString, favSpan) {
+            const favorites = self.getFavorites();
+            const pos = favorites.indexOf(itemKeyString);
+            if (pos >= 0) {
+                favorites.splice(pos, 1);
+                if (favSpan) {
+                    delete favSpan.dataset.favorite;
+                }
+            } else {
+                favorites.push(itemKeyString);
+                if (favSpan) {
+                    favSpan.dataset.favorite = 1;
+                }
+            }
+            setFavorites(favorites);
+        };
+
         // ------- //
         // PRIVATE //
         // ------- //
@@ -5536,7 +5569,7 @@ new function () {
             if (favorites.includes(itemKey)) {
                 favSpan.dataset.favorite = 1;
             }
-            favSpan.addEventListener('click', toggleFavorite.bind(self, itemKey, favSpan));
+            favSpan.addEventListener('click', self.toggleFavorite.bind(self, itemKey, favSpan));
             td.appendChild(favSpan);
 
             //
@@ -5866,29 +5899,6 @@ new function () {
             }
 
             parent.scrollTop = 0;
-        }
-
-        /**
-         * Toggles whether the given item key string is in the favorites list.
-         *
-         * @param {ItemKeyString} itemKeyString
-         * @param {HTMLElement} favSpan
-         */
-        function toggleFavorite(itemKeyString, favSpan) {
-            const favorites = self.getFavorites();
-            const pos = favorites.indexOf(itemKeyString);
-            if (pos >= 0) {
-                favorites.splice(pos, 1);
-                if (favSpan) {
-                    delete favSpan.dataset.favorite;
-                }
-            } else {
-                favorites.push(itemKeyString);
-                if (favSpan) {
-                    favSpan.dataset.favorite = 1;
-                }
-            }
-            setFavorites(favorites);
         }
 
         /**
