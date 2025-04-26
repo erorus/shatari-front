@@ -3748,18 +3748,23 @@ new function () {
             }
 
             {
+                const arbitrage = Search.isArbitrageMode();
                 const transmogMode = qs('.main .search-bar .filter [name="transmog-mode"]').checked;
                 const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
                 const outOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
 
-                if (transmogMode) {
-                    result += '/opt=transmog-mode';
-                }
-                if (vendorFlip) {
-                    result += '/opt=vendor-flip';
-                }
-                if (!outOfStock) {
-                    result += '/opt=in-stock';
+                if (arbitrage) {
+                    result += '/opt=arbitrage';
+                } else {
+                    if (transmogMode) {
+                        result += '/opt=transmog-mode';
+                    }
+                    if (vendorFlip) {
+                        result += '/opt=vendor-flip';
+                    }
+                    if (!outOfStock) {
+                        result += '/opt=in-stock';
+                    }
                 }
             }
 
@@ -3879,6 +3884,7 @@ new function () {
             let transmogMode = false;
             let vendorFlip = false;
             let outOfStock = true;
+            let arbitrage = false;
             let searchText = '';
 
             params.forEach(param => {
@@ -3922,6 +3928,9 @@ new function () {
                         break;
                     case 'opt':
                         switch (value) {
+                            case 'arbitrage':
+                                arbitrage = true;
+                                break;
                             case 'transmog-mode':
                                 transmogMode = true;
                                 break;
@@ -3959,6 +3968,13 @@ new function () {
             qs('.main .search-bar .filter [name="transmog-mode"]').checked = transmogMode;
             qs('.main .search-bar .filter [name="vendor-flip"]').checked = vendorFlip;
             qs('.main .search-bar .filter [name="out-of-stock"]').checked = outOfStock;
+            {
+                const checkbox = qs('.main .search-bar .filter [name="arbitrage-mode"]');
+                if (checkbox.checked !== arbitrage) {
+                    checkbox.click();
+                }
+            }
+
             qs('.main .search-bar input[type="text"]').value = searchText;
 
             await Search.perform(searchType === 'favorites', searchType === 'deals');
