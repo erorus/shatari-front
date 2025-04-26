@@ -2,6 +2,12 @@
 
 new function () {
     /**
+     * @typedef {Object} ArbitrageLine
+     * @property {Money} min
+     * @property {number} realms
+     */
+
+    /**
      * @typedef {Object} Auction
      * @property {Money} price
      * @property {number} quantity
@@ -137,7 +143,8 @@ new function () {
     /**
      * @typedef {object} RegionState
      * @property {Region} region
-     * @property {Object<ItemKeyString, Money>} items
+     * @property {Object.<ItemKeyString, ArbitrageLine>} arbitrage
+     * @property {Object.<ItemKeyString, Money>} items
      */
 
     /** @typedef {number} StatID */
@@ -229,7 +236,7 @@ new function () {
         const VERSION_GLOBAL_STATE = 2;
         const VERSION_ITEM_STATE = 5;
         const VERSION_REALM_STATE = 4;
-        const VERSION_REGION_STATE = 1;
+        const VERSION_REGION_STATE = 2;
         const VERSION_TOKEN_STATE = 1;
 
         // ********************* //
@@ -947,19 +954,28 @@ new function () {
                 return result;
             };
 
+            let hasArbitrage = true;
+
             let version = view.getUint8(read(1));
             switch (version) {
+                case 1:
+                    hasArbitrage = false;
+                    break;
+
                 case VERSION_REGION_STATE:
                     // no op
                     break;
+
                 default:
                     throw `Unknown data version for region state for ${region}.`;
             }
 
             /** @type {RegionState} result */
-            const result = {};
-            result.region = region;
-            result.items = {};
+            const result = {
+                region,
+                arbitrage: {},
+                items: {},
+            };
             let lastItemId = 0;
             for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
                 let itemId = lastItemId + view.getUint16(read(2), true);
@@ -969,6 +985,21 @@ new function () {
 
                 result.items[itemKeyString] = view.getUint32(read(4), true) * COPPER_SILVER;
                 lastItemId = itemId;
+            }
+
+            if (hasArbitrage) {
+                let lastItemId = 0;
+                for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
+                    let itemId = lastItemId + view.getUint16(read(2), true);
+                    let itemLevel = view.getUint16(read(2), true);
+                    let itemSuffix = view.getUint16(read(2), true);
+                    let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+
+                    let realms = view.getUint8(read(1))
+                    let min = view.getUint32(read(4), true) * COPPER_SILVER;
+                    result.arbitrage[itemKeyString] = {min, realms};
+                    lastItemId = itemId;
+                }
             }
 
             my.lastRegionState = {
