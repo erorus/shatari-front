@@ -266,6 +266,9 @@ body {
             width: 3em; }
           .main .search-bar button.filter > div table.rarity td:first-child, .main .search-bar a.filter.filter > div table.rarity td:first-child, .main .search-bar a.small-button.filter > div table.rarity td:first-child {
             text-align: right; }
+        .main .search-bar button.filter label.disabled, .main .search-bar a.filter.filter label.disabled, .main .search-bar a.small-button.filter label.disabled {
+          cursor: not-allowed;
+          color: #808080; }
     .main .search-bar > .button-border {
       margin: 5px 8px; }
       .main .search-bar > .button-border button {

@@ -12,6 +12,7 @@ $background40: #4a4644;
 $text10: #EEE;
 $text20: #DDD;
 $text30: #CCC;
+$textDisabled: #808080;
 
 $qColor: #CA4;
 $highlightBorderColor: #ff6;
@@ -403,6 +404,8 @@ body {
 
           table.rarity td:first-child {text-align: right}
         }
+
+        label.disabled {cursor: not-allowed; color: $textDisabled}
       }
     }
 

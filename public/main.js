@@ -5326,6 +5326,13 @@ new function () {
         }
 
         /**
+         * Returns whether we're in arbitrage mode.
+         *
+         * @returns {boolean}
+         */
+        this.isArbitrageMode = () => getArbitrageModeControl().checked;
+
+        /**
          * Perform a search for items, reading the parameters from the UI.
          *
          * @param {boolean} favoritesOnly
@@ -5733,6 +5740,13 @@ new function () {
         }
 
         /**
+         * Returns the checkbox for the option to use arbitrage mode.
+         *
+         * @return {HTMLInputElement}
+         */
+        const getArbitrageModeControl = () => qs('.main .search-bar .filter [name="arbitrage-mode"]');
+
+        /**
          * Returns the column we should use for the initial sort, based on the category class.
          *
          * @return {number|undefined}
@@ -6034,6 +6048,17 @@ new function () {
             self.getRegionMedianControl().checked = !!localStorage.getItem('show-region-median');
         } catch (e) {
             // Oh well.
+        }
+
+        {
+            const checkbox = getArbitrageModeControl();
+            checkbox.addEventListener('click', () => {
+                qsa('.main .search-bar .filter .arbitrage-mode-ignored').forEach(label => {
+                    label.classList.toggle('disabled', checkbox.checked);
+                    label.querySelector('input').disabled = checkbox.checked;
+                });
+            });
+            checkbox.checked = false;
         }
 
         /**
