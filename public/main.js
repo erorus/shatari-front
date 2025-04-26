@@ -6254,7 +6254,7 @@ new function () {
             }
 
             lastSearch = typed;
-            const items = await Auctions.hydrateList(await Items.search(Items.SEARCH_MODE_SUGGESTIONS));
+            const items = await Auctions.hydrateList(await Items.search(Items.SEARCH_MODE_SUGGESTIONS), {});
             if (lastSearch !== typed) {
                 return;
             }
