@@ -217,6 +217,8 @@ new function () {
      * Manages item prices and availability.
      */
     const Auctions = new function () {
+        const self = this;
+
         // ********************* //
         // ***** CONSTANTS ***** //
         // ********************* //
@@ -340,7 +342,7 @@ new function () {
                 realm = getCommodityRealm(realm.region);
             }
 
-            return getItemState(realm, item, !!realm);
+            return getItemState(realm, self.strip(item), !!realm);
         }
 
         /**
@@ -511,6 +513,18 @@ new function () {
 
             return result;
         }
+
+        /**
+         * Converts a PricedItem object back to a simple Item.
+         *
+         * @param {PricedItem|Item} pricedItem
+         * @return {Item}
+         */
+        this.strip = pricedItem => {
+            const {price, quantity, regionMedian, snapshot, ...result} = pricedItem;
+
+            return result;
+        };
 
         // ------- //
         // PRIVATE //
@@ -3789,7 +3803,7 @@ new function () {
                 if (item) {
                     let hydrated = await Auctions.hydrateList([item], {realm});
                     if (hydrated.length) {
-                        await Detail.show(hydrated[0], realm);
+                        await Detail.show(Auctions.strip(hydrated[0]), realm);
                     }
                 }
 
@@ -5610,7 +5624,7 @@ new function () {
                 rowLink.href = '#' + Hash.getItemDetailHash(item);
                 rowLink.addEventListener('click', event => {
                     event.preventDefault();
-                    Detail.show(item, null);
+                    Detail.show(Auctions.strip(item), null);
                 });
                 td.appendChild(rowLink);
             }
