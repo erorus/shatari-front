@@ -113,6 +113,12 @@ new function () {
      */
 
     /**
+     * @typedef {PricedItem} PricedItemListEntry
+     * @property {Money}     listPrice
+     * @property {number}    listQuantity
+     */
+
+    /**
      * @typedef {Object} Realm
      * @property {string}           category
      * @property {ConnectedRealmID} connectedId
@@ -144,6 +150,8 @@ new function () {
      * @typedef {object} RegionState
      * @property {Region} region
      * @property {Object.<ItemKeyString, ArbitrageLine>} arbitrage
+     * @property {Object.<ItemID, Array<ItemKeyString>>} arbitrageVariants
+     * @property {Object.<BattlePetSpeciesID, Array<ItemKeyString>>} arbitrageSpeciesVariants
      * @property {Object.<ItemKeyString, Money>} items
      */
 
@@ -368,6 +376,13 @@ new function () {
         };
 
         /**
+         * Returns the current realm's region state. May return a cached object shared between calls.
+         *
+         * @returns {Promise<RegionState>}
+         */
+        this.getRegionState = async () => await getRegionState(Realms.getCurrentRealm().region);
+
+        /**
          * Return the WoW token state for the given realm.
          *
          * @param {Realm|null} realm
@@ -439,19 +454,24 @@ new function () {
          * Hydrates a list of items with prices and quantities for the currently-selected realm.
          *
          * @param {Item[]} items
+         * @param {boolean} [arbitrage]
          * @param {Realm|undefined} [realm]
-         * @return {Promise<PricedItem[]>}
+         * @param {boolean} [regionMedian]
+         * @return {Promise<PricedItemListEntry[]>}
          */
-        this.hydrateList = async function (items, realm) {
+        this.hydrateList = async function (items, {arbitrage, realm, regionMedian}) {
             realm = realm || Realms.getCurrentRealm();
+            const useRegionMedian = regionMedian;
 
             /** @type {RealmState} */
             let realmState;
             /** @type {RegionState} */
             let regionState;
 
+            const regionRealmCount = arbitrage ? Realms.getRegionConnectedRealms(realm.region).length : 0;
+
             let promises = [(async () => realmState = await getRealmState(realm))()];
-            if (Search.getRegionMedianControl().checked) {
+            if (arbitrage || useRegionMedian) {
                 promises.push((async () => regionState = await getRegionState(realm.region))());
             }
             await Promise.all(promises);
@@ -461,8 +481,14 @@ new function () {
             items.forEach(function (item) {
                 const keyString = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
 
-                /** @type {PricedItem} pricedItem */
-                let pricedItem = {};
+                /** @type {PricedItemListEntry} pricedItem */
+                let pricedItem = {
+                    listPrice: 0,
+                    listQuantity: 0,
+                    price: 0,
+                    quantity: 0,
+                    snapshot: 0,
+                };
                 co(pricedItem, item);
 
                 const cur = realmState.summary[keyString];
@@ -470,15 +496,22 @@ new function () {
                     pricedItem.price = cur.price;
                     pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
                     pricedItem.snapshot = cur.snapshot;
+                }
 
-                    let regionMedian = regionState && regionState.items[keyString];
-                    if (regionMedian) {
-                        pricedItem.regionMedian = regionMedian;
+                if (arbitrage) {
+                    const cur = regionState.arbitrage[keyString];
+                    if (cur) {
+                        pricedItem.listPrice = cur.min;
+                        pricedItem.listQuantity = Math.round(cur.realms / regionRealmCount * 100);
                     }
                 } else {
-                    pricedItem.price = 0;
-                    pricedItem.quantity = 0;
-                    pricedItem.snapshot = 0;
+                    pricedItem.listPrice = pricedItem.price;
+                    pricedItem.listQuantity = pricedItem.quantity;
+                }
+
+                let regionMedian = useRegionMedian && regionState && regionState.items[keyString];
+                if (regionMedian) {
+                    pricedItem.regionMedian = regionMedian;
                 }
 
                 result.push(pricedItem);
@@ -974,6 +1007,8 @@ new function () {
             const result = {
                 region,
                 arbitrage: {},
+                arbitrageVariants: {},
+                arbitrageSpeciesVariants: {},
                 items: {},
             };
             let lastItemId = 0;
@@ -994,6 +1029,16 @@ new function () {
                     let itemLevel = view.getUint16(read(2), true);
                     let itemSuffix = view.getUint16(read(2), true);
                     let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+
+                    if (itemId === ITEM_PET_CAGE) {
+                        // Note: no itemSuffix filter here, both breeded and breedless pets are valid variants.
+                        result.arbitrageSpeciesVariants[itemLevel] ??= [];
+                        result.arbitrageSpeciesVariants[itemLevel].push(itemKeyString);
+                    } else {
+                        // Note: no itemLevel filter here, both levelled and bare items are valid variants.
+                        result.arbitrageVariants[itemId] ??= [];
+                        result.arbitrageVariants[itemId].push(itemKeyString);
+                    }
 
                     let realms = view.getUint8(read(1))
                     let min = view.getUint32(read(4), true) * COPPER_SILVER;
@@ -3768,7 +3813,7 @@ new function () {
                 // Try to show an item detail page.
                 let item = Items.getItemByKey(Items.parseKey(match[0]));
                 if (item) {
-                    let hydrated = await Auctions.hydrateList([item], realm);
+                    let hydrated = await Auctions.hydrateList([item], {realm});
                     if (hydrated.length) {
                         await Detail.show(hydrated[0], realm);
                     }
@@ -4186,6 +4231,7 @@ new function () {
         this.search = async function (searchMode) {
             const result = [];
 
+            const arbitrage = Search.isArbitrageMode();
             const forSuggestions = searchMode === self.SEARCH_MODE_SUGGESTIONS;
             const favoritesOnly = searchMode === self.SEARCH_MODE_FAVORITES;
             const favorites = favoritesOnly ? Search.getFavorites() : [];
@@ -4194,8 +4240,19 @@ new function () {
             const subClassIds = Categories.getSubClassIds();
             const invTypes = Categories.getInvTypes();
             const extraFilters = Categories.getExtraFilters();
-            const realmState = await Auctions.getRealmState();
-            const useVariants = !qs('.main .search-bar .filter [name="transmog-mode"]').checked;
+
+            let itemVariants = {};
+            let speciesVariants = {};
+            if (arbitrage) {
+                const regionState = await Auctions.getRegionState();
+                itemVariants = regionState.arbitrageVariants;
+                speciesVariants = regionState.arbitrageSpeciesVariants;
+            } else {
+                const realmState = await Auctions.getRealmState();
+                itemVariants = realmState.variants;
+                speciesVariants = realmState.speciesVariants;
+            }
+            const useVariants = arbitrage || !qs('.main .search-bar .filter [name="transmog-mode"]').checked;
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
@@ -4319,8 +4376,8 @@ new function () {
                     // Not using any variants, just bare item IDs.
                     variants = [Items.stringifyKeyParts(parseInt(id), 0, 0)];
                 } else {
-                    if (realmState.variants[id]) {
-                        variants = realmState.variants[id].slice(0);
+                    if (itemVariants[id]) {
+                        variants = itemVariants[id].slice(0);
                     } else {
                         variants = [
                             Items.stringifyKeyParts(
@@ -4414,8 +4471,8 @@ new function () {
                         // Not selecting by breed, just species.
                         variants = [Items.stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
                     } else {
-                        if (realmState.speciesVariants[speciesId]) {
-                            variants = realmState.speciesVariants[speciesId].slice(0);
+                        if (speciesVariants[speciesId]) {
+                            variants = speciesVariants[speciesId].slice(0);
                         } else {
                             variants = [Items.stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
                         }
@@ -5310,15 +5367,6 @@ new function () {
         }
 
         /**
-         * Returns the checkbox for the option to show the region median price.
-         *
-         * @return {HTMLInputElement}
-         */
-        this.getRegionMedianControl = function () {
-            return qs('.main .search-bar .filter [name="show-region-median"]');
-        };
-
-        /**
          * Empties the item list.
          */
         this.hide = function () {
@@ -5356,7 +5404,7 @@ new function () {
             emptyItemList();
             Realms.savePreferredRealm();
             try {
-                if (self.getRegionMedianControl().checked) {
+                if (getRegionMedianControl().checked) {
                     localStorage.setItem('show-region-median', 1);
                 } else {
                     localStorage.removeItem('show-region-median');
@@ -5376,7 +5424,8 @@ new function () {
             const hasSearchText = /\S/.test(searchBox.value);
 
             let itemsList = await Auctions.hydrateList(
-                await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL)
+                await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL),
+                {arbitrage: self.isArbitrageMode(), regionMedian: getRegionMedianControl().checked},
             );
 
             if (dealsOnly) {
@@ -5518,12 +5567,13 @@ new function () {
         /**
          * Creates a search result row.
          *
-         * @param {PricedItem} item
+         * @param {PricedItemListEntry} item
          * @param {HTMLTableSectionElement} tbody
          * @param {DetailColumn|undefined} detailColumn
          * @param {boolean} vendorFlip
          * @param {boolean} showingDeals
          * @param {boolean} hasRegionMedian
+         * @param {boolean} arbitrage
          * @param {ItemKeyString[]} favorites
          * @return {HTMLTableRowElement}
          */
@@ -5534,6 +5584,7 @@ new function () {
             vendorFlip,
             showingDeals,
             hasRegionMedian,
+            arbitrage,
             favorites
         ) {
             let suffix;
@@ -5554,14 +5605,15 @@ new function () {
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'price';
                 const rowLink = document.createElement('a');
-                if (item.price) {
-                    td.appendChild(priceElement(item.price));
+                const price = item.listPrice;
+                if (price) {
+                    td.appendChild(priceElement(price));
 
                     let vsp;
                     if (
                         !vendorFlip &&
-                        item.quantity &&
-                        (vsp = Items.getVendorSellPrice(item)) > item.price &&
+                        item.listQuantity &&
+                        (vsp = Items.getVendorSellPrice(item)) > price &&
                         vsp >= 10000
                     ) {
                         tr.classList.add('vendor-flip');
@@ -5661,12 +5713,12 @@ new function () {
             if (showingDeals) {
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'price-percentage'
-                td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
+                td.appendChild(ct(Math.round(item.listPrice / item.regionMedian * 100) + '%'));
             } else {
-                const quantity = item.quantity || 0;
+                const quantity = item.listQuantity || 0;
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
-                td.appendChild(ct(quantity.toLocaleString()));
+                td.appendChild(ct(quantity.toLocaleString() + (arbitrage ? '%' : '')));
                 if (quantity === 0 && item.snapshot > 0) {
                     let span = document.createElement('span');
                     span.className = 'delta-timestamp';
@@ -5714,18 +5766,18 @@ new function () {
         /**
          * Returns a list of items which are deals from the given list of priced items.
          *
-         * @param {PricedItem[]} itemsList
+         * @param {PricedItemListEntry[]} itemsList
          * @return {Promise<PricedItem[]>}
          */
         async function findDeals(itemsList) {
             // Items must be in stock, and must not be commodities.
-            itemsList = itemsList.filter(pricedItem => pricedItem.quantity > 0 && !(pricedItem.stack > 1));
+            itemsList = itemsList.filter(pricedItem => pricedItem.listQuantity > 0 && !(pricedItem.stack > 1));
 
             let dealsData = await Auctions.getDeals();
 
             itemsList = itemsList.filter(item => {
                 let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
-                if (!dealsData.items[itemKey] || item.price > dealsData.items[itemKey].dealPrice) {
+                if (!dealsData.items[itemKey] || item.listPrice > dealsData.items[itemKey].dealPrice) {
                     return false;
                 }
 
@@ -5745,6 +5797,13 @@ new function () {
          * @return {HTMLInputElement}
          */
         const getArbitrageModeControl = () => qs('.main .search-bar .filter [name="arbitrage-mode"]');
+
+        /**
+         * Returns the checkbox for the option to show the region median price.
+         *
+         * @return {HTMLInputElement}
+         */
+        const getRegionMedianControl = () => qs('.main .search-bar .filter [name="show-region-median"]');
 
         /**
          * Returns the column we should use for the initial sort, based on the category class.
@@ -5834,14 +5893,15 @@ new function () {
         /**
          * Given a pricing-hydrated list of items, show it in the UI.
          *
-         * @param {PricedItem[]} itemsList
+         * @param {PricedItemListEntry[]} itemsList
          * @param {boolean}      includeNeverSeen
          * @param {boolean}      showingDeals
          */
         async function showItemList(itemsList, includeNeverSeen, showingDeals) {
             const detailColumn = Categories.getDetailColumn();
-            const showOutOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
-            const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
+            const arbitrage = self.isArbitrageMode();
+            const showOutOfStock = !arbitrage && qs('.main .search-bar .filter [name="out-of-stock"]').checked;
+            const vendorFlip = !arbitrage && qs('.main .search-bar .filter [name="vendor-flip"]').checked;
             const bonusStat = Categories.getBonusStat();
 
             let itemKeyAllowList;
@@ -5907,17 +5967,17 @@ new function () {
                         continue;
                     }
                 }
-                if ((item.quantity || 0) === 0) {
+                if ((item.listQuantity || 0) === 0) {
                     if (!showOutOfStock) {
                         continue;
                     }
-                    if (!includeNeverSeen && (item.price || 0) === 0) {
+                    if (!includeNeverSeen && (item.listPrice || 0) === 0) {
                         continue;
                     }
                 }
                 if (vendorFlip) {
                     const vendorPrice = Items.getVendorSellPrice(item);
-                    if (!vendorPrice || vendorPrice <= item.price) {
+                    if (!vendorPrice || vendorPrice <= item.listPrice) {
                         continue;
                     }
                 }
@@ -5928,14 +5988,14 @@ new function () {
                 }
 
                 const sortRow = [
-                    createRow.bind(self, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian),
+                    createRow.bind(self, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian, arbitrage),
                 ];
                 my.rows.push(sortRow);
 
                 //
                 // PRICE
                 //
-                sortRow.push(item.price || 0);
+                sortRow.push(item.listPrice || 0);
 
                 //
                 // NAME
@@ -5972,9 +6032,9 @@ new function () {
                 // QUANTITY / PERCENTAGE
                 //
                 if (showingDeals) {
-                    sortRow.push(item.price / item.regionMedian);
+                    sortRow.push(item.listPrice / item.regionMedian);
                 } else {
-                    const quantity = item.quantity || 0;
+                    const quantity = item.listQuantity || 0;
                     if (quantity === 0) {
                         sortRow.push(quantity + item.snapshot / 10000000000000);
                     } else {
@@ -6045,7 +6105,7 @@ new function () {
         qs('.main .search-bar .deals').addEventListener('click', () => self.perform(false, true));
 
         try {
-            self.getRegionMedianControl().checked = !!localStorage.getItem('show-region-median');
+            getRegionMedianControl().checked = !!localStorage.getItem('show-region-median');
         } catch (e) {
             // Oh well.
         }
