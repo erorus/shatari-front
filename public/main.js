@@ -1037,11 +1037,11 @@ new function () {
                     let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
 
                     if (itemId === ITEM_PET_CAGE) {
-                        // Note: no itemSuffix filter here, both breeded and breedless pets are valid variants.
-                        result.arbitrageSpeciesVariants[itemLevel] ??= [];
-                        result.arbitrageSpeciesVariants[itemLevel].push(itemKeyString);
+                        if (itemSuffix) {
+                            result.arbitrageSpeciesVariants[itemLevel] ??= [];
+                            result.arbitrageSpeciesVariants[itemLevel].push(itemKeyString);
+                        }
                     } else {
-                        // Note: no itemLevel filter here, both levelled and bare items are valid variants.
                         result.arbitrageVariants[itemId] ??= [];
                         result.arbitrageVariants[itemId].push(itemKeyString);
                     }
@@ -1051,6 +1051,20 @@ new function () {
                     result.arbitrage[itemKeyString] = {min, realms};
                     lastItemId = itemId;
                 }
+
+                // Remove the base variants from the item variants list when that item has multiple variants.
+                // This allows us to include prior expansion items which don't have variant pricing data in our lists
+                // which would normally ignore them, but but not include those base variants which have pricing data for
+                // specific variants for the current expansion.
+                Object.entries(result.arbitrageVariants)
+                    .filter(([itemIdString, itemKeys]) => itemKeys.length > 1)
+                    .forEach(([itemIdString, itemKeys]) => {
+                        const baseKey = Items.stringifyKeyParts(parseInt(itemIdString), 0, 0);
+                        const baseKeyIndex = itemKeys.indexOf(baseKey);
+                        if (baseKeyIndex >= 0) {
+                            itemKeys.splice(baseKeyIndex, 1);
+                        }
+                    });
             }
 
             my.lastRegionState = {
@@ -3753,12 +3767,12 @@ new function () {
                 const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
                 const outOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
 
+                if (transmogMode) {
+                    result += '/opt=transmog-mode';
+                }
                 if (arbitrage) {
                     result += '/opt=arbitrage';
                 } else {
-                    if (transmogMode) {
-                        result += '/opt=transmog-mode';
-                    }
                     if (vendorFlip) {
                         result += '/opt=vendor-flip';
                     }
@@ -4256,7 +4270,7 @@ new function () {
                 itemVariants = realmState.variants;
                 speciesVariants = realmState.speciesVariants;
             }
-            const useVariants = arbitrage || !qs('.main .search-bar .filter [name="transmog-mode"]').checked;
+            const useVariants = !qs('.main .search-bar .filter [name="transmog-mode"]').checked;
 
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
