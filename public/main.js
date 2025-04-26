@@ -93,29 +93,23 @@ new function () {
 
     /**
      * @typedef {object} ItemState
+     * @property {Auction[]}       auctions   An array of distinct prices and quantities, ordered by price ascending
+     * @property {SummaryLine[]}   daily      A list of summary prices by day, order by snapshot ascending
+     * @property {Item}            item
      * @property {Realm}           realm
-     * @property {PricedItem}      item
-     * @property {Timestamp}       snapshot   The last snapshot when this item was seen
      * @property {Money}           price      The cheapest price when this item was last seen
      * @property {number}          quantity   How many were available when this was last seen
-     * @property {Auction[]}       auctions   An array of distinct prices and quantities, ordered by price ascending
-     * @property {AuctionDetail[]} specifics  An array of prices and bonus information, ordered by price ascending
+     * @property {Timestamp}       snapshot   The last snapshot when this item was seen
      * @property {SummaryLine[]}   snapshots  An array of summary prices, order by snapshot ascending
-     * @property {SummaryLine[]}   daily      A list of summary prices by day, order by snapshot ascending
+     * @property {AuctionDetail[]} specifics  An array of prices and bonus information, ordered by price ascending
      */
 
     /**
-     * @typedef {Item} PricedItem
+     * @typedef {Item} PricedItem Only to be used in search result lists.
      * @property {Money}     price
      * @property {number}    quantity
      * @property {Money}     [regionMedian]
      * @property {Timestamp} snapshot
-     */
-
-    /**
-     * @typedef {PricedItem} PricedItemListEntry
-     * @property {Money}     listPrice
-     * @property {number}    listQuantity
      */
 
     /**
@@ -335,7 +329,7 @@ new function () {
         /**
          * Given an item object, return its item state for the current/given realm.
          *
-         * @param {PricedItem} item
+         * @param {Item} item
          * @param {Realm|null} realm
          * @return {Promise<ItemState>}
          */
@@ -457,7 +451,7 @@ new function () {
          * @param {boolean} [arbitrage]
          * @param {Realm|undefined} [realm]
          * @param {boolean} [regionMedian]
-         * @return {Promise<PricedItemListEntry[]>}
+         * @return {Promise<PricedItem[]>}
          */
         this.hydrateList = async function (items, {arbitrage, realm, regionMedian}) {
             realm = realm || Realms.getCurrentRealm();
@@ -470,7 +464,10 @@ new function () {
 
             const regionRealmCount = arbitrage ? Realms.getRegionConnectedRealms(realm.region).length : 0;
 
-            let promises = [(async () => realmState = await getRealmState(realm))()];
+            let promises = [];
+            if (!arbitrage) {
+                promises.push((async () => realmState = await getRealmState(realm))());
+            }
             if (arbitrage || useRegionMedian) {
                 promises.push((async () => regionState = await getRegionState(realm.region))());
             }
@@ -481,32 +478,27 @@ new function () {
             items.forEach(function (item) {
                 const keyString = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
 
-                /** @type {PricedItemListEntry} pricedItem */
+                /** @type {PricedItem} pricedItem */
                 let pricedItem = {
-                    listPrice: 0,
-                    listQuantity: 0,
                     price: 0,
                     quantity: 0,
                     snapshot: 0,
                 };
                 co(pricedItem, item);
 
-                const cur = realmState.summary[keyString];
-                if (cur) {
-                    pricedItem.price = cur.price;
-                    pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
-                    pricedItem.snapshot = cur.snapshot;
-                }
-
                 if (arbitrage) {
                     const cur = regionState.arbitrage[keyString];
                     if (cur) {
-                        pricedItem.listPrice = cur.min;
-                        pricedItem.listQuantity = Math.round(cur.realms / regionRealmCount * 100);
+                        pricedItem.price = cur.min;
+                        pricedItem.quantity = Math.round(cur.realms / regionRealmCount * 100);
                     }
                 } else {
-                    pricedItem.listPrice = pricedItem.price;
-                    pricedItem.listQuantity = pricedItem.quantity;
+                    const cur = realmState.summary[keyString];
+                    if (cur) {
+                        pricedItem.price = cur.price;
+                        pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
+                        pricedItem.snapshot = cur.snapshot;
+                    }
                 }
 
                 let regionMedian = useRegionMedian && regionState && regionState.items[keyString];
@@ -638,7 +630,7 @@ new function () {
          * Given realm and item objects, return its item state.
          *
          * @param {Realm} realm
-         * @param {PricedItem} item
+         * @param {Item} item
          * @param {boolean} useCached
          * @return {Promise<ItemState>}
          */
@@ -1746,7 +1738,7 @@ new function () {
         /**
          * Enters detail mode to show the given item's details.
          *
-         * @param {PricedItem} item
+         * @param {Item} item
          * @param {Realm|null} realm
          */
         this.show = async function (item, realm) {
@@ -2134,7 +2126,7 @@ new function () {
         /**
          * Returns an array of item states for the given item for all realms in the given region.
          *
-         * @param {PricedItem} item
+         * @param {Item} item
          * @param {Region} region
          * @return {Promise<ItemState[]>}
          */
@@ -2156,7 +2148,7 @@ new function () {
         /**
          * Populate the auctions list in the rightmost panel.
          *
-         * @param {PricedItem} item
+         * @param {Item} item
          * @param {ItemState} itemState
          */
         function populateAuctions(item, itemState) {
@@ -2314,7 +2306,7 @@ new function () {
         /**
          * Populate the empty details panel for the given item.
          *
-         * @param {PricedItem} item
+         * @param {Item} item
          * @param {ItemState} itemState
          */
         async function populateDetails(item, itemState) {
@@ -2460,15 +2452,15 @@ new function () {
                 tr.appendChild(ce('td', {}, ct('Available')));
                 tr.appendChild(ce('td', {
                     dataset: {simpleTooltip: `Total quantity for sale on ${houseName} right now.`}
-                }, ct(item.quantity.toLocaleString())));
+                }, ct(itemState.quantity.toLocaleString())));
                 tr.appendChild(regionElements.quantity = ce('td', {
                     dataset: {simpleTooltip: 'Total quantity for sale in all ' + regionName + ' realms right now.'}
                 }));
 
-                if (!item.quantity) {
+                if (!itemState.quantity) {
                     table.appendChild(tr = ce('tr'));
                     tr.appendChild(ce('td', {}, ct('Last Seen')));
-                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: item.snapshot}})));
+                    tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: itemState.snapshot}})));
                     tr.appendChild(ce('td'));
                 }
 
@@ -2476,7 +2468,7 @@ new function () {
                 tr.appendChild(ce('td', {}, ct('Current')));
                 tr.appendChild(ce('td', {
                     dataset: {simpleTooltip: `Lowest price on ${houseName} right now.`}
-                }, item.price ? priceElement(item.price) : null));
+                }, itemState.price ? priceElement(itemState.price) : null));
                 tr.appendChild(regionElements.current = ce('td', {
                     dataset: {simpleTooltip: 'Lowest price among all ' + regionName + ' realms right now.'}
                 }));
@@ -3368,7 +3360,7 @@ new function () {
                         if (index > 0) {
                             tr.dataset.connectedRealm = 1;
                         }
-                        a.addEventListener('click', showOtherRealmItem.bind(self, item, itemState, realm));
+                        a.addEventListener('click', () => self.show(item, realm));
                         tr.appendChild(td = ce('td', {
                             className: 'text',
                             dataset: {pop: realm.population, sortValue: realm.population},
@@ -3660,24 +3652,6 @@ new function () {
             }
 
             return Math.floor(value + 0.5);
-        }
-
-        /**
-         * Shows the item detail for a given item on an alternate realm.
-         *
-         * @param {PricedItem} item
-         * @param {ItemState} itemState
-         * @param {Realm} realm
-         */
-        function showOtherRealmItem(item, itemState, realm) {
-            /** @var {PricedItem} repricedItem */
-            const repricedItem = {};
-            co(repricedItem, item);
-            repricedItem.quantity = itemState.quantity;
-            repricedItem.price = itemState.price;
-            repricedItem.snapshot = itemState.snapshot;
-
-            self.show(repricedItem, realm);
         }
     };
 
@@ -5567,7 +5541,7 @@ new function () {
         /**
          * Creates a search result row.
          *
-         * @param {PricedItemListEntry} item
+         * @param {PricedItem} item
          * @param {HTMLTableSectionElement} tbody
          * @param {DetailColumn|undefined} detailColumn
          * @param {boolean} vendorFlip
@@ -5605,14 +5579,14 @@ new function () {
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'price';
                 const rowLink = document.createElement('a');
-                const price = item.listPrice;
+                const price = item.price;
                 if (price) {
                     td.appendChild(priceElement(price));
 
                     let vsp;
                     if (
                         !vendorFlip &&
-                        item.listQuantity &&
+                        item.quantity &&
                         (vsp = Items.getVendorSellPrice(item)) > price &&
                         vsp >= 10000
                     ) {
@@ -5713,9 +5687,9 @@ new function () {
             if (showingDeals) {
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'price-percentage'
-                td.appendChild(ct(Math.round(item.listPrice / item.regionMedian * 100) + '%'));
+                td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
             } else {
-                const quantity = item.listQuantity || 0;
+                const quantity = item.quantity || 0;
                 tr.appendChild(td = document.createElement('td'));
                 td.className = 'quantity' + (quantity === 0 ? ' q0' : '');
                 td.appendChild(ct(quantity.toLocaleString() + (arbitrage ? '%' : '')));
@@ -5766,18 +5740,18 @@ new function () {
         /**
          * Returns a list of items which are deals from the given list of priced items.
          *
-         * @param {PricedItemListEntry[]} itemsList
+         * @param {PricedItem[]} itemsList
          * @return {Promise<PricedItem[]>}
          */
         async function findDeals(itemsList) {
             // Items must be in stock, and must not be commodities.
-            itemsList = itemsList.filter(pricedItem => pricedItem.listQuantity > 0 && !(pricedItem.stack > 1));
+            itemsList = itemsList.filter(pricedItem => pricedItem.quantity > 0 && !(pricedItem.stack > 1));
 
             let dealsData = await Auctions.getDeals();
 
             itemsList = itemsList.filter(item => {
                 let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
-                if (!dealsData.items[itemKey] || item.listPrice > dealsData.items[itemKey].dealPrice) {
+                if (!dealsData.items[itemKey] || item.price > dealsData.items[itemKey].dealPrice) {
                     return false;
                 }
 
@@ -5893,7 +5867,7 @@ new function () {
         /**
          * Given a pricing-hydrated list of items, show it in the UI.
          *
-         * @param {PricedItemListEntry[]} itemsList
+         * @param {PricedItem[]} itemsList
          * @param {boolean}      includeNeverSeen
          * @param {boolean}      showingDeals
          */
@@ -5967,17 +5941,17 @@ new function () {
                         continue;
                     }
                 }
-                if ((item.listQuantity || 0) === 0) {
+                if ((item.quantity || 0) === 0) {
                     if (!showOutOfStock) {
                         continue;
                     }
-                    if (!includeNeverSeen && (item.listPrice || 0) === 0) {
+                    if (!includeNeverSeen && (item.price || 0) === 0) {
                         continue;
                     }
                 }
                 if (vendorFlip) {
                     const vendorPrice = Items.getVendorSellPrice(item);
-                    if (!vendorPrice || vendorPrice <= item.listPrice) {
+                    if (!vendorPrice || vendorPrice <= item.price) {
                         continue;
                     }
                 }
@@ -5995,7 +5969,7 @@ new function () {
                 //
                 // PRICE
                 //
-                sortRow.push(item.listPrice || 0);
+                sortRow.push(item.price || 0);
 
                 //
                 // NAME
@@ -6032,9 +6006,9 @@ new function () {
                 // QUANTITY / PERCENTAGE
                 //
                 if (showingDeals) {
-                    sortRow.push(item.listPrice / item.regionMedian);
+                    sortRow.push(item.price / item.regionMedian);
                 } else {
-                    const quantity = item.listQuantity || 0;
+                    const quantity = item.quantity || 0;
                     if (quantity === 0) {
                         sortRow.push(quantity + item.snapshot / 10000000000000);
                     } else {
