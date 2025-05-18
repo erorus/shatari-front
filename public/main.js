@@ -4295,12 +4295,21 @@ new function () {
             }
             const useVariants = !qs('.main .search-bar .filter [name="transmog-mode"]').checked;
 
+            const idList = [];
             const wordExpressions = [];
             const searchBox = qs('.main .search-bar input[type="text"]');
 
             let query = searchBox.value;
             // Trim whitespace.
             query = query.replace(/^\s+|\s+$/g, '');
+            if (/^[\d ,]+$/.test(query)) {
+                const idSet = new Set();
+                query.match(/\d+/g).forEach(idString => idSet.add(+idString));
+                if (idSet.size) {
+                    query = '';
+                    idList.push(...idSet);
+                }
+            }
             if (/^\[[\w\W]+\]$/.test(query)) {
                 // Query was wrapped in brackets, like in a displayed itemlink. Remove the brackets.
                 query = query.slice(1, -1);
@@ -4358,6 +4367,9 @@ new function () {
 
             for (let id in my.items) {
                 if (!my.items.hasOwnProperty(id)) {
+                    continue;
+                }
+                if (idList.length && !idList.includes(+id)) {
                     continue;
                 }
 
