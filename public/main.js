@@ -4015,8 +4015,9 @@ new function () {
 
         /**
          * @typedef {object} Suffix
-         * @property {string} name
          * @property {number|null} bonus
+         * @property {string} name
+         * @property {string} [searchName]
          */
 
         this.CLASS_CONSUMABLE = 0;
@@ -4074,6 +4075,23 @@ new function () {
             "12": "H/B",
         };
 
+        /**
+         * @type {Object<string, string>} A map of fancy characters -> normalized characters, for searches.
+         */
+        const NORMALIZATION_MAP = {
+            // Apostrophes and single quotes
+            '‘': "'", '’': "'", '‛': "'", '‚': "'", 'ʼ': "'", 'ʻ': "'", 'ʽ': "'", 'ʾ': "'", 'ʿ': "'",
+            // Double quotes
+            '“': '"', '”': '"', '„': '"', '«': '"', '»': '"',
+            // Dashes
+            '–': '-', '—': '-', '−': '-',
+            // Ellipsis
+            '…': '...',
+            // Whitespace normalizations
+            '\u00A0': ' ', // Non-breaking space
+            '\u3000': ' ', // Full-width space (used in zh, ja, ko);
+        };
+
         // ********************* //
         // ***** VARIABLES ***** //
         // ********************* //
@@ -4082,9 +4100,11 @@ new function () {
          * @type {{
          * items: Object.<ItemID, UnnamedItem>,
          * names: Object.<ItemID, string>,
+         * searchNames: Object.<ItemID, string>,
          * suffixes: Object.<SuffixID, Suffix>,
          * battlePets: Object.<BattlePetSpeciesID, BattlePetSpecies>,
          * battlePetNames: Object.<BattlePetSpeciesID, string>,
+         * searchBattlePetNames: Object.<BattlePetSpeciesID, string>,
          * vendor: {
          *     quality: number[],
          *     2: number[],
@@ -4099,6 +4119,9 @@ new function () {
             battlePets: {},
             battlePetNames: {},
             vendor: {},
+
+            searchBattlePetNames: {},
+            searchNames: {},
         };
 
         // ********************* //
@@ -4296,6 +4319,7 @@ new function () {
                 // Trim whitespace again.
                 query = query.replace(/^\s+|\s+$/g, '');
             }
+            query = normalizeForSearch(query);
             // Split the query by whitespace, add a regex for each non-empty word string.
             query.split(/\s+/)
                 .filter(word => word.length > 0)
@@ -4438,24 +4462,25 @@ new function () {
                         }
                     }
 
-                    let name = my.names[itemKey.itemId];
+                    let searchName = my.searchNames[itemKey.itemId] ?? my.names[itemKey.itemId];
                     if (itemKey.itemSuffix) {
-                        name += ' ' + Items.getSuffix(itemKey.itemId, itemKey.itemSuffix).name;
+                        const suffix = Items.getSuffix(itemKey.itemId, itemKey.itemSuffix);
+                        searchName += ' ' + (suffix.searchName ?? suffix.name);
                     }
 
                     let foundAllWords = true;
                     for (let regex, x = 0; foundAllWords && (regex = wordExpressions[x]); x++) {
-                        foundAllWords = regex.test(name);
+                        foundAllWords = regex.test(searchName);
                     }
                     if (!foundAllWords) {
                         return;
                     }
 
                     if (forSuggestions) {
-                        if (seenNames[name]) {
+                        if (seenNames[searchName]) {
                             return;
                         }
-                        seenNames[name] = true;
+                        seenNames[searchName] = true;
                     }
 
                     /** @type {Item} newItem */
@@ -4503,21 +4528,22 @@ new function () {
                     variants.forEach(keyString => {
                         const itemKey = Items.parseKey(keyString);
 
-                        let name = my.battlePetNames[itemKey.itemLevel];
+                        let searchName = my.searchBattlePetNames[itemKey.itemLevel] ??
+                            my.battlePetNames[itemKey.itemLevel];
 
                         let foundAllWords = true;
                         for (let regex, x = 0; foundAllWords && (regex = wordExpressions[x]); x++) {
-                            foundAllWords = regex.test(name);
+                            foundAllWords = regex.test(searchName);
                         }
                         if (!foundAllWords) {
                             return;
                         }
 
                         if (forSuggestions) {
-                            if (seenNames[name]) {
+                            if (seenNames[searchName]) {
                                 return;
                             }
-                            seenNames[name] = true;
+                            seenNames[searchName] = true;
                         }
 
                         /** @type {Item} newItem */
@@ -4598,6 +4624,7 @@ new function () {
             }
 
             my.battlePetNames = await response.json();
+            my.searchBattlePetNames = getSearchNames(my.battlePetNames);
         }
 
         /**
@@ -4683,6 +4710,7 @@ new function () {
             if (boundResponse.ok) {
                 Object.assign(my.names, await boundResponse.json());
             }
+            my.searchNames = getSearchNames(my.names);
         }
 
         /**
@@ -4697,6 +4725,12 @@ new function () {
             }
 
             my.suffixes = await response.json();
+            Object.values(my.suffixes).forEach(suffix => {
+                const searchName = normalizeForSearch(suffix.name);
+                if (searchName !== suffix.name) {
+                    suffix.searchName = searchName;
+                }
+            });
         }
 
         /**
@@ -4710,6 +4744,36 @@ new function () {
 
             my.vendor = await response.json();
         }
+
+        /**
+         * Returns a sparse map which is a copy of $map but where the normalized $map value differs from the $map value.
+         *
+         * @param {Object<string|int, string>} map
+         * @return {Object<string|int, string>}
+         */
+        function getSearchNames(map) {
+            const result = {};
+            Object.entries(map).forEach(([key, value]) => {
+                const normalized = normalizeForSearch(value);
+                if (normalized !== value) {
+                    result[key] = normalized;
+                }
+            });
+
+            return result;
+        }
+
+        /**
+         * Normalizes a string to convert common substitutions (left/right single/double quotes, dashes, etc) to more
+         * standard ASCII characters (apostrophe, double quote, hyphen).
+         *
+         * @param {string} fancy
+         * @return {string}
+         */
+        const normalizeForSearch = fancy => fancy.replace(
+            /[‘’‛‚ʼʻʽʾʿ“”„«»–—−…\u00A0\u3000]/g,
+            match => NORMALIZATION_MAP[match] ?? match,
+        ).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         /**
          * Called when the user changes their preferred locale, this fetches new names for items and pets.
