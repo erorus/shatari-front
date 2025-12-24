@@ -763,12 +763,11 @@ new function () {
                 if (deltas[snapshot].quantity === 0 && prevDelta && deltas[snapshot].price === 0) {
                     deltas[snapshot].price = prevDelta.price;
                 }
-                if (!prevDelta) {
-                    prevDelta = deltas[snapshot];
-                }
+                prevDelta = deltas[snapshot];
             }
 
             if (prevDelta) {
+                prevDelta = deltas[Object.keys(deltas)[0]];
                 (await getSnapshotList(realm)).forEach(timestamp => {
                     if (deltas[timestamp]) {
                         // Something changed at this timestamp, and we have new stats.
