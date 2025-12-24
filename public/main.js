@@ -498,7 +498,7 @@ new function () {
                     const cur = realmState.summary[keyString];
                     if (cur) {
                         pricedItem.price = cur.price;
-                        pricedItem.quantity = cur.snapshot === realmState.snapshot ? cur.quantity : 0;
+                        pricedItem.quantity = cur.quantity;
                         pricedItem.snapshot = cur.snapshot;
                     }
                 }
