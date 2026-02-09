@@ -6099,7 +6099,7 @@ new function () {
                         itemName += ' ' + suffix.name;
                     }
                     if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
-                        itemName += ' (' + item.bonusLevel + ')';
+                        itemName += ' (' + item.bonusLevel.toString().padStart(4, '0') + ')';
                     }
                     if (item.craftingQualityTier) {
                         itemName += ' ' + item.craftingQualityTier.toString().padStart(3, '0');
