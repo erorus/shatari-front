@@ -22,6 +22,7 @@ Compared to a dynamic, server-side scripting setup, this design provides more co
   * `/public/fonts` contains fonts used by the site.
   * `/public/images` contains all the various images used by the site.
   * `/public/json` contains static JSON data provided by the Data repository linked above.
+    * `/public/json/realms` is gitignored, but expected to point at the `/realms` directory in the back end repo location.
   * `/public/data` is gitignored, but expected to point at the directory where the back end process stores the auction statistical data.
   * `/public/index.html` is the main HTML page with a basic layout.
   * `/public/main.js` is the bulk of the JS running the site in the browser.
