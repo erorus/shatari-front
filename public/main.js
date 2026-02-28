@@ -2607,9 +2607,9 @@ new function () {
                     }
 
                     prices.sort((a, b) => a - b);
-                    let q3 = prices[Math.floor(prices.length * 0.75)];
+                    let p95 = prices[Math.floor(prices.length * 0.95)];
 
-                    maxPrice = Math.min(maxPrice, q3 * 1.25);
+                    maxPrice = Math.min(maxPrice, p95 * 1.1);
                 }
 
                 const priceFormatter = point => {
