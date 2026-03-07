@@ -185,6 +185,8 @@ new function () {
      * @property {number} [reqLevel]
      * @property {number} [side]
      * @property {number} [slots]
+     * @property {number} [squishEra]
+     * @property {number} [squishedItemLevel]
      * @property {number} [stack]
      * @property {number} subclass
      * @property {number} [vendorBuy]
@@ -4221,7 +4223,7 @@ new function () {
                 return item.vendorSell;
             }
             if (item.hasOwnProperty('vendorSellFactor')) {
-                const baseFactor = my.vendor[item.vendorSellBase || item['class']][item.bonusLevel || item.itemLevel];
+                const baseFactor = my.vendor[item.vendorSellBase || item['class']][item.bonusLevel || item.squishedItemLevel || item.itemLevel];
                 const qualityFactor = my.vendor.quality[item.quality];
 
                 return Math.floor(item.vendorSellFactor * baseFactor * qualityFactor);
@@ -4414,10 +4416,10 @@ new function () {
                         }
                         // Check the item level of the base item, not the variant. No break.
                     case Items.CLASS_GEM:
-                        if (minLevel !== undefined && item.itemLevel < minLevel) {
+                        if (minLevel !== undefined && (item.squishedItemLevel || item.itemLevel) < minLevel) {
                             continue;
                         }
-                        if (maxLevel !== undefined && item.itemLevel > maxLevel) {
+                        if (maxLevel !== undefined && (item.squishedItemLevel || item.itemLevel) > maxLevel) {
                             continue;
                         }
                         break;
@@ -4435,7 +4437,7 @@ new function () {
                         variants = [
                             Items.stringifyKeyParts(
                                 parseInt(id),
-                                self.CLASSES_EQUIPMENT.includes(item['class']) ? item.itemLevel : 0,
+                                self.CLASSES_EQUIPMENT.includes(item['class']) ? (item.squishedItemLevel || item.itemLevel) : 0,
                                 0,
                             ),
                         ];
@@ -5792,8 +5794,8 @@ new function () {
                 if (detailColumn.prop === 'reqLevel' && value <= 1) {
                     value = 1;
                 }
-                if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
-                    value = item.bonusLevel;
+                if (detailColumn.prop === 'itemLevel') {
+                    value = item.bonusLevel || item.squishedItemLevel || value;
                 }
                 tr.appendChild(td = document.createElement('td'));
                 td.className = detailColumn.prop;
@@ -6115,8 +6117,8 @@ new function () {
                     if (detailColumn.prop === 'reqLevel' && value <= 1) {
                         value = 1;
                     }
-                    if (detailColumn.prop === 'itemLevel' && item.bonusLevel) {
-                        value = item.bonusLevel;
+                    if (detailColumn.prop === 'itemLevel') {
+                        value = item.bonusLevel || item.squishedItemLevel || value;
                     }
                     sortRow.push(value);
                 }
