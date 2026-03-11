@@ -5210,7 +5210,7 @@ new function () {
          */
         this.setCurrentRealm = function (realm) {
             const select = qs('.main .search-bar select');
-            let option = select.querySelector(`option[value="${realm.id}"]`);
+            let option = select.querySelector(`option[value="${realm.id}"]:not([data-native])`);
             if (option) {
                 option.selected = true;
             }
@@ -5368,13 +5368,23 @@ new function () {
                 });
             }
 
+            select.querySelectorAll('option[data-native]').forEach(option => option.parentNode.removeChild(option));
+
             const sorted = [];
             for (let k in my.realms) {
                 if (!my.realms.hasOwnProperty(k)) {
                     continue;
                 }
 
-                sorted.push(my.realms[k]);
+                const realm = my.realms[k];
+                sorted.push(realm);
+                if (realm.nativeName) {
+                    sorted.push({
+                        ...realm,
+                        name: realm.nativeName,
+                        fromNative: true,
+                    });
+                }
             }
             sorted.sort((a, b) => {
                 return a.name.localeCompare(b.name) || (REGIONS.indexOf(a.region) - REGIONS.indexOf(b.region));
@@ -5383,11 +5393,15 @@ new function () {
             let og = select.querySelector('optgroup');
             const seenNames = {};
             sorted.forEach(realm => {
-                let o = select.querySelector('option[value="' + realm.id + '"]');
+                let o = realm.fromNative ? null :
+                    select.querySelector(`option[value="${realm.id}"]:not([data-native])`);
                 if (o) {
                     ee(o);
                 } else {
                     o = ce('option', {value: realm.id});
+                }
+                if (realm.fromNative) {
+                    o.dataset.native = 'true';
                 }
                 o.label = realm.name;
 
@@ -5406,7 +5420,7 @@ new function () {
                 }
                 o.appendChild(ct(o.label));
 
-                if (realm.id === savedRealmId) {
+                if (!realm.fromNative && realm.id === savedRealmId) {
                     o.selected = true;
                 }
 
