@@ -917,7 +917,7 @@ body {
               width: 100%; }
             .main .main-result .item .panels > div.details .other-realms-container .check-container, .main .main-result .item .panels > div.details .other-realms-container .list {
               margin: 0 auto;
-              max-width: 30em; }
+              max-width: 35em; }
             .main .main-result .item .panels > div.details .other-realms-container table {
               border-collapse: collapse;
               position: relative;
@@ -1211,5 +1211,10 @@ body > .wowhead-tooltip {
   width: auto !important; }
   body > .wowhead-tooltip .wowhead-tooltip-powered {
     display: none !important; }
+
+.native-name {
+  font-size: 75%; }
+  .native-name:before {
+    content: ' / '; }
 
 /*# sourceMappingURL=main.css.map */

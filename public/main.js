@@ -1794,7 +1794,11 @@ new function () {
                 backBar.appendChild(ce('div', {className: 'button-border'}, backButton));
 
                 if (realm && realm.id !== Realms.getCurrentRealm().id) {
-                    backBar.appendChild(ce('span', {className: 'alt-realm'}, ct('Viewing Realm ' + realm.name)));
+                    const span = ce('span', {className: 'alt-realm'}, ct('Viewing Realm ' + realm.name));
+                    if (realm.nativeName) {
+                        span.appendChild(ce('span', {className: 'native-name'}, ct(realm.nativeName)));
+                    }
+                    backBar.appendChild(span);
                 }
 
                 backBar.appendChild(ce('span', {className: 'available'}));
@@ -3384,6 +3388,9 @@ new function () {
                         const tr = ce('tr');
                         let td, a;
                         tr.appendChild(td = ce('td', {className: 'text', dataset: {sortValue: realm.name}}, ct(realm.name)));
+                        if (realm.nativeName) {
+                            td.appendChild(ce('span', {className: 'native-name'}, ct(realm.nativeName)));
+                        }
                         td.appendChild(a = ce('a', {
                             href: 'javascript:',
                         }));
@@ -3493,7 +3500,11 @@ new function () {
                     let container = otherRealmsChart.querySelector('.links');
                     chartData.forEach(entry => {
                         const result = ce('table', {className: 'shatari-tooltip'});
-                        result.appendChild(ce('tr', {}, ce('td', {colSpan: 2}, ce('b', {}, ct(entry.realm.name)))));
+                        const realmTitle = ce('b', {}, ct(entry.realm.name));
+                        if (entry.realm.nativeName) {
+                            realmTitle.appendChild(ce('span', {className: 'native-name'}, ct(entry.realm.nativeName)));
+                        }
+                        result.appendChild(ce('tr', {}, ce('td', {colSpan: 2}, realmTitle)));
 
                         if (entry.price) {
                             const priceLine = ce('tr');

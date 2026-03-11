@@ -1193,7 +1193,7 @@ body {
 
               .check-container, .list {
                 margin: 0 auto;
-                max-width: 30em;
+                max-width: 35em;
               }
 
               table {
@@ -1587,4 +1587,10 @@ picture.model-thumbnail img {
 
 body > .wowhead-tooltip {max-width: 320px !important; width: auto !important;
   .wowhead-tooltip-powered {display: none !important}
+}
+
+.native-name {
+  font-size: 75%;
+
+  &:before {content: ' / '}
 }
