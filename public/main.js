@@ -118,6 +118,7 @@ new function () {
      * @property {ConnectedRealmID} connectedId
      * @property {RealmID}          id
      * @property {string}           name
+     * @property {string}           [nativeName]
      * @property {number}           population
      * @property {string}           populationName
      * @property {Region}           region
@@ -5328,7 +5329,7 @@ new function () {
         /**
          * Set the names and categories of our cached realms using the given dictionary.
          *
-         * @param {Object.<number, {name: string, category: string}>} names
+         * @param {Object.<number, {name: string, category: string, nativeName: string}>} names
          */
         function setNames(names) {
             const popNames = Locales.getPopulationNames();
@@ -5339,6 +5340,11 @@ new function () {
                 }
                 let nameRec = names[my.realms[id].id] || {};
                 my.realms[id].name = nameRec.name || ('Realm ' + id);
+                if (nameRec.nativeName) {
+                    my.realms[id].nativeName = nameRec.nativeName;
+                } else {
+                    delete my.realms[id].nativeName;
+                }
                 my.realms[id].category = nameRec.category || '';
                 my.realms[id].populationName = popNames[my.realms[id].population] || '';
             }
