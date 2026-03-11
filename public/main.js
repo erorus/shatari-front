@@ -3647,6 +3647,10 @@ new function () {
                 scroller.scrollTop = Math.max(0, sectionNode.offsetTop - (scroller.offsetHeight / 2));
             };
 
+            parent.querySelectorAll(':scope > [data-section-key]:empty').forEach(
+                section => section.parentNode.removeChild(section)
+            );
+
             parent.querySelectorAll(':scope > [data-section-key]').forEach(section => {
                 const controls = ce('span', {className: 'section-controls'});
                 section.appendChild(controls);
