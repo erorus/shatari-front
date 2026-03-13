@@ -3537,9 +3537,9 @@ new function () {
                         container.appendChild(link);
                     });
                 }
-            });
 
-            makeSectionControls(sectionParent);
+                makeSectionControls(sectionParent);
+            });
         }
 
         /**
