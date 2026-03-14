@@ -1,9 +1,11 @@
 import {
     canHover,
     createElement as ce,
-    createText as ct, emptyElement as ee,
+    createText as ct,
+    emptyElement as ee,
     priceElement,
-    querySelector as qs, querySelectorAll as qsa,
+    querySelector as qs,
+    querySelectorAll as qsa,
     updateDeltaTimestamps
 } from "./utils.js";
 import {ITEM_PET_CAGE, SIDE_ALLIANCE, SIDE_HORDE} from "./constants.js";
