@@ -1,14 +1,14 @@
-import {createElement as ce, querySelector as qs, updateDeltaTimestamps} from './js/utils.js';
-import {MS_MINUTE} from './js/constants.js';
+import {createElement as ce, querySelector as qs, updateDeltaTimestamps} from './utils.js';
+import {MS_MINUTE} from './constants.js';
 
-import Categories from './js/Categories.js';
-import Detail from './js/Detail.js';
-import Hash from './js/Hash.js';
-import Items from './js/Items.js';
-import Locales from './js/Locales.js';
-import Realms from './js/Realms.js';
-import Search from './js/Search.js';
-import UndermineMigration from './js/UndermineMigration.js';
+import Categories from './Categories.js';
+import Detail from './Detail.js';
+import Hash from './Hash.js';
+import Items from './Items.js';
+import Locales from './Locales.js';
+import Realms from './Realms.js';
+import Search from './Search.js';
+import UndermineMigration from './UndermineMigration.js';
 
 async function init() {
     const inMaintenance = !!qs('.main .welcome').dataset.maintenance;
