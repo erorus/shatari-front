@@ -1,6 +1,6 @@
-"use strict";
+import {createElement as ce, copyObject as co} from './js/utils.js';
+import {UndermineMigration} from './js/UndermineMigration.js';
 
-new function () {
     /**
      * @typedef {Object} ArbitrageLine
      * @property {Money} min
@@ -6435,133 +6435,9 @@ new function () {
         init();
     };
 
-    /**
-     * Handles migrating from oribos.exchange to undermine.exchange.
-     */
-    const UndermineMigration = new function () {
-        // ********************* //
-        // ***** VARIABLES ***** //
-        // ********************* //
-
-        const my = Object.seal({
-            abortInit: false,
-        });
-
-        // ********************* //
-        // ***** FUNCTIONS ***** //
-        // ********************* //
-
-        // ------ //
-        // PUBLIC //
-        // ------ //
-
-        /**
-         * Returns true when the full page init should be aborted (because we're about to redirect).
-         *
-         * @return {boolean}
-         */
-        this.abortInit = () => my.abortInit;
-
-        // ------- //
-        // PRIVATE //
-        // ------- //
-
-        function init() {
-            switch (location.host) {
-                case 'oribos.exchange':
-                    oribosPart();
-                    break;
-
-                case 'undermine.exchange':
-                    underminePart();
-                    break;
-            }
-        }
-
-        /**
-         * Receives all cross-document messages. Listens for those coming from oribos.exchange to receive local storage
-         * migration information.
-         *
-         * @param {MessageEvent} event
-         */
-        function migrationMessage(event) {
-            if (event.origin !== 'https://oribos.exchange') {
-                return;
-            }
-
-            if (event.data.action !== 'migration') {
-                return;
-            }
-
-            const storage = event.data.storage || {};
-            Object.keys(storage).forEach(key => {
-                localStorage.setItem(key, storage[key]);
-            });
-
-            location.reload();
-        }
-
-        /**
-         * Stuff to run on oribos.exchange for the migration.
-         */
-        function oribosPart() {
-            my.abortInit = true;
-            location.href = 'https://undermine.exchange/' + location.hash;
-        }
-
-        /**
-         * Stuff to run on undermine.exchange for the migration.
-         */
-        function underminePart() {
-            // Quit if we've already attempted migration.
-            if (localStorage.getItem('migrated')) {
-                return;
-            }
-
-            // Mark migration as attempted. Quit if we can't write to localstorage.
-            try {
-                localStorage.setItem('migrated', '1');
-            } catch (e) {
-                console.log('Local storage not available.');
-                return;
-            }
-
-            // Prepare to receive migration messages.
-            window.addEventListener('message', migrationMessage);
-
-            // Open the migration iframe.
-            document.body.appendChild(ce('iframe', {
-                style: {display: 'none'},
-                src: 'https://oribos.exchange/migration.html',
-            }));
-        }
-
-        init();
-    };
-
     //                           //
     // Generic Utility Functions //
     //                           //
-
-    /**
-     * Create Element.
-     *
-     * @param {string} tag
-     * @param {object} [props]
-     * @param {HTMLElement} [child]
-     * @return {HTMLElement}
-     */
-    function ce(tag, props, child) {
-        const result = document.createElement(tag);
-
-        co(result, props || {});
-
-        if (child) {
-            result.appendChild(child);
-        }
-
-        return result;
-    }
 
     /**
      * Create SVG Element.
@@ -6587,32 +6463,6 @@ new function () {
         }
 
         return result;
-    }
-
-    /**
-     * Copy Object. Properties from source are set onto dest.
-     *
-     * @param {object} dest
-     * @param {object} source
-     */
-    function co(dest, source) {
-        for (let k in source) {
-            if (!source.hasOwnProperty(k)) {
-                continue;
-            }
-            if (typeof source[k] === 'object') {
-                if (Array.isArray(source[k])) {
-                    dest[k] = source[k].slice(0);
-                } else {
-                    if (!(k in dest)) {
-                        dest[k] = {};
-                    }
-                    co(dest[k], source[k]);
-                }
-            } else {
-                dest[k] = source[k];
-            }
-        }
     }
 
     /**
@@ -6885,4 +6735,4 @@ new function () {
     }
 
     init().catch(alert);
-};
+
