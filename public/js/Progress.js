@@ -1,7 +1,3 @@
-/**
- * Manages a progress bar during HTTP fetch operations.
- */
-
 import {querySelector as qs} from './utils.js';
 
 const my = Object.seal({
@@ -12,7 +8,10 @@ const my = Object.seal({
     bar: qs('.main .progress .progress-bar-value'),
 });
 
-export const Progress = {
+/**
+ * Manages a progress bar during HTTP fetch operations.
+ */
+const Progress = {
     /**
      * Returns a Response promise from fetch() but monitors the download progress in the UI.
      *
@@ -58,6 +57,7 @@ export const Progress = {
         }));
     }
 };
+export default Progress;
 
 /**
  * Updates the UI to reflect how many fetches are in progress and how many have finished.

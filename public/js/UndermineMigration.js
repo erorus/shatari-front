@@ -1,10 +1,9 @@
+import {createElement as ce} from './utils.js';
+
 /**
  * Handles migrating from oribos.exchange to undermine.exchange.
  */
-
-import {createElement as ce} from './utils.js';
-
-export const UndermineMigration = {
+const UndermineMigration = {
     /**
      * Executes any settings migration code. Returns true when we should abort further page initialization.
      *
@@ -24,6 +23,7 @@ export const UndermineMigration = {
         return false;
     }
 };
+export default UndermineMigration;
 
 /**
  * Receives all cross-document messages. Listens for those coming from oribos.exchange to receive local storage

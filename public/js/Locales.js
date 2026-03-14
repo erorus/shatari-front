@@ -1,9 +1,5 @@
 import {createElement as ce, querySelector as qs} from './utils.js';
 
-/**
- * Methods to handle locale changes, to show localized names and fields.
- */
-
 const POPULATION_NAMES = {
     enus: ['', 'New', 'New Players', 'Low', 'Medium', 'High', 'Full', 'Locked'],
     dede: ['', 'Neu', 'Empfohlen', 'Niedrig', 'Mittel', 'Hoch', 'Voll', 'Verschl.'],
@@ -49,7 +45,10 @@ const my = {
     locale: 'enus',
 };
 
-export const Locales = {
+/**
+ * Methods to handle locale changes, to show localized names and fields.
+ */
+const Locales = {
     /**
      * Returns the current 4-letter lowercase locale code.
      *
@@ -116,6 +115,7 @@ export const Locales = {
         }
     },
 };
+export default Locales;
 
 /**
  * Change the locale to the currently-selected locale in the given select element.
