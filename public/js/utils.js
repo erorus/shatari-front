@@ -25,7 +25,7 @@ export function copyObject(dest, source) {
 }
 
 /**
- * Create Element.
+ * Creates an element.
  *
  * @param {string} tag
  * @param {object} [props]
@@ -44,6 +44,26 @@ export function createElement(tag, props, child) {
     return result;
 }
 
-export const createText = document.createTextNode.bind(document);
-export const querySelector = document.body.querySelector.bind(document.body);
-export const querySelectorAll = document.body.querySelectorAll.bind(document.body);
+/**
+ * Creates a text node.
+ *
+ * @param {string} data
+ * @return {Text}
+ */
+export const createText = data => document.createTextNode(data);
+
+/**
+ * Queries a selector in the document body, returning one.
+ *
+ * @param {string} selectors
+ * @return {HTMLElement|null}
+ */
+export const querySelector = selectors => document.body.querySelector(selectors);
+
+/**
+ * Queries a selector in the document body, returning all matches.
+ *
+ * @param {string} selectors
+ * @return {NodeListOf<HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>}
+ */
+export const querySelectorAll = selectors => document.body.querySelectorAll(selectors);
