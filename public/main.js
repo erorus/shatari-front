@@ -1,10 +1,29 @@
 import {
+    canHover,
     createElement as ce,
     copyObject as co,
+    createSVGElement as svge,
     createText as ct,
+    emptyElement as ee,
+    priceElement,
     querySelector as qs,
     querySelectorAll as qsa,
+    timeString,
+    updateDeltaTimestamps,
+    waitForHighstock,
 } from './js/utils.js';
+import {
+    COPPER_SILVER,
+    COPPER_GOLD,
+    ITEM_PET_CAGE,
+    MS_SEC,
+    MS_MINUTE,
+    MS_HOUR,
+    MS_DAY,
+    NBSP,
+    SIDE_ALLIANCE,
+    SIDE_HORDE,
+} from './js/constants.js';
 
 import {UndermineMigration} from './js/UndermineMigration.js';
 import {Progress} from './js/Progress.js';
@@ -204,22 +223,6 @@ import {Locales} from './js/Locales.js';
      * @property {number} [vendorSellBase]
      * @property {number} [vendorSellFactor]
      */
-
-    const COPPER_SILVER = 100;
-    const COPPER_GOLD = 10000;
-
-    /** @type {ItemID} ITEM_PET_CAGE */
-    const ITEM_PET_CAGE = 82800;
-
-    const MS_SEC = 1000;
-    const MS_MINUTE = 60 * MS_SEC;
-    const MS_HOUR = 60 * MS_MINUTE;
-    const MS_DAY = 24 * MS_HOUR;
-
-    const NBSP = '\u00A0';
-
-    const SIDE_ALLIANCE = 1;
-    const SIDE_HORDE = 2;
 
     /**
      * Manages item prices and availability.
@@ -6193,159 +6196,6 @@ import {Locales} from './js/Locales.js';
 
         init();
     };
-
-    //                           //
-    // Generic Utility Functions //
-    //                           //
-
-    /**
-     * Create SVG Element.
-     *
-     * @param {string} tag
-     * @param {object} [attributes]
-     * @param {Node} [child]
-     * @return {Node}
-     */
-    function svge(tag, attributes, child) {
-        const result = document.createElementNS('http://www.w3.org/2000/svg', tag);
-
-        if (attributes) {
-            for (let key in attributes) {
-                if (attributes.hasOwnProperty(key)) {
-                    result.setAttribute(key, attributes[key]);
-                }
-            }
-        }
-
-        if (child) {
-            result.appendChild(child);
-        }
-
-        return result;
-    }
-
-    /**
-     * Empties an element of all children.
-     *
-     * @param {Node} ele
-     */
-    function ee(ele) {
-        while (ele.hasChildNodes()) {
-            ele.removeChild(ele.firstChild);
-        }
-    }
-
-    /**
-     * Returns true when the primary input can hover.
-     *
-     * @return {boolean}
-     */
-    function canHover() {
-        return window.matchMedia('(hover: hover)').matches;
-    }
-
-    /**
-     * Returns an element for the given price.
-     *
-     * @param {Money} coppers
-     * @return {HTMLSpanElement}
-     */
-    function priceElement(coppers) {
-        const df = document.createElement('span');
-        df.style.whiteSpace = 'nowrap';
-        coppers = Math.abs(coppers);
-        const silver = Math.floor(coppers / COPPER_SILVER) % COPPER_SILVER;
-        const gold = Math.floor(coppers / COPPER_GOLD);
-
-        if (gold > 0) {
-            let goldSpan = document.createElement('span');
-            goldSpan.className = 'gold';
-            goldSpan.appendChild(ct(gold.toLocaleString()));
-            df.appendChild(goldSpan);
-        }
-        let silverSpan = document.createElement('span');
-        silverSpan.className = 'silver';
-        silverSpan.appendChild(ct(silver));
-        df.appendChild(silverSpan);
-
-        return df;
-    }
-
-    /**
-     * Returns a string describing the timestamp relative to now. e.g. "2 hours ago".
-     *
-     * @param {number} timestamp
-     * @return {string}
-     */
-    function timeString(timestamp) {
-        let now = Date.now();
-        let delta = now - timestamp;
-        let sign = Math.sign(delta);
-        delta = Math.abs(delta);
-        let ago = sign > 0 ? 'ago' : 'away';
-
-        if (sign === 0) {
-            return 'now';
-        }
-        if (delta < 2 * MS_HOUR) {
-            return Math.round(delta / MS_MINUTE) + ' minutes ' + ago;
-        }
-        if (delta < 2 * MS_DAY) {
-            return Math.round(delta / MS_HOUR) + ' hours ' + ago;
-        }
-        if (delta < 14 * MS_DAY) {
-            return Math.round(delta / MS_DAY) + ' days ' + ago;
-        }
-
-        const shortFormatter = new Intl.DateTimeFormat([], {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-
-        return shortFormatter.format(new Date(timestamp));
-    }
-
-    /**
-     * Updates all delta timestamp elements on the page with values for the current time.
-     */
-    function updateDeltaTimestamps() {
-        const longFormatter = new Intl.DateTimeFormat([], {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            timeZoneName: 'short',
-        });
-
-        qsa('.delta-timestamp[data-timestamp]').forEach(ele => {
-            const timestamp = parseInt(ele.dataset.timestamp);
-            ee(ele);
-            if (timestamp <= 0) {
-                delete ele.dataset.simpleTooltip;
-                ele.appendChild(ct('Never'));
-
-                return;
-            }
-            ele.dataset.simpleTooltip = longFormatter.format(new Date(timestamp));
-
-            ele.appendChild(ct(timeString(timestamp)));
-        });
-    }
-
-    /**
-     * Waits for Highstock to be loaded.
-     */
-    async function waitForHighstock() {
-        let tag = document.getElementById('highstock-script');
-        if (!tag.dataset.loaded) {
-            await new Promise(resolve => {
-                tag.addEventListener('load', () => resolve());
-            });
-        }
-    }
 
     //      //
     // Init //
