@@ -278,8 +278,6 @@ import UndermineMigration from './js/UndermineMigration.js';
             Realms.init(),
         ]);
 
-        qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false, false));
-
         const filterButton = qs('.main .search-bar .filter');
         filterButton.addEventListener('mouseup', (event) => {
             const div = filterButton.querySelector('div');
@@ -307,17 +305,6 @@ import UndermineMigration from './js/UndermineMigration.js';
             }
             outside.addEventListener('mouseup', closeDiv);
             event.stopPropagation();
-        });
-        const searchBox = qs('.main .search-bar input[type="text"]');
-        searchBox.addEventListener('keyup', event => {
-            if (event.key === 'Enter') {
-                Search.perform(false, false);
-            }
-        });
-        qs('.main .search-bar .text-reset').addEventListener('click', event => {
-            searchBox.value = '';
-            searchBox.focus();
-            searchBox.dispatchEvent(new FocusEvent('focus'));
         });
 
         {

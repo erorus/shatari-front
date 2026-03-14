@@ -106,6 +106,19 @@ const Search = {
         };
         document.addEventListener('keyup', copyNameToClipboard);
 
+        qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false, false));
+        const searchBox = qs('.main .search-bar input[type="text"]');
+        searchBox.addEventListener('keyup', event => {
+            if (event.key === 'Enter') {
+                Search.perform(false, false);
+            }
+        });
+        qs('.main .search-bar .text-reset').addEventListener('click', event => {
+            searchBox.value = '';
+            searchBox.focus();
+            searchBox.dispatchEvent(new FocusEvent('focus'));
+        });
+
         Suggestions.init();
     },
 
