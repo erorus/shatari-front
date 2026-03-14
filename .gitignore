@@ -1,11 +1,12 @@
 .idea/
 .sass-cache/
 node_modules/
+dist/
 public/css/*.map
 public/data/
 public/icons/
-public/json/realm-list*
-public/json/realms
-public/json/*.bound.*
+json/realm-list*
+json/realms
+json/*.bound.*
 *.gz
 *.br

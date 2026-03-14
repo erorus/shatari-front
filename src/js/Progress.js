@@ -24,12 +24,6 @@ const Progress = {
         my.runningFetchCount++;
         updateDisplay();
 
-        if (location.hostname === '127.0.0.1' && typeof resource === 'string') {
-            if (resource.startsWith('data/')) {
-                resource = 'data.php?path=' + encodeURIComponent(resource);
-            }
-        }
-
         const response = await fetch(resource, options);
         if (!response.ok || !response.body) {
             my.runningFetchCount--;
