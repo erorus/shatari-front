@@ -1,4 +1,6 @@
-@import 'SpinThatShit';
+@use "sass:math";
+@use "sass:color";
+@use 'SpinThatShit';
 
 $background00: #060100;
 $background10: #161211;
@@ -20,14 +22,14 @@ $categoryHoverBorder: #aaf;
 $categoryHoverGlow: #8080ff;
 
 $columnHeaderHoverBackground: #8080ff;
-$rowHoverStart: transparentize($columnHeaderHoverBackground, 1);
-$rowHoverEnd: transparentize($columnHeaderHoverBackground, 0.4);
+$rowHoverStart: color.adjust($columnHeaderHoverBackground, $alpha: -1);
+$rowHoverEnd: color.adjust($columnHeaderHoverBackground, $alpha: -0.4);
 
-$subsubCategoryHoverStart: transparentize($columnHeaderHoverBackground, 0.9);
+$subsubCategoryHoverStart: color.adjust($columnHeaderHoverBackground, $alpha: -0.9);
 $subsubCategoryHoverEnd: $rowHoverEnd;
 $rowHighlightColor: #e6b335;
-$subsubCategoryBackgroundStart: transparentize($rowHighlightColor, 0.9);
-$subsubCategoryBackgroundEnd: transparentize($rowHighlightColor, 0.4);
+$subsubCategoryBackgroundStart: color.adjust($rowHighlightColor, $alpha: -0.9);
+$subsubCategoryBackgroundEnd: color.adjust($rowHighlightColor, $alpha: -0.4);
 
 $buttonRed: #640000;
 $buttonRedBright: #CC0C00;
@@ -88,8 +90,8 @@ $tooltipPadding: 8px;
 @mixin button-red {
   @include button();
 
-  $borderUpper: mix($buttonRed, #CCC, 90%);
-  $borderLower: mix($buttonRed, #000, 70%);
+  $borderUpper: color.mix($buttonRed, #CCC, $weight: 90%);
+  $borderLower: color.mix($buttonRed, #000, $weight: 70%);
   background-color: $buttonRed;
   border-color: $borderUpper $borderUpper $borderLower;
   color: $buttonText;
@@ -106,11 +108,11 @@ $tooltipPadding: 8px;
 
 @font-face {
   font-family: "Arial Narrow";
-  src: url("../fonts/arialn.ttf") format("truetype");
+  src: url("/fonts/arialn.ttf") format("truetype");
 }
 @font-face {
   font-family: "Friz Quadrata TT";
-  src: url("../fonts/frizqt__.ttf") format("truetype");
+  src: url("/fonts/frizqt__.ttf") format("truetype");
 }
 
 $scrollbarThumb: $background40;
@@ -217,14 +219,14 @@ body {
       border-color: $background00 $background00 $background40;
       border-radius: $borderRadius;
       color: $text10;
-      padding: $marginStep / 2;
+      padding: math.div($marginStep, 2);
     }
     div.text-container {
       flex: 5 1;
       position: relative;
 
       .text-reset {
-        background-image: url("../images/clear-search.png");
+        background-image: url("/images/clear-search.png");
         background-position: center center;
         background-repeat: no-repeat;
         background-size: contain;
@@ -242,7 +244,7 @@ body {
       $textLeftPadding: 2em;
 
       input[type="text"] {
-        background-image: linear-gradient($background20Tint, $background20Tint), url("../images/eyeglass.png");
+        background-image: linear-gradient($background20Tint, $background20Tint), url("/images/eyeglass.png");
         background-position: 3px center;
         background-repeat: no-repeat;
         background-size: 1.25em;
@@ -314,17 +316,17 @@ body {
       max-width: 10em;
 
       &.favorite {
-        background-image: url('../images/favorite-star-off.png');
+        background-image: url('/images/favorite-star-off.png');
         background-position: center center;
         background-repeat: no-repeat;
         background-size: calc(100% - 2px);
 
         &[data-enabled] {
-          background-image: url('../images/favorite-star.png');
+          background-image: url('/images/favorite-star.png');
         }
       }
       &.deals {
-        background-image: url('../images/goldclover.png');
+        background-image: url('/images/goldclover.png');
         background-position: center center;
         background-repeat: no-repeat;
         background-size: calc(100% - 4px);
@@ -363,7 +365,7 @@ body {
           line-height: 1;
         }
         &::after {
-          background-image: url("../images/triangle-arrow.png");
+          background-image: url("/images/triangle-arrow.png");
           background-size: contain;
           background-position: center center;
           background-repeat: no-repeat;
@@ -445,12 +447,12 @@ body {
     }
 
     .categories {
-      bottom: $marginStep / 2;
-      left: $marginStep / 2;
+      bottom: math.div($marginStep, 2);
+      left: math.div($marginStep, 2);
       overflow-y: auto;
       position: absolute;
-      right: $marginStep / 2;
-      top: $marginStep / 2;
+      right: math.div($marginStep, 2);
+      top: math.div($marginStep, 2);
 
       &::-webkit-scrollbar-thumb {
         border-right:0;
@@ -482,7 +484,7 @@ body {
         color: $qColor;
         cursor: pointer;
         font: $fontSizeFriz * 0.85 $fontFriz;
-        margin: $marginStep / 2 0;
+        margin: math.div($marginStep, 2) 0;
         overflow: hidden;
         padding: $marginStep * 0.5 $marginStep * 0.75;
         text-overflow: ellipsis;
@@ -526,7 +528,7 @@ body {
         padding-left: $marginStep * 2;
         position: relative;
         &:after {
-          background-image: url("../images/subsub.png");
+          background-image: url("/images/subsub.png");
           background-repeat: no-repeat;
           background-size: contain;
           bottom: 4px;
@@ -552,15 +554,15 @@ body {
     }
 
     .welcome {
-      bottom: $marginStep / 2;
+      bottom: math.div($marginStep, 2);
       font: $fontSizeFriz $fontFriz;
-      left: $marginStep / 2;
+      left: math.div($marginStep, 2);
       line-height: 1.33;
       overflow-y: auto;
       position: absolute;
-      right: $marginStep / 2;
+      right: math.div($marginStep, 2);
       text-align: center;
-      top: $marginStep / 2;
+      top: math.div($marginStep, 2);
       z-index: 3;
 
       h1:first-child {margin-top: 0}
@@ -607,13 +609,13 @@ body {
       .search-result-border {
         border: $thin solid $background30;
         border-top: 0;
-        border-radius: $borderRadius / 2;
-        bottom: #{$marginStep / 2 + $thin};
+        border-radius: math.div($borderRadius, 2);
+        bottom: #{math.div($marginStep, 2) + $thin};
         left: $thin;
         overflow-y: auto;
         position: absolute;
         right: $thin;
-        top: #{$marginStep / 2 + $thin};
+        top: #{math.div($marginStep, 2) + $thin};
 
         &:empty {display: none}
       }
@@ -640,14 +642,14 @@ body {
           td {
             border: $thin solid $background40;
             border-bottom-color: $background30;
-            border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
+            border-radius: math.div($borderRadius, 2) math.div($borderRadius, 2) 0 0;
             cursor: pointer;
-            padding: $marginStep / 2 0 $marginStep / 2 $marginStep / 2;
+            padding: math.div($marginStep, 2) 0 math.div($marginStep, 2) math.div($marginStep, 2);
             &:first-child {border-left: 0}
             &:last-child {border-right: 0}
 
             &[data-sort]::after {
-              background-image: url("../images/sort-arrow.png");
+              background-image: url("/images/sort-arrow.png");
               background-repeat: no-repeat;
               background-size: contain;
               content: "";
@@ -680,13 +682,13 @@ body {
             cursor: pointer;
             &.vendor-flip {
               background: linear-gradient(90deg,
-                transparentize($rowHighlightColor, 0.9) 0%,
-                transparentize($rowHighlightColor, 0.4) 40%,
-                transparentize($rowHighlightColor, 0.4) 60%,
-                transparentize($rowHighlightColor, 0.9) 100%
+                color.adjust($rowHighlightColor, $alpha: -0.9) 0%,
+                color.adjust($rowHighlightColor, $alpha: -0.4) 40%,
+                color.adjust($rowHighlightColor, $alpha: -0.4) 60%,
+                color.adjust($rowHighlightColor, $alpha: -0.9) 100%
               );
             }
-            body.no-row-backgrounds &.vendor-flip {background: transparentize($rowHighlightColor, 0.4)}
+            body.no-row-backgrounds &.vendor-flip {background: color.adjust($rowHighlightColor, $alpha: -0.4)}
 
             @media (hover: hover) {
               &:hover {
@@ -718,7 +720,7 @@ body {
             }
           }
           td {
-            padding: $marginStep / 4 $marginStep;
+            padding: math.div($marginStep, 4) $marginStep;
             &.price {
               text-align: right;
               width: $priceWidth;
@@ -728,10 +730,10 @@ body {
               padding-top: 0;
               > * {
                 position: relative;
-                top: $marginStep / 4;
+                top: math.div($marginStep, 4);
               }
               > a {
-                height: calc(1.25em + #{$marginStep / 2});
+                height: calc(1.25em + #{math.div($marginStep, 2)});
                 left: 0;
                 position: absolute;
                 right: 0;
@@ -776,7 +778,7 @@ body {
                 white-space: nowrap;
               }
               span.favorite {
-                background-image: url('../images/favorite-star-off.png');
+                background-image: url('/images/favorite-star-off.png');
                 background-position: center center;
                 background-repeat: no-repeat;
                 background-size: contain;
@@ -792,7 +794,7 @@ body {
                 }
 
                 &[data-favorite] {
-                  background-image: url('../images/favorite-star.png');
+                  background-image: url('/images/favorite-star.png');
                   visibility: visible;
                 }
               }
@@ -851,16 +853,16 @@ body {
           border: $bevel solid;
           border-color: $background00 $background10 $background40;
           border-radius: $borderRadius;
-          padding: $marginStep / 2;
+          padding: math.div($marginStep, 2);
           position: relative;
 
           .scroller {
-            bottom: $marginStep / 2;
-            left: $marginStep / 2;
+            bottom: math.div($marginStep, 2);
+            left: math.div($marginStep, 2);
             overflow-y: auto;
             position: absolute;
-            right: $marginStep / 2;
-            top: $marginStep / 2;
+            right: math.div($marginStep, 2);
+            top: math.div($marginStep, 2);
 
             .scroll-indicator {
               background: linear-gradient(to bottom, transparent, transparent 25%, rgba(0,0,0,0.666) 83%, transparent);
@@ -914,7 +916,7 @@ body {
                 width: 2em;
 
                 &:after {
-                  background-image: url("../images/ring-1.png");
+                  background-image: url("/images/ring-1.png");
                   background-position: center center;
                   background-repeat: no-repeat;
                   background-size: contain;
@@ -925,18 +927,18 @@ body {
                   right: -0.5em;
                   top: -0.5em;
                 }
-                &[data-quality="0"]:after {background-image: url("../images/ring-0.png")}
-                &[data-quality="2"]:after {background-image: url("../images/ring-2.png")}
-                &[data-quality="3"]:after {background-image: url("../images/ring-3.png")}
-                &[data-quality="4"]:after {background-image: url("../images/ring-4.png")}
-                &[data-quality="5"]:after {background-image: url("../images/ring-5.png")}
+                &[data-quality="0"]:after {background-image: url("/images/ring-0.png")}
+                &[data-quality="2"]:after {background-image: url("/images/ring-2.png")}
+                &[data-quality="3"]:after {background-image: url("/images/ring-3.png")}
+                &[data-quality="4"]:after {background-image: url("/images/ring-4.png")}
+                &[data-quality="5"]:after {background-image: url("/images/ring-5.png")}
               }
 
               .quality-tier {height: 1.25em; padding-left: 0.25em; vertical-align: bottom}
 
               span.favorite {
                 aspect-ratio: 1;
-                background-image: url('../images/favorite-star-off.png');
+                background-image: url('/images/favorite-star-off.png');
                 background-position: center center;
                 background-repeat: no-repeat;
                 background-size: contain;
@@ -947,7 +949,7 @@ body {
                 width: 1em;
 
                 &[data-favorite] {
-                  background-image: url('../images/favorite-star.png');
+                  background-image: url('/images/favorite-star.png');
                 }
               }
             }
@@ -987,7 +989,7 @@ body {
                 .move {cursor: pointer; filter: grayscale(1)}
                 .move:hover {filter: none}
                 .move::after {
-                  background-image: url("../images/sort-arrow.png");
+                  background-image: url("/images/sort-arrow.png");
                   background-repeat: no-repeat;
                   background-size: contain;
                   content: "";
@@ -1038,7 +1040,7 @@ body {
                 box-sizing: border-box;
                 color: $text10;
                 font: $fontSizeArial $fontArial;
-                padding: $marginStep / 2 $marginStep;
+                padding: math.div($marginStep, 2) $marginStep;
                 width: 100%;
               }
 
@@ -1081,7 +1083,7 @@ body {
                   stroke: $priceChart;
                 }
                 polygon.price {
-                  fill: transparentize($priceChart, 0.5);
+                  fill: color.adjust($priceChart, $alpha: -0.5);
                 }
 
                 polyline.quantity {
@@ -1089,7 +1091,7 @@ body {
                   stroke: $quantityChart;
                 }
                 polygon.quantity {
-                  fill: transparentize($quantityChart, 0.5);
+                  fill: color.adjust($quantityChart, $alpha: -0.5);
                   stroke: $quantityChart;
                 }
 
@@ -1147,10 +1149,10 @@ body {
                 }
 
                 .bar-section.price-bars {flex: 20 0 auto;
-                  .bar {border-color: $priceChart; background-color: transparentize($priceChart, 0.5)}
+                  .bar {border-color: $priceChart; background-color: color.adjust($priceChart, $alpha: -0.5)}
                 }
                 .bar-section.quantity-bars {flex: 10 0 auto;
-                  .bar {border-color: $quantityChart; background-color: transparentize($quantityChart, 0.5)}
+                  .bar {border-color: $quantityChart; background-color: color.adjust($quantityChart, $alpha: -0.5)}
                 }
 
                 .bar-section.links {
@@ -1209,14 +1211,14 @@ body {
                   td {
                     border: $thin solid $background40;
                     border-bottom-color: $background30;
-                    border-radius: $borderRadius / 2 $borderRadius / 2 0 0;
+                    border-radius: math.div($borderRadius, 2) math.div($borderRadius, 2) 0 0;
                     cursor: pointer;
-                    padding: $marginStep / 2 0 $marginStep / 2 $marginStep / 2;
+                    padding: math.div($marginStep, 2) 0 math.div($marginStep, 2) math.div($marginStep, 2);
                     &:first-child {border-left: 0}
                     &:last-child {border-right: 0}
 
                     &[data-sort]::after {
-                      background-image: url("../images/sort-arrow.png");
+                      background-image: url("/images/sort-arrow.png");
                       background-repeat: no-repeat;
                       background-size: contain;
                       content: "";
@@ -1334,18 +1336,18 @@ body {
 
                 &[data-selected] {
                   background: linear-gradient(90deg,
-                    transparentize($rowHighlightColor, 0.9) 0%,
-                    transparentize($rowHighlightColor, 0.4) 40%,
-                    transparentize($rowHighlightColor, 0.4) 60%,
-                    transparentize($rowHighlightColor, 0.9) 100%
+                    color.adjust($rowHighlightColor, $alpha: -0.9) 0%,
+                    color.adjust($rowHighlightColor, $alpha: -0.4) 40%,
+                    color.adjust($rowHighlightColor, $alpha: -0.4) 60%,
+                    color.adjust($rowHighlightColor, $alpha: -0.9) 100%
                   );
                 }
                 &[data-selected="part"] {
                   background: linear-gradient(90deg,
-                    transparentize($rowHighlightColor, 0.9) 0%,
-                    transparentize($rowHighlightColor, 0.66) 40%,
-                    transparentize($rowHighlightColor, 0.66) 60%,
-                    transparentize($rowHighlightColor, 0.9) 100%
+                    color.adjust($rowHighlightColor, $alpha: -0.9) 0%,
+                    color.adjust($rowHighlightColor, $alpha: -0.66) 40%,
+                    color.adjust($rowHighlightColor, $alpha: -0.66) 60%,
+                    color.adjust($rowHighlightColor, $alpha: -0.9) 100%
                   );
                 }
 
@@ -1356,8 +1358,8 @@ body {
                 }
 
                 body.no-row-backgrounds & {background: $background15;
-                  &[data-selected] {background: transparentize($rowHighlightColor, 0.4)}
-                  &[data-selected="part"] {background: transparentize($rowHighlightColor, 0.66)}
+                  &[data-selected] {background: color.adjust($rowHighlightColor, $alpha: -0.4)}
+                  &[data-selected="part"] {background: color.adjust($rowHighlightColor, $alpha: -0.66)}
                   @media (hover: hover) {
                     &:hover {background: $rowHoverEnd}
                   }
@@ -1419,7 +1421,7 @@ body {
       border-radius: $borderRadius;
       color: $text10;
       font: $fontSizeFriz * 0.8 $fontFriz;
-      padding: 0 $marginStep / 2;
+      padding: 0 math.div($marginStep, 2);
     }
 
     .progress {
@@ -1433,7 +1435,7 @@ body {
         height: 1.5em;
         width: 1.5em;
 
-        &-inner {@include loader03($color: $highlightBorderColor, $size: 100%, $border-size: 3px)}
+        &-inner {@include SpinThatShit.loader03($color: $highlightBorderColor, $size: 100%, $border-size: 3px)}
       }
 
       &-bar {
@@ -1531,9 +1533,9 @@ body {
     background-size: 1em;
     padding-right: 1em;
   }
-  .gold {background-image: url("../images/coin-gold.png");}
-  .silver {background-image: url("../images/coin-silver.png");}
-  .copper {background-image: url("../images/coin-copper.png");}
+  .gold {background-image: url("/images/coin-gold.png");}
+  .silver {background-image: url("/images/coin-silver.png");}
+  .copper {background-image: url("/images/coin-copper.png");}
 }
 
 .shatari-tooltip {
