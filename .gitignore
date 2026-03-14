@@ -1,6 +1,7 @@
 .idea/
 .sass-cache/
 node_modules/
+data/
 dist/
 public/css/*.map
 public/data/

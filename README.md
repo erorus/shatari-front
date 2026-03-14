@@ -17,20 +17,26 @@ Compared to a dynamic, server-side scripting setup, this design provides more co
 
 ## Directory Structure
 
-* `/public` is what nginx hosts as the root of the website.
-  * `/public/css` is CSS compiled at development time.
+* `/index.html` is the main HTML page with a basic layout.
+* `/src` contains the JS and SCSS source.
+  * `/src/js/main.js` is the main JS entry point, and loads all other JS files as required.
+  * `/src/scss/main.scss` is the main SCSS entry point, and includes all other SCSS files as required.
+* `/public` is a collection of static assets copied to `/dist` at build time.
   * `/public/fonts` contains fonts used by the site.
   * `/public/images` contains all the various images used by the site.
-  * `/public/json` contains static JSON data provided by the Data repository linked above.
-    * `/public/json/realms` is gitignored, but expected to point at the `/realms` directory in the back end repo location.
-  * `/public/data` is gitignored, but expected to point at the directory where the back end process stores the auction statistical data.
-  * `/public/index.html` is the main HTML page with a basic layout.
-  * `/public/main.js` is the bulk of the JS running the site in the browser.
   * `/public/power.js` is a local copy of [Wowhead's tooltip script](https://www.wowhead.com/tooltips), slightly modified.
   * `/public/highstock-*.js` is a local copy of [Highcharts Stock](https://www.highcharts.com/blog/products/stock/)
-* `/scss` contains the SCSS which is the source of the compiled CSS.
+* `/dist` is served by nginx (under the `/` root path) and is wiped and reset with each build.
+* `/json` is served by nginx (under the `/json` path) and contains static JSON data provided by the Data repository linked above.
+  * `/json/realms` is gitignored, but expected to point at the `/realms` directory in the back end repo location.
+* `/data` is served by nginx (under the `/data` path) and is a symlink to the directory where the back end process stores the auction statistical data.
 * `/oribos` contains some public migration support pages for when Undermine Exchange was renamed from Oribos Exchange, and moved from another domain.
-* `/start.sh` is a dev script to start `sass --watch` and run a local PHP web server for basic browser support during development.
+
+## Installation
+
+* Run `npm install` to download dependencies.
+* Run `npm run dev` in your development environment to load a local server with live changes.
+* Run `npm run build` in production to wipe and fill the `/dist` directory with compiled files.
 
 ## Thanks
 
