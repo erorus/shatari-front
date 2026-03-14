@@ -43,3 +43,7 @@ export function createElement(tag, props, child) {
 
     return result;
 }
+
+export const createText = document.createTextNode.bind(document);
+export const querySelector = document.body.querySelector.bind(document.body);
+export const querySelectorAll = document.body.querySelectorAll.bind(document.body);
