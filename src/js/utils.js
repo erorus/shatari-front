@@ -1,4 +1,4 @@
-import {COPPER_GOLD, COPPER_SILVER, MS_DAY, MS_HOUR, MS_MINUTE} from './constants.js';
+import {COPPER_GOLD, COPPER_SILVER, MS_DAY, MS_HOUR, MS_MINUTE} from "./constants";
 
 /**
  * Returns true when the primary input can hover.

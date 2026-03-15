@@ -4,9 +4,9 @@ import {
     createText as ct,
     emptyElement as ee,
     querySelector as qs
-} from "./utils.js";
-import Locales from "./Locales.js";
-import Progress from "./Progress.js";
+} from "./utils";
+import Locales from "./Locales";
+import Progress from "./Progress";
 
 /** @type {Region[]} */
 const REGIONS = ['us', 'eu', 'tw', 'kr'];

@@ -1,4 +1,4 @@
-import {createElement as ce, querySelector as qs} from './utils.js';
+import {createElement as ce, querySelector as qs} from "./utils";
 
 const POPULATION_NAMES = {
     enus: ['', 'New', 'New Players', 'Low', 'Medium', 'High', 'Full', 'Locked'],

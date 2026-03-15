@@ -7,17 +7,17 @@ import {
     querySelector as qs,
     querySelectorAll as qsa,
     updateDeltaTimestamps
-} from "./utils.js";
-import {ITEM_PET_CAGE, SIDE_ALLIANCE, SIDE_HORDE} from "./constants.js";
+} from "./utils";
+import {ITEM_PET_CAGE, SIDE_ALLIANCE, SIDE_HORDE} from "./constants";
 
-import Auctions from "./Auctions.js";
-import Categories from "./Categories.js";
-import Detail from "./Detail.js";
-import Hash from "./Hash.js";
-import Items from "./Items.js";
-import Locales from "./Locales.js";
-import Realms from "./Realms.js";
-import Suggestions from "./Suggestions.js";
+import Auctions from "./Auctions";
+import Categories from "./Categories";
+import Detail from "./Detail";
+import Hash from "./Hash";
+import Items from "./Items";
+import Locales from "./Locales";
+import Realms from "./Realms";
+import Suggestions from "./Suggestions";
 
 const COL_PRICE = 1;
 const COL_NAME = 2;

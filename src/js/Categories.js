@@ -5,11 +5,11 @@ import {
     emptyElement as ee,
     querySelector as qs,
     querySelectorAll as qsa
-} from "./utils.js";
-import Detail from './Detail.js';
-import Items from './Items.js';
-import Locales from "./Locales.js";
-import Progress from "./Progress.js";
+} from "./utils";
+import Detail from "./Detail";
+import Items from "./Items";
+import Locales from "./Locales";
+import Progress from "./Progress";
 
 /**
  * @typedef {Object} Category

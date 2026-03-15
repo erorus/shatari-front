@@ -1,6 +1,6 @@
-import {createElement as ce, emptyElement as ee, querySelector as qs} from "./utils.js";
-import Auctions from "./Auctions.js";
-import Items from "./Items.js";
+import {createElement as ce, emptyElement as ee, querySelector as qs} from "./utils";
+import Auctions from "./Auctions";
+import Items from "./Items";
 
 const searchBox = qs('.main .search-bar input[type="text"]');
 const textContainer = searchBox.parentNode;

@@ -1,4 +1,4 @@
-import {querySelector as qs} from './utils.js';
+import {querySelector as qs} from "./utils";
 
 const my = Object.seal({
     runningFetchCount: 0,

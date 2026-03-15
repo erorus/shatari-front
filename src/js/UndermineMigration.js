@@ -1,4 +1,4 @@
-import {createElement as ce} from './utils.js';
+import {createElement as ce} from "./utils";
 
 /**
  * Handles migrating from oribos.exchange to undermine.exchange.

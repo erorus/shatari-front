@@ -1,11 +1,11 @@
-import {querySelector as qs} from "./utils.js";
+import {querySelector as qs} from "./utils";
 
-import Auctions from "./Auctions.js";
-import Categories from "./Categories.js";
-import Detail from "./Detail.js";
-import Items from "./Items.js";
-import Realms from "./Realms.js";
-import Search from './Search.js';
+import Auctions from "./Auctions";
+import Categories from "./Categories";
+import Detail from "./Detail";
+import Items from "./Items";
+import Realms from "./Realms";
+import Search from "./Search";
 
 /**
  * Manages the URL/location hash.

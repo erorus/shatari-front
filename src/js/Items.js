@@ -1,11 +1,11 @@
-import {copyObject as co, querySelector as qs} from "./utils.js";
-import {ITEM_PET_CAGE} from "./constants.js";
+import {copyObject as co, querySelector as qs} from "./utils";
+import {ITEM_PET_CAGE} from "./constants";
 
-import Auctions from './Auctions.js';
-import Categories from "./Categories.js";
-import Locales from "./Locales.js";
-import Progress from "./Progress.js";
-import Search from "./Search.js";
+import Auctions from "./Auctions";
+import Categories from "./Categories";
+import Locales from "./Locales";
+import Progress from "./Progress";
+import Search from "./Search";
 
 /** @typedef {string} IconSize */
 

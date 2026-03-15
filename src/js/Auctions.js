@@ -1,4 +1,4 @@
-import {COPPER_SILVER, ITEM_PET_CAGE, MS_DAY, MS_HOUR, MS_SEC} from "./constants.js";
+import {COPPER_SILVER, ITEM_PET_CAGE, MS_DAY, MS_HOUR, MS_SEC} from "./constants";
 import {
     copyObject as co,
     createElement as ce,
@@ -6,11 +6,11 @@ import {
     emptyElement as ee,
     querySelector as qs,
     updateDeltaTimestamps
-} from "./utils.js";
+} from "./utils";
 
-import Items from "./Items.js";
-import Progress from "./Progress.js";
-import Realms from "./Realms.js";
+import Items from "./Items";
+import Progress from "./Progress";
+import Realms from "./Realms";
 
 /** @type {Object<Region, ConnectedRealmID>} Realm IDs used by commodity realms for each region. */
 const COMMODITY_REALMS = {

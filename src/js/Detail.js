@@ -9,16 +9,16 @@ import {
     timeString,
     updateDeltaTimestamps,
     waitForHighstock,
-} from "./utils.js";
-import {COPPER_GOLD, COPPER_SILVER, ITEM_PET_CAGE, MS_DAY, MS_HOUR, NBSP} from "./constants.js";
+} from "./utils";
+import {COPPER_GOLD, COPPER_SILVER, ITEM_PET_CAGE, MS_DAY, MS_HOUR, NBSP} from "./constants";
 
-import Auctions from "./Auctions.js";
-import Categories from "./Categories.js";
-import Hash from './Hash.js';
-import Items from "./Items.js";
-import Locales from "./Locales.js";
-import Realms from "./Realms.js";
-import Search from "./Search.js";
+import Auctions from "./Auctions";
+import Categories from "./Categories";
+import Hash from "./Hash";
+import Items from "./Items";
+import Locales from "./Locales";
+import Realms from "./Realms";
+import Search from "./Search";
 
 /** @type {Object.<number, BattlePetStats>} */
 const BREED_STATS = {

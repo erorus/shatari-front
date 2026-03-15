@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
-import fs from 'fs';
-import path from 'path';
+import { defineConfig } from "vite";
+import fs from "fs";
+import path from "path";
 
 const removeCSPInDev = {
     name: 'remove-csp-in-dev',
