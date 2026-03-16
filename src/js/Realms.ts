@@ -1,22 +1,22 @@
 import {
-    copyObject as co,
     createElement as ce,
     createText as ct,
     emptyElement as ee,
     querySelector as qs
 } from "./utils";
+
 import Locales from "./Locales";
 import Progress from "./Progress";
+import * as Types from "./Types";
 
-/** @type {Region[]} */
-const REGIONS = ['us', 'eu', 'tw', 'kr'];
+const REGIONS: Types.Region[] = ['us', 'eu', 'tw', 'kr'];
 
-/** @type {{
- *      connectedRealms: Object.<string, Object.<ConnectedRealmID, ConnectedRealm>>,
- *      realms: Object.<RealmID, Realm>
- * }}
- */
-const my = {
+type ModuleVars = {
+    connectedRealms: Record<string, Record<Types.ConnectedRealmID, Types.ConnectedRealm>>;
+    realms: Record<Types.RealmID, Types.Realm>;
+}
+
+const my: ModuleVars = {
     connectedRealms: {},
 
     realms: {},
@@ -28,21 +28,16 @@ const my = {
 const Realms = {
     /**
      * Returns the connected realm object for a given realm.
-     *
-     * @param {Realm} realm
-     * @return {ConnectedRealm}
      */
-    getConnectedRealm(realm) {
+    getConnectedRealm(realm: Types.Realm): Types.ConnectedRealm {
         return getConnectedRealmsForRegion(realm.region)[realm.connectedId];
     },
 
     /**
      * Get a copy of the realm object for the currently-selected realm, or undefined if not found.
-     *
-     * @return {Realm|undefined}
      */
-    getCurrentRealm() {
-        const sel = qs('.main .search-bar select');
+    getCurrentRealm(): Types.Realm|undefined {
+        const sel = qs('.main .search-bar select') as HTMLSelectElement;
         const realmId = sel.options[sel.selectedIndex].value;
 
         if (!realmId) {
@@ -58,33 +53,23 @@ const Realms = {
      * @param {RealmID} realmId
      * @return {Realm|undefined}
      */
-    getRealm(realmId) {
-        if (!my.realms[realmId]) {
-            return;
+    getRealm(realmId: Types.RealmID): Types.Realm|undefined {
+        if (my.realms[realmId]) {
+            return {...my.realms[realmId]};
         }
-
-        let result = {};
-        co(result, my.realms[realmId]);
-
-        return result;
     },
 
     /**
      * Returns the realm matching the given hash slug, or undefined for no realm.
-     *
-     * @param {string} hashSlug
-     * @return {Realm|undefined}
      */
-    getRealmByHash(hashSlug) {
+    getRealmByHash(hashSlug: string): Types.Realm|undefined {
         return Object.values(my.realms).find(realm => hashSlug === Realms.getRealmHash(realm));
     },
 
     /**
      * Returns the realm's slug which is used in the location hash.
-     *
-     * @param {Realm} realm
      */
-    getRealmHash(realm) {
+    getRealmHash(realm: Types.Realm): string {
         return `${realm.region}-${realm.slug}`;
     },
 
@@ -94,7 +79,7 @@ const Realms = {
      * @param {Region} region
      * @return {ConnectedRealm[]}
      */
-    getRegionConnectedRealms(region) {
+    getRegionConnectedRealms(region: Types.Region): Types.ConnectedRealm[] {
         const result = Object.values(getConnectedRealmsForRegion(region));
         result.sort((a, b) => a.canonical.name.localeCompare(b.canonical.name));
 
@@ -107,10 +92,10 @@ const Realms = {
     async init() {
         await getRealms();
 
-        const select = qs('.main .search-bar select');
+        const select = qs('.main .search-bar select') as HTMLSelectElement;
         select.addEventListener('change', placeholderUsageCheck);
 
-        updateSelectNames(parseInt(localStorage.getItem('realm') || 0));
+        updateSelectNames(parseInt(localStorage.getItem('realm') || '0'));
 
         placeholderUsageCheck();
 
@@ -119,17 +104,15 @@ const Realms = {
 
     /**
      * Saves the current/given realm to localstorage as the preferred realm.
-     *
-     * @param {Realm} [realm]
      */
-    savePreferredRealm(realm) {
+    savePreferredRealm(realm: Types.Realm) {
         realm = realm || Realms.getCurrentRealm();
         if (!realm) {
             return;
         }
 
         try {
-            localStorage.setItem('realm', realm.id);
+            localStorage.setItem('realm', `${realm.id}`);
         } catch (e) {
             // Ignore
         }
@@ -137,12 +120,10 @@ const Realms = {
 
     /**
      * Changes the currently-selected realm to the given realm.
-     *
-     * @param {Realm} realm
      */
-    setCurrentRealm(realm) {
-        const select = qs('.main .search-bar select');
-        let option = select.querySelector(`option[value="${realm.id}"]:not([data-native])`);
+    setCurrentRealm(realm: Types.Realm) {
+        const select = qs('.main .search-bar select') as HTMLSelectElement;
+        let option = select.querySelector(`option[value="${realm.id}"]:not([data-native])`) as HTMLOptionElement|undefined;
         if (option) {
             option.selected = true;
         }
@@ -154,52 +135,40 @@ export default Realms;
 
 /**
  * Returns the connected realms for a region, keyed by connected realm ID.
- *
- * @param {Region} region
- * @return {Object.<ConnectedRealmID, ConnectedRealm>}
  */
-function getConnectedRealmsForRegion(region) {
+function getConnectedRealmsForRegion(region: Types.Region): Record<Types.ConnectedRealmID, Types.ConnectedRealm> {
     let result = my.connectedRealms[region];
     if (result) {
         return result;
     }
 
     result = {};
-    for (let realmId in my.realms) {
-        if (!my.realms.hasOwnProperty(realmId)) {
-            continue;
-        }
+    Object.values(my.realms)
+        .filter(realm => realm.region === region)
+        .forEach(realm => {
+            if (!result.hasOwnProperty(realm.connectedId)) {
+                result[realm.connectedId] = {
+                    region: realm.region,
+                    id: realm.connectedId,
+                    secondary: [],
+                    canonical: realm,
+                };
+            }
+            if (realm.id === realm.connectedId) {
+                result[realm.connectedId].canonical = realm;
+            } else {
+                result[realm.connectedId].secondary.push(realm);
+            }
+        });
 
-        let realm = my.realms[realmId];
-        if (realm.region !== region) {
-            continue;
+    Object.values(result).forEach(connectedRealm => {
+        // If we never found the canonical, we would've made the first "secondary" the canonical.
+        if (connectedRealm.secondary[0]?.id === connectedRealm.canonical.id) {
+            // Remove the canonical from the secondary list.
+            connectedRealm.secondary.shift();
         }
-
-        if (!result.hasOwnProperty(realm.connectedId)) {
-            result[realm.connectedId] = {
-                region: realm.region,
-                id: realm.connectedId,
-                secondary: [],
-            };
-        }
-        if (realm.id === realm.connectedId) {
-            result[realm.connectedId].canonical = realm;
-        } else {
-            result[realm.connectedId].secondary.push(realm);
-        }
-    }
-
-    for (let connectedId in result) {
-        if (!result.hasOwnProperty(connectedId)) {
-            continue;
-        }
-
-        let connectedRealm = result[connectedId];
         connectedRealm.secondary.sort((a, b) => a.name.localeCompare(b.name));
-        if (!connectedRealm.canonical) {
-            connectedRealm.canonical = connectedRealm.secondary.shift();
-        }
-    }
+    });
 
     return my.connectedRealms[region] = result;
 }
@@ -228,11 +197,9 @@ async function getRealms() {
 
 /**
  * Called when the user changes their preferred locale, this updates the UI with the new names.
- *
- * @param {string} locale
  */
-async function onLocaleChange(locale) {
-    const response = await Progress.fetch('json/realms/realm-names.' + locale + '.json', {mode:'same-origin'});
+async function onLocaleChange(locale: string) {
+    const response = await Progress.fetch(`json/realms/realm-names.${locale}.json`, {mode:'same-origin'});
     if (!response.ok) {
         throw 'Could not load realm names in locale ' + locale;
     }
@@ -245,10 +212,10 @@ async function onLocaleChange(locale) {
  * Removes the "Select a realm" placeholder from the realm dropdown once it's no longer needed.
  */
 function placeholderUsageCheck() {
-    const select = qs('.main .search-bar select');
+    const select = qs('.main .search-bar select') as HTMLSelectElement;
     if (!select.options[0].value) {
         if (select.selectedIndex !== 0) {
-            select.removeChild(select.querySelector('option[value=""]'));
+            select.removeChild(select.options[0]);
             select.removeEventListener('change', placeholderUsageCheck);
         }
     } else {
@@ -257,40 +224,31 @@ function placeholderUsageCheck() {
 }
 
 /**
- * Set the names and categories of our cached realms using the given dictionary.
- *
- * @param {Object.<number, {name: string, category: string, nativeName: string}>} names
+ * Sets the names and categories of our cached realms using the given dictionary.
  */
-function setNames(names) {
+function setNames(names: Record<Types.RealmID, {name: string, category: string, nativeName?: string}>) {
     const popNames = Locales.getPopulationNames();
 
-    for (let id in my.realms) {
-        if (!my.realms.hasOwnProperty(id)) {
-            continue;
-        }
-        let nameRec = names[my.realms[id].id] || {};
-        my.realms[id].name = nameRec.name || ('Realm ' + id);
-        if (nameRec.nativeName) {
-            my.realms[id].nativeName = nameRec.nativeName;
+    Object.values(my.realms).forEach(realm => {
+        const nameRec = names[realm.id];
+        realm.name = nameRec?.name || ('Realm ' + realm.id);
+        if (nameRec?.nativeName) {
+            realm.nativeName = nameRec.nativeName;
         } else {
-            delete my.realms[id].nativeName;
+            delete realm.nativeName;
         }
-        my.realms[id].category = nameRec.category || '';
-        my.realms[id].populationName = popNames[my.realms[id].population] || '';
-    }
+        realm.category = nameRec?.category || '';
+        realm.populationName = popNames[realm.population] || '';
+    });
 }
 
 /**
  * Updates the realm select box options with their names for the current locale.
- *
- * @param {number} [savedRealmId] The "current" realm ID.
  */
-function updateSelectNames(savedRealmId) {
-    if (!savedRealmId) {
-        savedRealmId = (Realms.getCurrentRealm() || {}).id;
-    }
+function updateSelectNames(savedRealmId?: Types.RealmID) {
+    savedRealmId ??= (Realms.getCurrentRealm() || {}).id;
 
-    const select = qs('.main .search-bar select');
+    const select = qs('.main .search-bar select') as HTMLSelectElement;
 
     if (!select.querySelector('optgroup')) {
         REGIONS.forEach(region => {
@@ -298,15 +256,10 @@ function updateSelectNames(savedRealmId) {
         });
     }
 
-    select.querySelectorAll('option[data-native]').forEach(option => option.parentNode.removeChild(option));
+    select.querySelectorAll('option[data-native]').forEach(option => option.parentNode?.removeChild(option));
 
-    const sorted = [];
-    for (let k in my.realms) {
-        if (!my.realms.hasOwnProperty(k)) {
-            continue;
-        }
-
-        const realm = my.realms[k];
+    const sorted: Array<Types.Realm & {fromNative?: boolean}> = [];
+    Object.values(my.realms).forEach(realm => {
         sorted.push(realm);
         if (realm.nativeName) {
             sorted.push({
@@ -315,49 +268,49 @@ function updateSelectNames(savedRealmId) {
                 fromNative: true,
             });
         }
-    }
+    });
     sorted.sort((a, b) => {
         return a.name.localeCompare(b.name) || (REGIONS.indexOf(a.region) - REGIONS.indexOf(b.region));
     });
 
-    let og = select.querySelector('optgroup');
-    const seenNames = {};
+    let optGroup = select.querySelector('optgroup') as HTMLOptGroupElement;
+    const seenNames: Record<string, HTMLOptionElement|true> = {};
     sorted.forEach(realm => {
-        let o = realm.fromNative ? null :
+        let option: HTMLOptionElement|null = realm.fromNative ? null :
             select.querySelector(`option[value="${realm.id}"]:not([data-native])`);
-        if (o) {
-            ee(o);
+        if (option) {
+            ee(option);
         } else {
-            o = ce('option', {value: realm.id});
+            option = ce('option', {value: realm.id}) as HTMLOptionElement;
         }
         if (realm.fromNative) {
-            o.dataset.native = 'true';
+            option.dataset.native = 'true';
         }
-        o.label = realm.name;
+        option.label = realm.name;
 
-        if (seenNames[realm.name]) {
-            if (seenNames[realm.name] !== true) {
-                const opt = seenNames[realm.name];
-                opt.label += ' ' + Realms.getRealm(parseInt(opt.value)).region.toUpperCase();
-                ee(opt);
-                opt.appendChild(ct(opt.label));
+        const seenOpt = seenNames[realm.name];
+        if (seenOpt) {
+            if (seenOpt !== true) {
+                seenOpt.label += ' ' + my.realms[parseInt(seenOpt.value)]?.region.toUpperCase();
+                ee(seenOpt);
+                seenOpt.appendChild(ct(seenOpt.label));
 
                 seenNames[realm.name] = true;
             }
-            o.label += ' ' + realm.region.toUpperCase();
+            option.label += ' ' + realm.region.toUpperCase();
         } else {
-            seenNames[realm.name] = o;
+            seenNames[realm.name] = option;
         }
-        o.appendChild(ct(o.label));
+        option.appendChild(ct(option.label));
 
         if (!realm.fromNative && realm.id === savedRealmId) {
-            o.selected = true;
+            option.selected = true;
         }
 
-        if (og.dataset.region !== realm.region) {
-            og = select.querySelector(`optgroup[data-region="${realm.region}"]`);
+        if (optGroup.dataset.region !== realm.region) {
+            optGroup = select.querySelector(`optgroup[data-region="${realm.region}"]`) ?? optGroup;
         }
 
-        og.appendChild(o);
+        optGroup.appendChild(option);
     });
 }

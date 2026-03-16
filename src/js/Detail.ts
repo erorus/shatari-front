@@ -169,7 +169,7 @@ const Detail = {
             namePanel.appendChild(nameLink);
         }
 
-        const tokenState = await Auctions.getToken(null);
+        const tokenState = await Auctions.getToken();
         if (!tokenState.region) {
             scroller.appendChild(ct('Choose a realm first.'));
 

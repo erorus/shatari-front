@@ -6,6 +6,7 @@ import Categories from "./Categories";
 import Locales from "./Locales";
 import Progress from "./Progress";
 import Search from "./Search";
+import * as Types from "./Types";
 
 /** @typedef {string} IconSize */
 
@@ -584,13 +585,8 @@ const Items = {
 
     /**
      * Serialize an item key's parts into a short string.
-     *
-     * @param {ItemID}   itemId
-     * @param {number}   itemLevel
-     * @param {SuffixID} itemSuffix
-     * @returns {ItemKeyString}
      */
-    stringifyKeyParts(itemId, itemLevel, itemSuffix) {
+    stringifyKeyParts(itemId: Types.ItemID, itemLevel: number, itemSuffix: Types.SuffixID): Types.ItemKeyString {
         let result = '' + itemId;
         if (itemLevel) {
             result += '-' + itemLevel;
