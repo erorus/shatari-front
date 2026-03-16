@@ -1,8 +1,9 @@
-export const COPPER_SILVER = 100;
-export const COPPER_GOLD = 10000;
+import {ItemID, Money} from "./Types";
 
-/** @type {ItemID} ITEM_PET_CAGE */
-export const ITEM_PET_CAGE = 82800;
+export const COPPER_SILVER = 100 as Money;
+export const COPPER_GOLD = 10000 as Money;
+
+export const ITEM_PET_CAGE = 82800 as ItemID;
 
 export const MS_SEC = 1000;
 export const MS_MINUTE = 60 * MS_SEC;

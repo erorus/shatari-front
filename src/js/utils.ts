@@ -1,21 +1,17 @@
 import {COPPER_GOLD, COPPER_SILVER, MS_DAY, MS_HOUR, MS_MINUTE} from "./constants";
+import {Money, PlainObject} from "./Types";
 
 /**
  * Returns true when the primary input can hover.
- *
- * @return {boolean}
  */
-export function canHover() {
+export function canHover(): boolean {
     return window.matchMedia('(hover: hover)').matches;
 }
 
 /**
  * Copy Object. Properties from source are set onto dest.
- *
- * @param {object} dest
- * @param {object} source
  */
-export function copyObject(dest, source) {
+export function copyObject(dest: PlainObject, source: PlainObject) {
     for (let k in source) {
         if (!source.hasOwnProperty(k)) {
             continue;
@@ -37,13 +33,8 @@ export function copyObject(dest, source) {
 
 /**
  * Creates an element.
- *
- * @param {string} tag
- * @param {object} [props]
- * @param {Node} [child]
- * @return {HTMLElement}
  */
-export function createElement(tag, props, child) {
+export function createElement(tag: string, props?: PlainObject, child?: Node): HTMLElement {
     const result = document.createElement(tag);
 
     copyObject(result, props || {});
@@ -63,7 +54,7 @@ export function createElement(tag, props, child) {
  * @param {Node} [child]
  * @return {Node}
  */
-export function createSVGElement(tag, attributes, child) {
+export function createSVGElement(tag: string, attributes?: PlainObject, child?: Node): SVGElement {
     const result = document.createElementNS('http://www.w3.org/2000/svg', tag);
 
     if (attributes) {
@@ -83,30 +74,23 @@ export function createSVGElement(tag, attributes, child) {
 
 /**
  * Creates a text node.
- *
- * @param {string} data
- * @return {Text}
  */
-export const createText = data => document.createTextNode(data);
+export const createText = (data: string) => document.createTextNode(data);
 
 /**
  * Empties an element of all children.
- *
- * @param {Node} ele
  */
-export function emptyElement(ele) {
-    while (ele.hasChildNodes()) {
-        ele.removeChild(ele.firstChild);
+export function emptyElement(ele: Node) {
+    let child;
+    while (child = ele.firstChild) {
+        ele.removeChild(child);
     }
 }
 
 /**
  * Returns an element for the given price.
- *
- * @param {Money} coppers
- * @return {HTMLSpanElement}
  */
-export function priceElement(coppers) {
+export function priceElement(coppers: Money) {
     const df = document.createElement('span');
     df.style.whiteSpace = 'nowrap';
     coppers = Math.abs(coppers);
@@ -129,27 +113,18 @@ export function priceElement(coppers) {
 
 /**
  * Queries a selector in the document body, returning one.
- *
- * @param {string} selectors
- * @return {HTMLElement|null}
  */
-export const querySelector = selectors => document.body.querySelector(selectors);
+export const querySelector = (selectors: string): Element|null => document.body.querySelector(selectors);
 
 /**
  * Queries a selector in the document body, returning all matches.
- *
- * @param {string} selectors
- * @return {NodeListOf<HTMLElementTagNameMap[keyof HTMLElementTagNameMap]>}
  */
-export const querySelectorAll = selectors => document.body.querySelectorAll(selectors);
+export const querySelectorAll = (selectors: string) => document.body.querySelectorAll(selectors);
 
 /**
  * Returns a string describing the timestamp relative to now. e.g. "2 hours ago".
- *
- * @param {number} timestamp
- * @return {string}
  */
-export function timeString(timestamp) {
+export function timeString(timestamp: number): string {
     let now = Date.now();
     let delta = now - timestamp;
     let sign = Math.sign(delta);
@@ -160,13 +135,13 @@ export function timeString(timestamp) {
         return 'now';
     }
     if (delta < 2 * MS_HOUR) {
-        return Math.round(delta / MS_MINUTE) + ' minutes ' + ago;
+        return `${Math.round(delta / MS_MINUTE)}  minutes ${ago}`;
     }
     if (delta < 2 * MS_DAY) {
-        return Math.round(delta / MS_HOUR) + ' hours ' + ago;
+        return `${Math.round(delta / MS_HOUR)} hours ${ago}`;
     }
     if (delta < 14 * MS_DAY) {
-        return Math.round(delta / MS_DAY) + ' days ' + ago;
+        return `${Math.round(delta / MS_DAY)} days ${ago}`;
     }
 
     const shortFormatter = new Intl.DateTimeFormat([], {
@@ -193,7 +168,10 @@ export function updateDeltaTimestamps() {
     });
 
     querySelectorAll('.delta-timestamp[data-timestamp]').forEach(ele => {
-        const timestamp = parseInt(ele.dataset.timestamp);
+        if (!(ele instanceof HTMLElement)) {
+            return;
+        }
+        const timestamp = parseInt(ele.dataset.timestamp ?? '0');
         emptyElement(ele);
         if (timestamp <= 0) {
             delete ele.dataset.simpleTooltip;
@@ -212,9 +190,12 @@ export function updateDeltaTimestamps() {
  */
 export async function waitForHighstock() {
     let tag = document.getElementById('highstock-script');
+    if (!tag) {
+        throw 'Highstock script tag not found!';
+    }
     if (!tag.dataset.loaded) {
         await new Promise(resolve => {
-            tag.addEventListener('load', () => resolve());
+            tag.addEventListener('load', () => resolve(true));
         });
     }
 }

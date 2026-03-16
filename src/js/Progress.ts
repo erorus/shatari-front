@@ -4,8 +4,8 @@ const my = Object.seal({
     runningFetchCount: 0,
     totalFetchCount: 0,
 
-    area: qs('.main .progress'),
-    bar: qs('.main .progress .progress-bar-value'),
+    area: qs('.main .progress') as HTMLElement|null,
+    bar: qs('.main .progress .progress-bar-value') as HTMLElement|null,
 });
 
 /**
@@ -14,17 +14,13 @@ const my = Object.seal({
 const Progress = {
     /**
      * Returns a Response promise from fetch() but monitors the download progress in the UI.
-     *
-     * @param {string|Request} resource
-     * @param {object}         options
-     * @returns {Promise<Response>}
      */
-    async fetch(resource, options) {
+    async fetch(resource: URL|RequestInfo, options: RequestInit) {
         my.totalFetchCount++;
         my.runningFetchCount++;
         updateDisplay();
 
-        const response = await fetch(resource, options);
+        const response = await window.fetch(resource, options);
         if (!response.ok || !response.body) {
             my.runningFetchCount--;
             updateDisplay();
@@ -34,8 +30,8 @@ const Progress = {
 
         return new Response(new ReadableStream({
             start: async function (controller) {
-                const reader = response.body.getReader();
-                while (true) {
+                const reader = response.body?.getReader();
+                while (reader) {
                     let {done, value} = await reader.read();
                     if (done) {
                         controller.close();
@@ -59,11 +55,12 @@ export default Progress;
 function updateDisplay() {
     if (my.runningFetchCount === 0 || my.totalFetchCount === 0) {
         my.totalFetchCount = 0;
-        delete my.area.dataset.shown;
-        return;
+        if (my.area) {
+            delete my.area.dataset.shown;
+        }
+    } else if (my.bar && my.area) {
+        let finishedCount = my.totalFetchCount - my.runningFetchCount;
+        my.bar.style.width = (finishedCount / my.totalFetchCount * 100) + '%';
+        my.area.dataset.shown = '1';
     }
-
-    let finishedCount = my.totalFetchCount - my.runningFetchCount;
-    my.bar.style.width = (finishedCount / my.totalFetchCount * 100) + '%';
-    my.area.dataset.shown = 1;
 }

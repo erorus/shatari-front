@@ -28,10 +28,8 @@ export default UndermineMigration;
 /**
  * Receives all cross-document messages. Listens for those coming from oribos.exchange to receive local storage
  * migration information.
- *
- * @param {MessageEvent} event
  */
-function migrationMessage(event) {
+function migrationMessage(event: MessageEvent) {
     if (event.origin !== 'https://oribos.exchange') {
         return;
     }

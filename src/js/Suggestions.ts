@@ -2,17 +2,17 @@ import {createElement as ce, emptyElement as ee, querySelector as qs} from "./ut
 import Auctions from "./Auctions";
 import Items from "./Items";
 
-const searchBox = qs('.main .search-bar input[type="text"]');
-const textContainer = searchBox.parentNode;
-const datalist = qs('.main .search-bar .datalist');
+const searchBox = qs('.main .search-bar input[type="text"]') as HTMLInputElement;
+const textContainer = searchBox.parentNode as HTMLElement;
+const datalist = qs('.main .search-bar .datalist') as HTMLElement;
 
 const MIN_SEARCH_LENGTH = 2;
 const MAX_SUGGESTIONS = 10;
 const SEARCH_DELAY = 150;
 
-let searchTimer;
-let lastSearch;
-let blurTimeout;
+let searchTimer: number|undefined;
+let lastSearch: string;
+let blurTimeout: number|undefined;
 
 /** Manages the search suggestions list. */
 const Suggestions = {
@@ -68,11 +68,11 @@ const Suggestions = {
             }
             queueUpdate();
             delete datalist.dataset.withItems;
-            textContainer.dataset.withFocus = 1;
+            textContainer.dataset.withFocus = '1';
         });
 
-        const onOptionClick = option => {
-            searchBox.value = option.dataset.value;
+        const onOptionClick = (option: HTMLElement) => {
+            searchBox.value = option.dataset.value ?? '';
             searchBox.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter'}));
         };
         for (let x = 0; x < MAX_SUGGESTIONS; x++) {
@@ -84,13 +84,13 @@ const Suggestions = {
 };
 export default Suggestions;
 
-function navigateList(down) {
+function navigateList(down: boolean) {
     if (!datalist.dataset.withItems) {
         return;
     }
 
-    let curSelection = datalist.querySelector('div.selected');
-    let newSelection;
+    let curSelection = datalist.querySelector('div.selected') as HTMLDivElement|null;
+    let newSelection: HTMLDivElement|null;
     if (!curSelection) {
         if (down) {
             newSelection = datalist.querySelector('div');
@@ -98,7 +98,7 @@ function navigateList(down) {
             return;
         }
     } else {
-        newSelection = down ? curSelection.nextSibling : curSelection.previousSibling;
+        newSelection = (down ? curSelection.nextSibling : curSelection.previousSibling) as HTMLDivElement|null;
     }
     if (!newSelection || !newSelection.textContent) {
         return;
@@ -108,9 +108,11 @@ function navigateList(down) {
         curSelection.classList.remove('selected');
     }
     newSelection.classList.add('selected');
-    newSelection.parentNode.scrollTop = newSelection.offsetTop - newSelection.parentNode.firstChild.offsetTop;
+    const parent = newSelection.parentNode as HTMLElement;
+    const firstSibling = parent.firstChild as HTMLElement;
+    parent.scrollTop = newSelection.offsetTop - firstSibling.offsetTop;
 
-    searchBox.value = newSelection.dataset.value;
+    searchBox.value = newSelection.dataset.value ?? '';
     searchBox.selectionStart = searchBox.value.length;
 }
 
@@ -163,7 +165,7 @@ async function update() {
         ee(options[index++]);
     }
     if (options[0].firstChild) {
-        datalist.dataset.withItems = 1;
+        datalist.dataset.withItems = '1';
     } else {
         delete datalist.dataset.withItems;
     }

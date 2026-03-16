@@ -11,7 +11,8 @@ import Search from "./Search";
 import UndermineMigration from "./UndermineMigration";
 
 async function init() {
-    const inMaintenance = !!qs('.main .welcome').dataset.maintenance;
+    const welcome = qs('.main .welcome') as HTMLElement|null;
+    const inMaintenance = !!welcome?.dataset.maintenance;
     if (inMaintenance) {
         return;
     }
@@ -32,7 +33,7 @@ async function init() {
             df.appendChild(document.createTextNode('All messages are read, but replies are uncommon.'));
             df.appendChild(ce('br'));
             df.appendChild(ce('br'));
-            toReplace.parentNode.replaceChild(df, toReplace);
+            toReplace.parentNode?.replaceChild(df, toReplace);
         }
     }
 
@@ -54,13 +55,13 @@ async function init() {
         document.body.classList.add('no-row-backgrounds');
     }
 
-    const fsDiv = qs('.main .welcome .full-screen');
+    const fsDiv = qs('.main .welcome .full-screen') as HTMLElement;
     if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
-        fsDiv.querySelector('button').addEventListener('click', () => {
+        fsDiv.querySelector('button')?.addEventListener('click', () => {
             if (document.fullscreenEnabled) {
-                qs('.main').requestFullscreen();
+                qs('.main')?.requestFullscreen();
             } else if (document.webkitFullscreenEnabled) {
-                qs('.main').webkitRequestFullscreen();
+                qs('.main')?.webkitRequestFullscreen();
             }
         });
     } else {
@@ -76,9 +77,9 @@ async function init() {
     ]);
 
     const filterButton = qs('.main .search-bar .filter');
-    filterButton.addEventListener('mouseup', (event) => {
+    filterButton?.addEventListener('mouseup', (event) => {
         const div = filterButton.querySelector('div');
-        if (div.style.display === 'block') {
+        if (!div || div.style.display === 'block') {
             return;
         }
 
@@ -86,12 +87,10 @@ async function init() {
         const outside = document.body;
         /**
          * Called on mouseup to close the filter tooltip.
-         *
-         * @param {Event} event
          */
-        const closeDiv = function (event) {
+        const closeDiv = function (event: Event) {
             let target = event.target;
-            while (target.parentNode) {
+            while ((target instanceof Node) && target.parentNode) {
                 if (target === div) {
                     return;
                 }
@@ -105,7 +104,7 @@ async function init() {
     });
 
     {
-        const rarityClassFix = select =>
+        const rarityClassFix = (select: HTMLSelectElement) =>
             select.querySelectorAll('option').forEach(option => {
                 if (option.selected) {
                     select.classList.add(option.className);
@@ -113,25 +112,27 @@ async function init() {
                     select.classList.remove(option.className);
                 }
             });
-        const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]');
-        const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]');
-        rarityFrom.addEventListener('change', () => {
-            rarityTo.selectedIndex = Math.max(rarityFrom.selectedIndex, rarityTo.selectedIndex);
-            rarityClassFix(rarityFrom);
-            rarityClassFix(rarityTo);
-        });
-        rarityTo.addEventListener('change', () => {
-            rarityFrom.selectedIndex = Math.min(rarityFrom.selectedIndex, rarityTo.selectedIndex);
-            rarityClassFix(rarityFrom);
-            rarityClassFix(rarityTo);
-        });
+        const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]') as HTMLSelectElement|null;
+        const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]') as HTMLSelectElement|null;
+        if (rarityFrom && rarityTo) {
+            rarityFrom.addEventListener('change', () => {
+                rarityTo.selectedIndex = Math.max(rarityFrom.selectedIndex, rarityTo.selectedIndex);
+                rarityClassFix(rarityFrom);
+                rarityClassFix(rarityTo);
+            });
+            rarityTo.addEventListener('change', () => {
+                rarityFrom.selectedIndex = Math.min(rarityFrom.selectedIndex, rarityTo.selectedIndex);
+                rarityClassFix(rarityFrom);
+                rarityClassFix(rarityTo);
+            });
+        }
     }
 
-    qs('.main .bottom-bar .links a.home').addEventListener('click', event => {
+    qs('.main .bottom-bar .links a.home')?.addEventListener('click', event => {
         event.preventDefault();
         Detail.hide();
         Search.hide();
-        qs('.main .welcome').style.display = '';
+        welcome && (welcome.style.display = '');
     });
 
     setInterval(updateDeltaTimestamps, MS_MINUTE);

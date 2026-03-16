@@ -11,17 +11,19 @@ import {
 import Items from "./Items";
 import Progress from "./Progress";
 import Realms from "./Realms";
+import * as Types from "./Types";
 
-/** @type {Object<Region, ConnectedRealmID>} Realm IDs used by commodity realms for each region. */
-const COMMODITY_REALMS = {
+/** Realm IDs used by commodity realms for each region. */
+const COMMODITY_REALMS: Record<Types.Region, Types.ConnectedRealmID> = {
     'us': 0x7F00,
     'eu': 0x7F01,
     'tw': 0x7F02,
     'kr': 0x7F03,
 };
 
-const MAX_SNAPSHOT_INTERVAL = 2 * MS_HOUR;
-const SNAPSHOTS_FOR_INTERVAL = 20;
+// Unused
+//const MAX_SNAPSHOT_INTERVAL = 2 * MS_HOUR;
+//const SNAPSHOTS_FOR_INTERVAL = 20;
 
 const REALM_STATE_CACHE_DURATION = 10 * MS_SEC;
 
@@ -32,10 +34,23 @@ const VERSION_REALM_STATE = 4;
 const VERSION_REGION_STATE = 2;
 const VERSION_TOKEN_STATE = 1;
 
-const my = {
+type CachedRealmState = {
+    id: number,
+    data: Types.RealmState,
+    // The last-modified header verbatim.
+    modified: string|null,
+    checked: Types.Timestamp,
+};
+type ModuleVars = {
+    bonusToStats: Record<number, number[]>|undefined,
+    lastCommodityRealmState: CachedRealmState|undefined,
+    lastRealmState: CachedRealmState|undefined,
+};
+
+const my: ModuleVars = {
     bonusToStats: undefined,
-    lastCommodityRealmState: {},
-    lastRealmState: {},
+    lastCommodityRealmState: undefined,
+    lastRealmState: undefined,
     lastRegionState: {},
 
     lastSnapshotList: {},
@@ -238,7 +253,10 @@ const Auctions = {
      * @param {boolean} [regionMedian]
      * @return {Promise<PricedItem[]>}
      */
-    async hydrateList(items, {arbitrage, realm, regionMedian}) {
+    async hydrateList(
+        items: any[],
+        {arbitrage, realm, regionMedian}: {arbitrage?: boolean; realm?: any; regionMedian?: boolean;}
+    ) {
         realm = realm || Realms.getCurrentRealm();
         const useRegionMedian = regionMedian;
 
@@ -405,11 +423,8 @@ async function getBonusToStats() {
 
 /**
  * Returns a fake Realm object for the commodity realm used by the given region.
- *
- * @param {Region} region
- * @return {Realm}
  */
-function getCommodityRealm(region) {
+function getCommodityRealm(region: Types.Region): Types.Realm {
     return {
         category: 'Commodities',
         connectedId: COMMODITY_REALMS[region],
@@ -417,6 +432,8 @@ function getCommodityRealm(region) {
         name: region.toUpperCase(),
         region: region,
         slug: 'commodity',
+        population: 0,
+        populationName: '',
     };
 }
 
@@ -599,51 +616,44 @@ async function getItemState(realm, item, useCached) {
  * @param {Realm} realm
  * @return {Promise<RealmState>}
  */
-async function getRealmState(realm) {
-    let isCommodityRealm = Object.values(COMMODITY_REALMS).includes(realm.connectedId);
-    let lastStateKey = isCommodityRealm ? 'lastCommodityRealmState' : 'lastRealmState';
+async function getRealmState(realm: Types.Realm): Promise<Types.RealmState> {
+    const isCommodityRealm = Object.values(COMMODITY_REALMS).includes(realm.connectedId);
+    const lastState = isCommodityRealm ? my.lastCommodityRealmState : my.lastRealmState;
 
     if (
-        my[lastStateKey].data &&
-        my[lastStateKey].id === realm.connectedId &&
-        my[lastStateKey].checked > Date.now() - REALM_STATE_CACHE_DURATION
+        lastState?.data &&
+        lastState.id === realm.connectedId &&
+        lastState.checked > Date.now() - REALM_STATE_CACHE_DURATION
     ) {
-        return my[lastStateKey].data;
+        return lastState.data;
     }
 
-    let response;
-    let commodityRealmState;
-    let promises = [
-        (async () => {
-            response = await Progress.fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'});
-        })(),
-    ];
-    if (!isCommodityRealm) {
-        promises.push((async () => {
-            commodityRealmState = await getRealmState(getCommodityRealm(realm.region));
-        })());
-    }
-    await Promise.all(promises);
+    let response: Response;
+    let commodityRealmState: Types.RealmState|null;
+    [response, commodityRealmState] = await Promise.all([
+        Progress.fetch(`data/${realm.connectedId}/state.bin`, {mode: 'same-origin'}),
+        isCommodityRealm ? Promise.resolve(null) : getRealmState(getCommodityRealm(realm.region)),
+    ]);
 
     if (!response.ok) {
         throw "Unable to get realm state for " + realm.connectedId;
     }
 
     if (
-        my[lastStateKey].data &&
-        my[lastStateKey].id === realm.connectedId &&
-        my[lastStateKey].modified === response.headers.get('last-modified')
+        lastState?.data &&
+        lastState.id === realm.connectedId &&
+        lastState.modified === response.headers.get('last-modified')
     ) {
-        my[lastStateKey].checked = Date.now();
+        lastState.checked = Date.now();
 
-        return my[lastStateKey].data;
+        return lastState.data;
     }
 
     const buffer = await response.arrayBuffer();
     const view = new DataView(buffer);
 
     let offset = 0;
-    const read = function (byteCount) {
+    const read = function (byteCount: number) {
         let result = offset;
         offset += byteCount;
 
@@ -664,18 +674,19 @@ async function getRealmState(realm) {
     }
 
     /** @type {RealmState} result */
-    const result = {};
-    result.realm = {};
-    co(result.realm, realm);
-    result.snapshot = view.getUint32(read(4), true) * MS_SEC;
-    result.lastCheck = view.getUint32(read(4), true) * MS_SEC;
-    result.snapshots = [];
+    const result: Types.RealmState = {
+        realm: {...realm},
+        snapshot: view.getUint32(read(4), true) * MS_SEC,
+        lastCheck: view.getUint32(read(4), true) * MS_SEC,
+        snapshots: [],
+        summary: {},
+        variants: {},
+        speciesVariants: {},
+        bonusStatItems: {},
+    };
     for (let remaining = view.getUint16(read(2), true); remaining > 0; remaining--) {
         result.snapshots.push(view.getUint32(read(4), true) * MS_SEC);
     }
-    result.summary = {};
-    result.variants = {};
-    result.speciesVariants = {};
     for (let remaining = view.getUint32(read(4), true); remaining > 0; remaining--) {
         let itemId = view.getUint32(read(4), true);
         let itemLevel = view.getUint16(read(2), true);
@@ -702,7 +713,6 @@ async function getRealmState(realm) {
             quantity: quantity,
         };
     }
-    result.bonusStatItems = {};
     if (hasBonusStatItems) {
         for (let statCount = view.getUint8(read(1)); statCount > 0; statCount--) {
             const statId = view.getUint8(read(1));
@@ -721,12 +731,17 @@ async function getRealmState(realm) {
         mergeCommodityData(result, commodityRealmState);
     }
 
-    my[lastStateKey] = {
+    const newLastState: CachedRealmState = {
         id: realm.connectedId,
         modified: response.headers.get('last-modified'),
         checked: Date.now(),
         data: result,
     };
+    if (isCommodityRealm) {
+        my.lastCommodityRealmState = newLastState;
+    } else {
+        my.lastRealmState = newLastState;
+    }
 
     return result;
 }
