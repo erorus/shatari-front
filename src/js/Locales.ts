@@ -1,6 +1,23 @@
+/**
+ * Methods to handle locale changes, to show localized names and fields.
+ */
+
 import {createElement as ce, querySelector as qs} from "./utils";
 
-const POPULATION_NAMES = {
+export enum Locale {
+    enus = 'enus',
+    dede = 'dede',
+    eses = 'eses',
+    esmx = 'esmx',
+    frfr = 'frfr',
+    itit = 'itit',
+    ptbr = 'ptbr',
+    ruru = 'ruru',
+    zhtw = 'zhtw',
+    kokr = 'kokr',
+}
+
+const POPULATION_NAMES: {[key in Locale]: [string, string, string, string, string, string, string, string]} = {
     enus: ['', 'New', 'New Players', 'Low', 'Medium', 'High', 'Full', 'Locked'],
     dede: ['', 'Neu', 'Empfohlen', 'Niedrig', 'Mittel', 'Hoch', 'Voll', 'Verschl.'],
     eses: ['', 'Nuevo', 'Jugadores nuevos', 'Bajo', 'Medio', 'Alto', 'Lleno', 'Bloqueado'],
@@ -13,7 +30,7 @@ const POPULATION_NAMES = {
     kokr: ['', '신규', '신규 플레이어', '쾌적', '보통', '혼잡', '정원초과', '잠김'],
 };
 
-const NAMES = {
+const NAMES: {[key in Locale]: string} = {
     enus: 'English',
     dede: 'Deutsch',
     eses: 'Español',
@@ -26,7 +43,7 @@ const NAMES = {
     kokr: '한국어',
 };
 
-const WOWHEAD_DOMAINS = {
+const WOWHEAD_DOMAINS: {[key in Locale]: string} = {
     enus: 'www',
     dede: 'de',
     eses: 'es',
@@ -39,91 +56,74 @@ const WOWHEAD_DOMAINS = {
     kokr: 'ko',
 };
 
-const my = {
+type ModuleVars = {
+    changeCallbacks: Array<(locale: Locale) => void>,
+    locale: Locale,
+}
+const my: ModuleVars = {
     changeCallbacks: [],
-
-    locale: 'enus',
+    locale: Locale.enus,
 };
 
 /**
- * Methods to handle locale changes, to show localized names and fields.
+ * Returns the current 4-letter lowercase locale code.
  */
-const Locales = {
-    /**
-     * Returns the current 4-letter lowercase locale code.
-     *
-     * @return {string}
-     */
-    getCurrent: () => my.locale,
+export const getCurrent = (): Locale => my.locale;
 
-    /**
-     * Returns an ordered list of population names for the current locale.
-     *
-     * @return {string[]}
-     */
-    getPopulationNames: () => POPULATION_NAMES[my.locale],
+/**
+ * Returns an ordered list of population names for the current locale.
+ */
+export const getPopulationNames = (): [string, string, string, string, string, string, string, string] => POPULATION_NAMES[my.locale];
 
-    /**
-     * Returns the Wowhead subdomain for the current locale.
-     *
-     * @return {string}
-     */
-    getWowheadDomain: () => WOWHEAD_DOMAINS[my.locale],
+/**
+ * Returns the Wowhead subdomain for the current locale.
+ */
+export const getWowheadDomain = (): string => WOWHEAD_DOMAINS[my.locale];
 
-    /**
-     * Returns the Wowhead path prefix for the current locale.
-     *
-     * @return {string}
-     */
-    getWowheadPathPrefix: () => my.locale === 'enus' ? '' : (Locales.getWowheadDomain() + '/'),
+/**
+ * Returns the Wowhead path prefix for the current locale.
+ */
+export const getWowheadPathPrefix = (): string => my.locale === Locale.enus ? '' : (getWowheadDomain() + '/');
 
-    /**
-     * Sets up any controls and reads the user's preferred locale from local storage.
-     */
-    init() {
-        let curLocale = localStorage.getItem('locale') || my.locale;
-        if (!NAMES.hasOwnProperty(curLocale)) {
-            curLocale = my.locale;
-        }
-        my.locale = curLocale;
+/**
+ * Sets up any controls and reads the user's preferred locale from local storage.
+ */
+export function init() {
+    let storedLocale = localStorage.getItem('locale') ?? '';
+    if (isLocale(storedLocale)) {
+        my.locale = storedLocale;
+    }
 
-        const sel = qs('.main .bottom-bar select.locales');
-        for (let id in NAMES) {
-            if (!NAMES.hasOwnProperty(id)) {
-                continue;
-            }
+    const sel = qs('.main .bottom-bar select.locales') as HTMLSelectElement;
+    Object.values(Locale).forEach(locale => {
+        sel.appendChild(ce('option', {
+            value: locale,
+            label: NAMES[locale],
+            selected: locale === my.locale,
+        }, document.createTextNode(NAMES[locale])));
+    });
+    sel.addEventListener('change', () => changeLocale(sel));
+}
 
-            let o = ce('option', {
-                value: id,
-                label: NAMES[id],
-                selected: id === my.locale,
-            }, document.createTextNode(NAMES[id]));
-
-            sel.appendChild(o);
-        }
-        sel.addEventListener('change', () => changeLocale(sel));
-    },
-
-    /**
-     * Registers a callback function for when the locale changes. The new locale is given as the first param.
-     *
-     * @param {function} callback
-     */
-    registerCallback(callback) {
-        if (!my.changeCallbacks.includes(callback)) {
-            my.changeCallbacks.push(callback);
-        }
-    },
-};
-export default Locales;
+/**
+ * Registers a callback function for when the locale changes. The new locale is given as the first param.
+ */
+export function registerCallback(callback: (locale: Locale) => void) {
+    if (!my.changeCallbacks.includes(callback)) {
+        my.changeCallbacks.push(callback);
+    }
+}
 
 /**
  * Change the locale to the currently-selected locale in the given select element.
- *
- * @param {HTMLSelectElement} sel
  */
-function changeLocale(sel) {
-    my.locale = sel.options[sel.selectedIndex].value;
+function changeLocale(sel: HTMLSelectElement) {
+    const chosenLocale = sel.options[sel.selectedIndex].value;
+    if (!isLocale(chosenLocale)) {
+        return;
+    }
+
+    my.locale = chosenLocale;
 
     try {
         localStorage.setItem('locale', my.locale);
@@ -131,5 +131,12 @@ function changeLocale(sel) {
         // Ignore
     }
 
-    my.changeCallbacks.forEach(f => f(Locales.getCurrent()));
+    my.changeCallbacks.forEach(f => f(my.locale));
+}
+
+/**
+ * Returns whether the given string is a valid locale enum value.
+ */
+function isLocale(value: string): value is Locale {
+    return Object.values(Locale).includes(value as Locale);
 }

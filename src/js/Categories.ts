@@ -1,5 +1,4 @@
 import {
-    copyObject as co,
     createElement as ce,
     createText as ct,
     emptyElement as ee,
@@ -7,8 +6,8 @@ import {
     querySelectorAll as qsa
 } from "./utils";
 import Detail from "./Detail";
-import Items from "./Items";
-import Locales from "./Locales";
+import {ItemClass} from "./Items";
+import {registerCallback as registerLocaleCallback, getCurrent as getCurrentLocale} from "./Locales";
 import Progress from "./Progress";
 import * as Types from "./Types";
 
@@ -140,7 +139,7 @@ const Categories = {
         let tokenName = 'WoW Token';
 
         my.categories.forEach(category => {
-            if (category['class'] === Items.CLASS_WOW_TOKEN) {
+            if (category['class'] === ItemClass.WowToken) {
                 tokenName = category.name;
             }
         });
@@ -193,7 +192,7 @@ const Categories = {
             setHashCode(catDiv);
             categoriesParent.appendChild(catDiv);
             catDiv.addEventListener('click', clickCategory.bind(null, catDiv));
-            if (cat['class'] === Items.CLASS_WOW_TOKEN) {
+            if (cat['class'] === ItemClass.WowToken) {
                 catDiv.classList.add('q8');
             }
 
@@ -271,7 +270,7 @@ const Categories = {
             });
         });
 
-        Locales.registerCallback(onLocaleChange);
+        registerLocaleCallback(onLocaleChange);
     },
 
     /**
@@ -352,10 +351,10 @@ function clickCategory(catDiv: HTMLDivElement) {
             });
     }
 
-    if (my.classId === Items.CLASS_WOW_TOKEN) {
+    if (my.classId === ItemClass.WowToken) {
         // Jump straight to the WoW Token detail panel.
         Detail.showWowToken();
-    } else if (oldClassId === Items.CLASS_WOW_TOKEN) {
+    } else if (oldClassId === ItemClass.WowToken) {
         // Exit WoW Token mode.
         Detail.hide();
     }
@@ -478,15 +477,15 @@ async function getCategories(): Promise<Category[]> {
         return my.categories;
     }
 
-    const locale = Locales.getCurrent();
-    const response = await Progress.fetch('json/categories.' + locale + '.json', {mode:'same-origin'});
+    const locale = getCurrentLocale();
+    const response = await Progress.fetch(`json/categories.${locale}.json`, {mode: 'same-origin'});
     if (!response.ok) {
         throw 'Cannot get list of categories!';
     }
 
     my.categories = await response.json();
     my.categories.forEach(category => {
-        if (category['class'] === Items.CLASS_BATTLE_PET) {
+        if (category['class'] === ItemClass.BattlePet) {
             category.subcategories?.forEach(subcategory => {
                 if (subcategory.subClass) {
                     my.battlePetTypes[subcategory.subClass] = subcategory.name;
@@ -517,7 +516,7 @@ function getNameNode(cat: Category|Subcategory): Node {
 /**
  * Called when the user changes their preferred locale, this updates the UI with the new names.
  */
-async function onLocaleChange(locale: string) {
+async function onLocaleChange() {
     my.categories = [];
     my.battlePetTypes = {};
 

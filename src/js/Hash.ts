@@ -3,9 +3,10 @@ import {querySelector as qs} from "./utils";
 import Auctions from "./Auctions";
 import Categories from "./Categories";
 import Detail from "./Detail";
-import Items from "./Items";
+import {getItemByKey, parseKey, stringifyKeyParts} from "./Items";
 import Realms from "./Realms";
 import Search from "./Search";
+import * as Types from "./Types";
 
 /**
  * Manages the URL/location hash.
@@ -13,15 +14,15 @@ import Search from "./Search";
 const Hash = {
     /**
      * Returns the hash we use for the detail page for the given item on the given realm.
-     *
-     * @param {Item} item
-     * @param {Realm} [realm]
-     * @return {string}
      */
-    getItemDetailHash(item, realm) {
-        let realmHash = Realms.getRealmHash(realm || Realms.getCurrentRealm());
+    getItemDetailHash(item: Types.Item, realm?: Types.Realm) {
+        realm ??= Realms.getCurrentRealm();
+        if (!realm) {
+            return '';
+        }
 
-        let itemHash = Items.stringifyKeyParts(
+        const realmHash = Realms.getRealmHash(realm);
+        const itemHash = stringifyKeyParts(
             item.id,
             item.bonusLevel,
             item.bonusSuffix,
@@ -32,11 +33,13 @@ const Hash = {
 
     /**
      * Returns the hash we use for the current search criteria.
-     *
-     * @param {string} searchTypeName
      */
-    getSearchHash(searchTypeName) {
-        let realmHash = Realms.getRealmHash(Realms.getCurrentRealm());
+    getSearchHash(searchTypeName: string) {
+        const realm = Realms.getCurrentRealm();
+        if (!realm) {
+            return '';
+        }
+        const realmHash = Realms.getRealmHash(realm);
 
         let result = `${realmHash}/${searchTypeName}`;
 
@@ -48,8 +51,8 @@ const Hash = {
         }
 
         {
-            let minLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-min"]').value) || [])[0];
-            let maxLevel = (/^\d+$/.exec(qs('.main .search-bar input[name="level-max"]').value) || [])[0];
+            let minLevel = (/^\d+$/.exec((qs('.main .search-bar input[name="level-min"]') as HTMLInputElement).value) || [])[0];
+            let maxLevel = (/^\d+$/.exec((qs('.main .search-bar input[name="level-max"]') as HTMLInputElement).value) || [])[0];
             if (minLevel !== undefined) {
                 result += `/lmin=${minLevel}`;
             }
@@ -59,8 +62,8 @@ const Hash = {
         }
 
         {
-            const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]');
-            const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]');
+            const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]') as HTMLSelectElement;
+            const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]') as HTMLSelectElement;
             const minRarity = parseInt(rarityFrom.options[rarityFrom.selectedIndex].value);
             const maxRarity = parseInt(rarityTo.options[rarityTo.selectedIndex].value);
 
@@ -73,7 +76,7 @@ const Hash = {
         }
 
         {
-            const expansionSelect = qs('.main .filter select.expansion');
+            const expansionSelect = qs('.main .filter select.expansion') as HTMLSelectElement;
             if (expansionSelect.selectedIndex !== 0) {
                 result += `/era=${expansionSelect.options[expansionSelect.selectedIndex].value}`;
             }
@@ -81,9 +84,9 @@ const Hash = {
 
         {
             const arbitrage = Search.isArbitrageMode();
-            const transmogMode = qs('.main .search-bar .filter [name="transmog-mode"]').checked;
-            const vendorFlip = qs('.main .search-bar .filter [name="vendor-flip"]').checked;
-            const outOfStock = qs('.main .search-bar .filter [name="out-of-stock"]').checked;
+            const transmogMode = (qs('.main .search-bar .filter [name="transmog-mode"]') as HTMLInputElement).checked;
+            const vendorFlip = (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked;
+            const outOfStock = (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked;
 
             if (transmogMode) {
                 result += '/opt=transmog-mode';
@@ -101,7 +104,7 @@ const Hash = {
         }
 
         {
-            const searchBox = qs('.main .search-bar input[type="text"]');
+            const searchBox = qs('.main .search-bar input[type="text"]') as HTMLInputElement;
             let searchText = searchBox.value.replace(/^\s+|\s+$/, '');
             if (searchText !== '') {
                 result += '/' + encodeURIComponent(searchText).replace(
@@ -125,11 +128,11 @@ const Hash = {
 
     /**
      * Sets the browser's location bar hash.
-     *
-     * @param {string} newHash Must not include any initial #
-     * @param {string} title The page title fragment
      */
-    set(newHash, title) {
+    set(
+        newHash: string, // Must not include any initial #
+        title: string,   // The page title fragment
+    ) {
         document.title = (title ? `${title} - ` : '') + 'Undermine Exchange';
 
         if (newHash === getHash()) {
@@ -158,31 +161,29 @@ export default Hash;
 
 /**
  * Returns the current location hash, without leading #.
- *
- * @return {string}
  */
-function getHash() {
+function getHash(): string {
     return decodeURIComponent(location.hash.replace(/^#+/, ''));
 }
 
 /**
  * Performs a search of the given type.
- *
- * @param {string}   searchType
- * @param {string[]} params     The additional hash components between slashes.
  */
-async function performSearch(searchType, params) {
-    let catHash = '';
-    let rmin = 0;
-    let rmax = 5;
-    let lmin = '';
-    let lmax = '';
-    let expansion = '';
-    let transmogMode = false;
-    let vendorFlip = false;
-    let outOfStock = true;
-    let arbitrage = false;
-    let searchText = '';
+async function performSearch(
+    searchType: string,
+    params: string[], // The additional hash components between slashes.
+) {
+    let catHash: string = '';
+    let rmin: number = 0;
+    let rmax: number = 5;
+    let lmin: number|undefined;
+    let lmax: number|undefined;
+    let expansion: number|undefined;
+    let transmogMode: boolean = false;
+    let vendorFlip: boolean = false;
+    let outOfStock: boolean = true;
+    let arbitrage: boolean = false;
+    let searchText: string = '';
 
     params.forEach(param => {
         if (param.indexOf('=') < 0) {
@@ -246,33 +247,32 @@ async function performSearch(searchType, params) {
     }
 
     Categories.setHashCode(catHash);
-    qs(`.main .search-bar .filter select.expansion`).selectedIndex = 0;
-    [
-        ['.rarity[name="rarity-from"]', rmin],
-        ['.rarity[name="rarity-to"]', rmax],
-        ['.expansion', expansion],
-    ].forEach(([selector, value]) => {
-        const sel = qs(`.main .search-bar .filter select${selector}`);
+    ([
+        ['.rarity[name="rarity-from"]', `${rmin}`],
+        ['.rarity[name="rarity-to"]', `${rmax}`],
+        ['.expansion', `${expansion ?? ''}`],
+    ] as [string, string][]).forEach(([selector, value]) => {
+        const sel = qs(`.main .search-bar .filter select${selector}`) as HTMLSelectElement;
         Array.from(sel.options).forEach((opt, index) => {
-            if (opt.value == value) {
+            if (opt.value === value) {
                 sel.selectedIndex = index;
             }
         });
         sel.dispatchEvent(new Event('change'));
     });
-    qs('.main .search-bar input[name="level-min"]').value = lmin;
-    qs('.main .search-bar input[name="level-max"]').value = lmax;
-    qs('.main .search-bar .filter [name="transmog-mode"]').checked = transmogMode;
-    qs('.main .search-bar .filter [name="vendor-flip"]').checked = vendorFlip;
-    qs('.main .search-bar .filter [name="out-of-stock"]').checked = outOfStock;
+    (qs('.main .search-bar input[name="level-min"]') as HTMLInputElement).value = `${lmin ?? ''}`;
+    (qs('.main .search-bar input[name="level-max"]') as HTMLInputElement).value = `${lmax ?? ''}`;
+    (qs('.main .search-bar .filter [name="transmog-mode"]') as HTMLInputElement).checked = transmogMode;
+    (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked = vendorFlip;
+    (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked = outOfStock;
     {
-        const checkbox = qs('.main .search-bar .filter [name="arbitrage-mode"]');
+        const checkbox = qs('.main .search-bar .filter [name="arbitrage-mode"]') as HTMLInputElement;
         if (checkbox.checked !== arbitrage) {
             checkbox.click();
         }
     }
 
-    qs('.main .search-bar input[type="text"]').value = searchText;
+    (qs('.main .search-bar input[type="text"]') as HTMLInputElement).value = searchText;
 
     await Search.perform(searchType === 'favorites', searchType === 'deals');
 }
@@ -299,7 +299,8 @@ const read = async function () {
     let match = /^\d+(?:-\d+(?:-\d+)?)?$/.exec(hashParts[1]);
     if (match) {
         // Try to show an item detail page.
-        let item = Items.getItemByKey(Items.parseKey(match[0]));
+
+        let item = getItemByKey(parseKey(match[0]));
         if (item) {
             let hydrated = await Auctions.hydrateList([item], {realm});
             if (hydrated.length) {

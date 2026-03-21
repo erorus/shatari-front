@@ -1,6 +1,6 @@
 import {createElement as ce, emptyElement as ee, querySelector as qs} from "./utils";
 import Auctions from "./Auctions";
-import Items from "./Items";
+import * as Items from "./Items";
 
 const searchBox = qs('.main .search-bar input[type="text"]') as HTMLInputElement;
 const textContainer = searchBox.parentNode as HTMLElement;
@@ -135,13 +135,13 @@ async function update() {
     }
 
     lastSearch = typed;
-    const items = await Auctions.hydrateList(await Items.search(Items.SEARCH_MODE_SUGGESTIONS), {});
+    const items = await Auctions.hydrateList(await Items.search(Items.SearchMode.Suggestions), {});
     if (lastSearch !== typed) {
         return;
     }
     items.sort((a, b) => {
-        let aFullName = a.name + (a.bonusSuffix ? ' ' + Items.getSuffix(a.id, a.bonusSuffix).name : '');
-        let bFullName = b.name + (b.bonusSuffix ? ' ' + Items.getSuffix(b.id, b.bonusSuffix).name : '');
+        let aFullName = a.name + (a.bonusSuffix ? ' ' + Items.getSuffix(a.id, a.bonusSuffix)?.name : '');
+        let bFullName = b.name + (b.bonusSuffix ? ' ' + Items.getSuffix(b.id, b.bonusSuffix)?.name : '');
         let aFirst = aFullName.toLowerCase().startsWith(typed) ? 0 : 1;
         let bFirst = bFullName.toLowerCase().startsWith(typed) ? 0 : 1;
 
@@ -151,12 +151,12 @@ async function update() {
 
     let index = 0;
     for (let item; item = items[index]; index++) {
-        let name = item.name + (item.bonusSuffix ? ' ' + Items.getSuffix(item.id, item.bonusSuffix).name : '');
+        let name = item.name + (item.bonusSuffix ? ' ' + Items.getSuffix(item.id, item.bonusSuffix)?.name : '');
         let option = options[index];
         ee(option);
         option.dataset.value = name;
         option.appendChild(ce('img', {
-            src: Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM),
+            src: Items.getIconUrl(item.icon, Items.IconSize.Medium),
             loading: 'lazy',
         }));
         option.appendChild(document.createTextNode(name));

@@ -14,8 +14,8 @@ import Auctions from "./Auctions";
 import Categories from "./Categories";
 import Detail from "./Detail";
 import Hash from "./Hash";
-import Items from "./Items";
-import Locales from "./Locales";
+import * as Items from "./Items";
+import {getWowheadDomain} from "./Locales";
 import Realms from "./Realms";
 import Suggestions from "./Suggestions";
 
@@ -138,9 +138,9 @@ const Search = {
      * @param {boolean} dealsOnly
      */
     async perform(favoritesOnly, dealsOnly) {
-        if (Categories.getClassId() === Items.CLASS_WOW_TOKEN) {
+        if (Categories.getClassId() === Items.ItemClass.WowToken) {
             // Get out of WoW Token mode before performing any searches.
-            qs('.main .categories .category[data-class-id="' + Items.CLASS_WOW_TOKEN + '"]').dispatchEvent(new MouseEvent('click'));
+            qs('.main .categories .category[data-class-id="' + Items.ItemClass.WowToken + '"]').dispatchEvent(new MouseEvent('click'));
         }
 
         const thisRealm = Realms.getCurrentRealm();
@@ -175,7 +175,7 @@ const Search = {
         const hasSearchText = /\S/.test(searchBox.value);
 
         let itemsList = await Auctions.hydrateList(
-            await Items.search(favoritesOnly ? Items.SEARCH_MODE_FAVORITES : Items.SEARCH_MODE_NORMAL),
+            await Items.search(favoritesOnly ? Items.SearchMode.Favorites : Items.SearchMode.Normal),
             {arbitrage: Search.isArbitrageMode(), regionMedian: getRegionMedianControl().checked},
         );
 
@@ -371,9 +371,9 @@ function createRow(
         }
         if (canHover()) {
             if (item.id === ITEM_PET_CAGE) {
-                rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + Locales.getWowheadDomain();
+                rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + getWowheadDomain();
             } else {
-                rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + Locales.getWowheadDomain();
+                rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + getWowheadDomain();
                 if (item.bonusLevel) {
                     rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
                 }
@@ -407,7 +407,7 @@ function createRow(
         if (item.side === SIDE_ALLIANCE) {
             let img = document.createElement('img');
             img.loading = 'lazy';
-            img.src = Items.getIconUrl('ui_allianceicon', Items.ICON_SIZE.MEDIUM);
+            img.src = Items.getIconUrl('ui_allianceicon', Items.IconSize.Large);
             img.classList.add('icon');
             td.appendChild(img);
             td.dataset.sideIcon = 1;
@@ -415,7 +415,7 @@ function createRow(
         } else if (item.side === SIDE_HORDE) {
             let img = document.createElement('img');
             img.loading = 'lazy';
-            img.src = Items.getIconUrl('ui_hordeicon', Items.ICON_SIZE.MEDIUM);
+            img.src = Items.getIconUrl('ui_hordeicon', Items.IconSize.Medium);
             img.classList.add('icon');
             td.appendChild(img);
             td.dataset.sideIcon = 1;
@@ -423,7 +423,7 @@ function createRow(
         }
         let img = document.createElement('img');
         img.loading = 'lazy';
-        img.src = Items.getIconUrl(item.icon, Items.ICON_SIZE.MEDIUM);
+        img.src = Items.getIconUrl(item.icon, Items.IconSize.Medium);
         img.classList.add('icon');
         td.appendChild(img);
 

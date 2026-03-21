@@ -5,7 +5,12 @@ import {
     querySelector as qs
 } from "./utils";
 
-import Locales from "./Locales";
+import {
+    registerCallback as registerLocaleCallback,
+    getCurrent as getCurrentLocale,
+    getPopulationNames,
+    Locale
+} from "./Locales";
 import Progress from "./Progress";
 import * as Types from "./Types";
 
@@ -99,7 +104,7 @@ const Realms = {
 
         placeholderUsageCheck();
 
-        Locales.registerCallback(onLocaleChange);
+        registerLocaleCallback(onLocaleChange);
     },
 
     /**
@@ -177,11 +182,11 @@ function getConnectedRealmsForRegion(region: Types.Region): Record<Types.Connect
  * Fetches the realm list and stores it locally.
  */
 async function getRealms() {
-    const localeCode = Locales.getCurrent();
+    const localeCode = getCurrentLocale();
 
     const responses = await Promise.all([
-        Progress.fetch('json/realms/realm-list.json', {mode:'same-origin'}),
-        Progress.fetch(`json/realms/realm-names.${localeCode}.json`, {mode:'same-origin'}),
+        Progress.fetch('json/realms/realm-list.json', {mode: 'same-origin'}),
+        Progress.fetch(`json/realms/realm-names.${localeCode}.json`, {mode: 'same-origin'}),
     ]);
 
     if (!responses[0].ok) {
@@ -198,8 +203,8 @@ async function getRealms() {
 /**
  * Called when the user changes their preferred locale, this updates the UI with the new names.
  */
-async function onLocaleChange(locale: string) {
-    const response = await Progress.fetch(`json/realms/realm-names.${locale}.json`, {mode:'same-origin'});
+async function onLocaleChange(locale: Locale) {
+    const response = await Progress.fetch(`json/realms/realm-names.${locale}.json`, {mode: 'same-origin'});
     if (!response.ok) {
         throw 'Could not load realm names in locale ' + locale;
     }
@@ -227,7 +232,7 @@ function placeholderUsageCheck() {
  * Sets the names and categories of our cached realms using the given dictionary.
  */
 function setNames(names: Record<Types.RealmID, {name: string, category: string, nativeName?: string}>) {
-    const popNames = Locales.getPopulationNames();
+    const popNames = getPopulationNames();
 
     Object.values(my.realms).forEach(realm => {
         const nameRec = names[realm.id];

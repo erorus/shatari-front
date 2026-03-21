@@ -7,7 +7,7 @@ import {
     updateDeltaTimestamps
 } from "./utils";
 
-import Items from "./Items";
+import {stringifyKeyParts, Modifier} from "./Items";
 import Progress from "./Progress";
 import Realms from "./Realms";
 import * as Types from "./Types";
@@ -113,7 +113,7 @@ const Auctions = {
             let itemId = view.getUint32(read(4), true);
             let itemLevel = view.getUint16(read(2), true);
             let itemSuffix = view.getUint16(read(2), true);
-            let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+            let itemKeyString = stringifyKeyParts(itemId, itemLevel, itemSuffix);
 
             let median = view.getUint32(read(4), true) * COPPER_SILVER;
             let dealPrice = view.getUint32(read(4), true) * COPPER_SILVER;
@@ -269,7 +269,7 @@ const Auctions = {
         const result: Types.PricedItem[] = [];
 
         items.forEach(function (item) {
-            const keyString = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
+            const keyString = stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
 
             let pricedItem: Types.PricedItem = {
                 ...item,
@@ -403,7 +403,7 @@ async function getBonusToStats(): Promise<Record<number, number[]>> {
         return my.bonusToStats;
     }
 
-    const response = await Progress.fetch('json/bonusToStats.json', {mode:'same-origin'});
+    const response = await Progress.fetch('json/bonusToStats.json', {mode: 'same-origin'});
 
     if (!response.ok) {
         throw 'Cannot get map of bonus to stats!';
@@ -444,7 +444,7 @@ async function getItemState(realm: Types.Realm, item: Types.Item, useCached: boo
         daily: [],
     };
 
-    let basename = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
+    let basename = stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
     const url = [
         'data',
         useCached ? 'cached' : '',
@@ -510,7 +510,7 @@ async function getItemState(realm: Types.Realm, item: Types.Item, useCached: boo
         } else {
             let level = view.getUint8(read(1));
             if (level) {
-                modifiers[Items.MODIFIER_TYPE_TIMEWALKER_LEVEL] = level;
+                modifiers[Modifier.TypeTimewalkerLevel] = level;
             }
         }
         let bonuses = [];
@@ -668,7 +668,7 @@ async function getRealmState(realm: Types.Realm): Promise<Types.RealmState> {
         let itemId = view.getUint32(read(4), true);
         let itemLevel = view.getUint16(read(2), true);
         let itemSuffix = view.getUint16(read(2), true);
-        let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+        let itemKeyString = stringifyKeyParts(itemId, itemLevel, itemSuffix);
         if (itemId === ITEM_PET_CAGE) {
             if (itemSuffix) {
                 result.speciesVariants[itemLevel] = result.speciesVariants[itemLevel] || [];
@@ -698,7 +698,7 @@ async function getRealmState(realm: Types.Realm): Promise<Types.RealmState> {
                 const itemId = view.getUint32(read(4), true);
                 const itemLevel = view.getUint16(read(2), true);
                 const itemSuffix = view.getUint16(read(2), true);
-                const itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+                const itemKeyString = stringifyKeyParts(itemId, itemLevel, itemSuffix);
                 result.bonusStatItems[statId].push(itemKeyString);
             }
         }
@@ -790,7 +790,7 @@ async function getRegionState(region: Types.Region): Promise<Types.RegionState> 
         let itemId = lastItemId + view.getUint16(read(2), true);
         let itemLevel = view.getUint16(read(2), true);
         let itemSuffix = view.getUint16(read(2), true);
-        let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+        let itemKeyString = stringifyKeyParts(itemId, itemLevel, itemSuffix);
 
         result.items[itemKeyString] = view.getUint32(read(4), true) * COPPER_SILVER;
         lastItemId = itemId;
@@ -802,7 +802,7 @@ async function getRegionState(region: Types.Region): Promise<Types.RegionState> 
             let itemId = lastItemId + view.getUint16(read(2), true);
             let itemLevel = view.getUint16(read(2), true);
             let itemSuffix = view.getUint16(read(2), true);
-            let itemKeyString = Items.stringifyKeyParts(itemId, itemLevel, itemSuffix);
+            let itemKeyString = stringifyKeyParts(itemId, itemLevel, itemSuffix);
 
             if (itemId === ITEM_PET_CAGE) {
                 if (itemSuffix) {
@@ -827,7 +827,7 @@ async function getRegionState(region: Types.Region): Promise<Types.RegionState> 
         Object.entries(result.arbitrageVariants)
             .filter(([itemIdString, itemKeys]) => itemKeys.length > 1)
             .forEach(([itemIdString, itemKeys]) => {
-                const baseKey = Items.stringifyKeyParts(parseInt(itemIdString), 0, 0);
+                const baseKey = stringifyKeyParts(parseInt(itemIdString), 0, 0);
                 const baseKeyIndex = itemKeys.indexOf(baseKey);
                 if (baseKeyIndex >= 0) {
                     itemKeys.splice(baseKeyIndex, 1);

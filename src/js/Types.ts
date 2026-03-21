@@ -31,18 +31,18 @@ export type AuctionDetail = {
     // List of unique tertiary stat IDs
     stats: number[];
 }
-export type BattlePetSpecies = {
+export type BattlePetStats = {
+    power: number;
+    stamina: number;
+    speed: number;
+}
+export type BattlePetSpecies = BattlePetStats & {
     display: number;
     expansion: number;
     icon: string;
     npc: number;
     side?: number;
     type: number;
-}
-export type BattlePetStats = {
-    power: number;
-    stamina: number;
-    speed: number;
 }
 export type ConnectedRealm = {
     region: Region;
@@ -162,6 +162,6 @@ export type UnnamedItem = {
     subclass: number;
     vendorBuy?: number;
     vendorSell?: number;
-    vendorSellBase?: number;
+    vendorSellBase?: 2|4;
     vendorSellFactor?: number;
 }

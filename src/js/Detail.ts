@@ -1,5 +1,4 @@
 import {
-    copyObject as co,
     createElement as ce,
     createSVGElement as svge,
     createText as ct,
@@ -15,8 +14,8 @@ import {COPPER_GOLD, COPPER_SILVER, ITEM_PET_CAGE, MS_DAY, MS_HOUR, NBSP} from "
 import Auctions from "./Auctions";
 import Categories from "./Categories";
 import Hash from "./Hash";
-import Items from "./Items";
-import Locales from "./Locales";
+import * as Items from "./Items";
+import {getWowheadDomain, getWowheadPathPrefix} from "./Locales";
 import Realms from "./Realms";
 import Search from "./Search";
 import * as Types from "./Types";
@@ -162,12 +161,12 @@ const Detail = {
             scroller.appendChild(namePanel);
 
             const icon = ce('span', {className: 'icon', dataset: {quality: 8}});
-            icon.style.backgroundImage = 'url("' + Items.getIconUrl('wow_token01', Items.ICON_SIZE.LARGE) + '")';
+            icon.style.backgroundImage = 'url("' + Items.getIconUrl('wow_token01', Items.IconSize.Large) + '")';
             namePanel.appendChild(icon);
 
             let itemName = Categories.getTokenName();
             const nameLink = ce('a', {
-                href: `https://www.wowhead.com/${Locales.getWowheadPathPrefix()}item=122284`,
+                href: `https://www.wowhead.com/${getWowheadPathPrefix()}item=122284`,
             }, ct(itemName));
             namePanel.appendChild(nameLink);
         }
@@ -406,10 +405,10 @@ export default Detail;
 /**
  * Given a pet's base stats and an auction's modifiers, return the actual stats of the pet.
  */
-function getBattlePetStats(baseStats: Types.BattlePetStats, modifiers: Record<number, number>): Types.BattlePetStats {
-    const quality = modifiers[Items.MODIFIER_BATTLE_PET_QUALITY];
-    const rawBreed = modifiers[Items.MODIFIER_BATTLE_PET_BREED];
-    const level = modifiers[Items.MODIFIER_BATTLE_PET_LEVEL];
+function getBattlePetStats(baseStats: Types.BattlePetStats, modifiers: Record<Items.Modifier, number>): Types.BattlePetStats {
+    const quality = modifiers[Items.Modifier.BattlePetQuality];
+    const rawBreed = modifiers[Items.Modifier.BattlePetBreed];
+    const level = modifiers[Items.Modifier.BattlePetLevel];
 
     if (quality == null) {
         throw "Missing pet quality";
@@ -530,8 +529,8 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
             }
 
             if (finalStats) {
-                const quality = specLine.modifiers[Items.MODIFIER_BATTLE_PET_QUALITY];
-                const level = specLine.modifiers[Items.MODIFIER_BATTLE_PET_LEVEL];
+                const quality = specLine.modifiers[Items.Modifier.BattlePetQuality];
+                const level = specLine.modifiers[Items.Modifier.BattlePetLevel];
                 const battlePetType = item.battlePetType ?? 0;
 
                 let tooltip = ce('div');
@@ -568,11 +567,11 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
         } else {
             const wowheadParams: string[] = [];
             wowheadParams.push('item=' + item.id);
-            wowheadParams.push('domain=' + Locales.getWowheadDomain());
+            wowheadParams.push('domain=' + getWowheadDomain());
             if (specLine.bonuses.length) {
                 wowheadParams.push('bonus=' + specLine.bonuses.join(':'));
             }
-            let lvl = specLine.modifiers[Items.MODIFIER_TYPE_TIMEWALKER_LEVEL];
+            let lvl = specLine.modifiers[Items.Modifier.TypeTimewalkerLevel];
             if (lvl) {
                 wowheadParams.push('lvl=' + lvl);
             }
@@ -580,11 +579,11 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
                 wowheadParams.push('ilvl=' + item.bonusLevel);
             }
             const craftedStats = [];
-            if (specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_1]) {
-                craftedStats[0] = specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_1];
+            if (specLine.modifiers[Items.Modifier.TypeCraftingStat1]) {
+                craftedStats[0] = specLine.modifiers[Items.Modifier.TypeCraftingStat1];
             }
-            if (specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_2]) {
-                let stat2 = specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_STAT_2];
+            if (specLine.modifiers[Items.Modifier.TypeCraftingStat2]) {
+                let stat2 = specLine.modifiers[Items.Modifier.TypeCraftingStat2];
                 if (!craftedStats.length) {
                     craftedStats.push(0);
                 }
@@ -593,8 +592,8 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
             if (craftedStats.length) {
                 wowheadParams.push('crafted-stats=' + craftedStats.join(':'));
             }
-            if (specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_QUALITY]) {
-                wowheadParams.push('crafting-quality=' + specLine.modifiers[Items.MODIFIER_TYPE_CRAFTING_QUALITY]);
+            if (specLine.modifiers[Items.Modifier.TypeCraftingQuality]) {
+                wowheadParams.push('crafting-quality=' + specLine.modifiers[Items.Modifier.TypeCraftingQuality]);
             }
 
             datasetParams.wowhead = wowheadParams.join('&');
@@ -612,7 +611,7 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
                 }
 
                 const icon = ce('span', {className: 'icon'});
-                icon.style.backgroundImage = 'url("' + Items.getIconUrl(iconName, Items.ICON_SIZE.MEDIUM) + '")';
+                icon.style.backgroundImage = 'url("' + Items.getIconUrl(iconName, Items.IconSize.Medium) + '")';
 
                 statIcons.appendChild(icon);
             });
@@ -676,7 +675,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         scroller.appendChild(namePanel);
 
         const icon = ce('span', {className: 'icon', dataset: {quality: item.quality}});
-        icon.style.backgroundImage = 'url("' + Items.getIconUrl(item.icon, Items.ICON_SIZE.LARGE) + '")';
+        icon.style.backgroundImage = 'url("' + Items.getIconUrl(item.icon, Items.IconSize.Large) + '")';
         namePanel.appendChild(icon);
 
         // Model
@@ -716,9 +715,9 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         namePanel.appendChild(nameLink);
 
         if (item.id === ITEM_PET_CAGE) {
-            nameLink.href = 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'npc=' + item.npc;
+            nameLink.href = 'https://www.wowhead.com/' + getWowheadPathPrefix() + 'npc=' + item.npc;
         } else {
-            nameLink.href = 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'item=' + item.id;
+            nameLink.href = 'https://www.wowhead.com/' + getWowheadPathPrefix() + 'item=' + item.id;
         }
         nameLink.href += '/' + item.name
             .replace(/%\w|['#]|^\s*|\s*$/g, '')
@@ -1526,7 +1525,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
             }
 
             const headerTr = headerTd.parentNode as HTMLTableRowElement;
-            const headerTds = headerTr.querySelectorAll('td') as NodelistOf<HTMLTableCellElement>;
+            const headerTds = headerTr.querySelectorAll('td') as NodeListOf<HTMLTableCellElement>;
             const sortCol = parseInt(headerTd.dataset.sortCol ?? '0');
             let columnPos = 0;
             for (let x = 0; x < headerTds.length; x++) {
@@ -1575,7 +1574,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
                     return reversed * valDiff;
                 }
 
-                if (aTd.dataset.sortValue2) {
+                if (aTd.dataset.sortValue2 && bTd.dataset.sortValue2) {
                     const valDiff = parseInt(aTd.dataset.sortValue2) - parseInt(bTd.dataset.sortValue2);
                     if (valDiff) {
                         return reversed * valDiff;

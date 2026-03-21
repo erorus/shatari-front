@@ -4,8 +4,8 @@ import {MS_MINUTE} from "./constants";
 import Categories from "./Categories";
 import Detail from "./Detail";
 import Hash from "./Hash";
-import Items from "./Items";
-import Locales from "./Locales";
+import {init as ItemsInit} from "./Items";
+import {init as LocalesInit} from "./Locales";
 import Realms from "./Realms";
 import Search from "./Search";
 import UndermineMigration from "./UndermineMigration";
@@ -46,7 +46,7 @@ async function init() {
 
     document.head.appendChild(ce('script', {src: 'power.js'}));
 
-    if (!navigator.userAgentData &&
+    if (!('userAgentData' in navigator) &&
         navigator.userAgent.indexOf('Safari') > -1 &&
         navigator.userAgent.indexOf('Chrome') < 0 &&
         navigator.userAgent.indexOf('Chromium') < 0
@@ -56,11 +56,13 @@ async function init() {
     }
 
     const fsDiv = qs('.main .welcome .full-screen') as HTMLElement;
-    if (document.fullscreenEnabled || document.webkitFullscreenEnabled) {
+    const doc = document as Document & {webkitFullscreenEnabled?: boolean};
+    if (document.fullscreenEnabled || doc.webkitFullscreenEnabled) {
         fsDiv.querySelector('button')?.addEventListener('click', () => {
             if (document.fullscreenEnabled) {
                 qs('.main')?.requestFullscreen();
-            } else if (document.webkitFullscreenEnabled) {
+            } else if (doc.webkitFullscreenEnabled) {
+                // @ts-ignore
                 qs('.main')?.webkitRequestFullscreen();
             }
         });
@@ -68,11 +70,11 @@ async function init() {
         fsDiv.style.visibility = 'hidden';
     }
 
-    Locales.init();
+    LocalesInit();
 
     await Promise.all([
         Categories.init(),
-        Items.init(),
+        ItemsInit(),
         Realms.init(),
     ]);
 
