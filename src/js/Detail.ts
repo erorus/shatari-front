@@ -19,9 +19,11 @@ import Items from "./Items";
 import Locales from "./Locales";
 import Realms from "./Realms";
 import Search from "./Search";
+import * as Types from "./Types";
 
-/** @type {Object.<number, BattlePetStats>} */
-const BREED_STATS = {
+declare const Highcharts: any;
+
+const BREED_STATS: Record<number, Types.BattlePetStats> = {
     3:  {stamina: 0.5, power: 0.5, speed: 0.5},
     4:  {stamina: 0.0, power: 2.0, speed: 0.0},
     5:  {stamina: 0.0, power: 0.0, speed: 2.0},
@@ -34,8 +36,8 @@ const BREED_STATS = {
     12: {stamina: 0.9, power: 0.4, speed: 0.4},
 }
 
-/** @type {string[]} All the section keys, in default order. */
-const SECTION_KEYS = [
+/** All the section keys, in default order. */
+const SECTION_KEYS: string[] = [
     'base-stats',
     'snapshots',
     'heat',
@@ -45,15 +47,19 @@ const SECTION_KEYS = [
     'other-realms',
 ];
 
-/** @type {Object<number, string>} A map of stat ID to icon name. */
-const STAT_TO_ICON = {
+/** A map of stat ID to icon name. */
+const STAT_TO_ICON: Record<Types.StatID, string> = {
     61: 'petbattle_speed',                    // Speed
     62: 'rogue_leeching_poison',              // Leech
     63: 'rogue_burstofspeed',                 // Avoidance
     64: 'spell_magic_greaterblessingofkings', // Indestructible
 };
 
-const my = {
+type ModuleVars = {
+    everScrolled: boolean;
+}
+
+const my: ModuleVars = {
     everScrolled: false,
 };
 
@@ -62,28 +68,25 @@ const my = {
  */
 const Detail = {
     /**
-     * Hide detail mode to revert to search result mode.
+     * Hides detail mode to revert to search result mode.
      */
     hide() {
-        delete qs('.main .main-result').dataset.detailMode;
+        delete (qs('.main .main-result') as HTMLDivElement).dataset.detailMode;
         Search.setHash();
     },
 
     /**
      * Enters detail mode to show the given item's details.
-     *
-     * @param {Item} item
-     * @param {Realm|null} realm
      */
-    async show(item, realm) {
-        qs('.main .main-result').dataset.detailMode = 1;
+    async show(item: Types.Item, realm: Types.Realm|null) {
+        (qs('.main .main-result') as HTMLDivElement).dataset.detailMode = '1';
 
-        const itemDiv = qs('.main .main-result .item');
+        const itemDiv = qs('.main .main-result .item') as HTMLDivElement;
         ee(itemDiv);
 
         {
             let thisRealm = realm || Realms.getCurrentRealm();
-            Hash.set(
+            thisRealm && Hash.set(
                 Hash.getItemDetailHash(item, thisRealm),
                 `[${item.name}] - ${thisRealm.name} ${thisRealm.region.toUpperCase()}`,
             );
@@ -97,8 +100,8 @@ const Detail = {
             backButton.addEventListener('click', Detail.hide);
             backBar.appendChild(ce('div', {className: 'button-border'}, backButton));
 
-            if (realm && realm.id !== Realms.getCurrentRealm().id) {
-                const span = ce('span', {className: 'alt-realm'}, ct('Viewing Realm ' + realm.name));
+            if (realm && realm.id !== Realms.getCurrentRealm()?.id) {
+                const span = ce('span', {className: 'alt-realm'}, ct(`Viewing Realm ${realm.name}`));
                 if (realm.nativeName) {
                     span.appendChild(ce('span', {className: 'native-name'}, ct(realm.nativeName)));
                 }
@@ -126,10 +129,10 @@ const Detail = {
      * Shows the WoW Token panel for the current region.
      */
     async showWowToken() {
-        qs('.main .main-result').dataset.detailMode = 1;
+        (qs('.main .main-result') as HTMLDivElement).dataset.detailMode = '1';
         Hash.set('', '');
 
-        const itemDiv = qs('.main .main-result .item');
+        const itemDiv = qs('.main .main-result .item') as HTMLDivElement;
         ee(itemDiv);
 
         {
@@ -164,7 +167,7 @@ const Detail = {
 
             let itemName = Categories.getTokenName();
             const nameLink = ce('a', {
-                href: 'https://www.wowhead.com/' + Locales.getWowheadPathPrefix() + 'item=122284',
+                href: `https://www.wowhead.com/${Locales.getWowheadPathPrefix()}item=122284`,
             }, ct(itemName));
             namePanel.appendChild(nameLink);
         }
@@ -201,13 +204,13 @@ const Detail = {
             tr.appendChild(ce('td', {}, ct('Current')));
             tr.appendChild(ce('td', {
                 dataset: {simpleTooltip: 'Price of a token in ' + regionName + ' right now.'}
-            }, tokenState.price ? priceElement(tokenState.price) : null));
+            }, tokenState.price ? priceElement(tokenState.price) : undefined));
 
             table.appendChild(tr = ce('tr'));
             tr.appendChild(ce('td', {}, ct('Updated')));
             tr.appendChild(ce('td', {}, ce('span', {className: 'delta-timestamp', dataset: {timestamp: tokenState.snapshot}})));
 
-            let prices = [];
+            let prices: Types.Money[] = [];
             tokenState.snapshots.forEach(snapshot => {
                 if (snapshot.price > 0) {
                     prices.push(snapshot.price);
@@ -215,23 +218,24 @@ const Detail = {
             });
             prices.sort((a, b) => a - b);
 
-            let elements = {};
+            let eleMedian: HTMLElement;
+            let eleMean: HTMLElement;
 
             table.appendChild(tr = ce('tr'));
             tr.appendChild(ce('td', {}, ct('Median')));
-            tr.appendChild(elements.median = ce('td', {
+            tr.appendChild(eleMedian = ce('td', {
                 dataset: {simpleTooltip: 'Median price in ' + regionName + ' over the past ' + days + ' days.'}
             }));
 
             table.appendChild(tr = ce('tr'));
             tr.appendChild(ce('td', {}, ct('Mean')));
-            tr.appendChild(elements.mean = ce('td', {
+            tr.appendChild(eleMean = ce('td', {
                 dataset: {simpleTooltip: 'Mean (average) price in ' + regionName + ' over the past ' + days + ' days.'}
             }));
 
             let statistics = getStatistics(prices);
-            elements.median.appendChild(priceElement(statistics.median));
-            elements.mean.appendChild(priceElement(statistics.mean));
+            eleMedian.appendChild(priceElement(statistics.median));
+            eleMean.appendChild(priceElement(statistics.mean));
         })();
 
         // Price chart
@@ -266,7 +270,7 @@ const Detail = {
             let firstTimestamp = Date.now();
             let lastTimestamp = 0;
             {
-                let prices = [];
+                let prices: Types.Money[] = [];
                 tokenState.snapshots.forEach(snapshot => {
                     maxPrice = Math.max(maxPrice, snapshot.price);
                     firstTimestamp = Math.min(firstTimestamp, snapshot.snapshot);
@@ -288,9 +292,15 @@ const Detail = {
             }
             const timestampRange = lastTimestamp - firstTimestamp;
 
+            type HoverPoint = Types.SummaryLine & {
+                xCenter: number;
+                xMin: number;
+                xMax: number;
+            };
+
             // Set point arrays.
-            const pricePoints = [];
-            const hoverData = [];
+            const pricePoints: string[] = [];
+            const hoverData: HoverPoint[] = [];
 
             const xOffset = Math.round(1 / tokenState.snapshots.length * xMax / 2);
             const xRange = xMax - 2 * xOffset;
@@ -300,20 +310,19 @@ const Detail = {
                 const priceY = Math.round((maxPrice - snapshot.price) / maxPrice * yMaxPrice);
                 pricePoints.push([x, priceY].join(','));
 
-                const hoverPoint = {
+                const hoverPoint: HoverPoint = {
+                    ...snapshot,
                     xCenter: x / xMax,
+                    xMin: 0,
+                    xMax: 1,
                 };
-                co(hoverPoint, snapshot);
-                if (hoverData.length === 0) {
-                    hoverPoint.xMin = 0;
-                } else {
+                if (hoverData.length > 0) {
                     let prev = hoverData[hoverData.length - 1];
                     hoverPoint.xMin = prev.xMax = prev.xCenter + (hoverPoint.xCenter - prev.xCenter) / 2;
                 }
 
                 hoverData.push(hoverPoint);
             });
-            hoverData[hoverData.length - 1].xMax = 1;
 
             // line + fill
             [
@@ -341,7 +350,7 @@ const Detail = {
                 priceChart.appendChild(line);
             });
 
-            const hoverLine = svge('line', {x1: -1000, x2: -1000, y1: 0, y2: yMax});
+            const hoverLine = svge('line', {x1: -1000, x2: -1000, y1: 0, y2: yMax}) as SVGLineElement;
             hoverLine.classList.add('hover');
             priceChart.appendChild(hoverLine);
 
@@ -396,23 +405,19 @@ export default Detail;
 
 /**
  * Given a pet's base stats and an auction's modifiers, return the actual stats of the pet.
- *
- * @param {BattlePetStats} baseStats
- * @param {Object.<number, number>} modifiers
- * @return {BattlePetStats}
  */
-function getBattlePetStats(baseStats, modifiers) {
+function getBattlePetStats(baseStats: Types.BattlePetStats, modifiers: Record<number, number>): Types.BattlePetStats {
     const quality = modifiers[Items.MODIFIER_BATTLE_PET_QUALITY];
     const rawBreed = modifiers[Items.MODIFIER_BATTLE_PET_BREED];
     const level = modifiers[Items.MODIFIER_BATTLE_PET_LEVEL];
 
-    if (quality === undefined) {
+    if (quality == null) {
         throw "Missing pet quality";
     }
-    if (rawBreed === undefined) {
+    if (rawBreed == null) {
         throw "Missing pet breed";
     }
-    if (level === undefined) {
+    if (level == null) {
         throw "Missing pet level";
     }
 
@@ -420,7 +425,7 @@ function getBattlePetStats(baseStats, modifiers) {
     const breed = ((rawBreed - 3) % 10) + 3;
 
     let breedStats = BREED_STATS[breed];
-    if (breedStats === undefined) {
+    if (!breedStats) {
         throw "Invalid breed";
     }
 
@@ -433,11 +438,8 @@ function getBattlePetStats(baseStats, modifiers) {
 
 /**
  * Returns the median and mean of a sorted list of numbers.
- *
- * @param {number[]} values
- * @return {{median: number, mean: number}}
  */
-function getStatistics(values) {
+function getStatistics(values: number[]): {median: number, mean: number} {
     let median;
     if (values.length % 2 === 1) {
         median = values[Math.floor(values.length / 2)];
@@ -452,28 +454,21 @@ function getStatistics(values) {
     values.forEach(value => sum += value);
     mean = Math.round(sum / values.length);
 
-    return {
-        median: median,
-        mean: mean,
-    };
+    return {median, mean};
 }
 
 /**
- * Returns an array of item states for the given item for all realms in the given region.
- *
- * @param {Item} item
- * @param {Region} region
- * @return {Promise<ItemState[]>}
+ * Returns a list of item states for the given item for all realms in the given region.
  */
-async function fetchOtherRealms(item, region) {
+async function fetchOtherRealms(item: Types.Item, region: Types.Region): Promise<Types.ItemState[]> {
     const currentRealm = Realms.getCurrentRealm();
     const connectedRealms = Realms.getRegionConnectedRealms(region);
 
-    const toFetch = [];
+    const toFetch: Promise<Types.ItemState>[] = [];
     connectedRealms.forEach(connectedRealm => {
         toFetch.push(Auctions.getItem(
             item,
-            connectedRealm.id === currentRealm.connectedId ? currentRealm : connectedRealm.canonical
+            connectedRealm.id === currentRealm?.connectedId ? currentRealm : connectedRealm.canonical
         ));
     });
 
@@ -482,16 +477,13 @@ async function fetchOtherRealms(item, region) {
 
 /**
  * Populate the auctions list in the rightmost panel.
- *
- * @param {Item} item
- * @param {ItemState} itemState
  */
-function populateAuctions(item, itemState) {
-    const availableSpan = qs('.main .main-result .item .back-bar .available');
+function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
+    const availableSpan = qs('.main .main-result .item .back-bar .available') as HTMLSpanElement;
 
     availableSpan.appendChild(ct(itemState.quantity.toLocaleString() + ' Available'));
 
-    const auctionsPanel = qs('.main .main-result .item .auctions');
+    const auctionsPanel = qs('.main .main-result .item .auctions') as HTMLDivElement;
     const scroller = ce('div', {className: 'scroller'});
     auctionsPanel.appendChild(scroller);
     scroller.scrollTop = 0;
@@ -499,20 +491,21 @@ function populateAuctions(item, itemState) {
     const table = ce('table');
     scroller.appendChild(table);
 
-    const onRowClick = tr => {
-        const input = qs('.main .main-result .item .details .quantity-calc input');
-        input.value = tr.dataset.runningQuantity;
+    const onRowClick = (tr: HTMLTableRowElement) => {
+        const input = qs('.main .main-result .item .details .quantity-calc input') as HTMLInputElement;
+        input.value = tr.dataset.runningQuantity ?? '1';
         input.dispatchEvent(new Event('change'));
     };
 
     let runningQuantity = 0;
     itemState.auctions.forEach(auction => {
-        const tr = ce('tr');
+        const tr = ce('tr') as HTMLTableRowElement;
         table.appendChild(tr);
 
-        tr.dataset.price = auction.price;
-        tr.dataset.quantity = auction.quantity;
-        tr.dataset.runningQuantity = runningQuantity += auction.quantity
+        tr.dataset.price = `${auction.price}`;
+        tr.dataset.quantity = `${auction.quantity}`;
+        runningQuantity += auction.quantity;
+        tr.dataset.runningQuantity = `${runningQuantity}`;
         tr.appendChild(ce('td', {}, priceElement(auction.price)));
         tr.appendChild(ce('td', {}, ct(auction.quantity.toLocaleString())));
 
@@ -520,18 +513,18 @@ function populateAuctions(item, itemState) {
     });
 
     itemState.specifics.forEach(specLine => {
-        const tr = ce('tr');
+        const tr = ce('tr') as HTMLTableRowElement;
         table.appendChild(tr);
 
-        const td = ce('td');
+        const td = ce('td') as HTMLTableCellElement;
         tr.appendChild(td);
 
-        const datasetParams = {};
+        const datasetParams: WowheadDataset = {};
         if (item.id === ITEM_PET_CAGE) {
             // Build our own damn tooltip, with stats.
             let finalStats;
             try {
-                finalStats = getBattlePetStats(item.battlePetStats, specLine.modifiers);
+                finalStats = item.battlePetStats && getBattlePetStats(item.battlePetStats, specLine.modifiers);
             } catch (e) {
                 console.debug("Could not get battle pet stats", item.battlePetStats, specLine.modifiers);
             }
@@ -539,6 +532,7 @@ function populateAuctions(item, itemState) {
             if (finalStats) {
                 const quality = specLine.modifiers[Items.MODIFIER_BATTLE_PET_QUALITY];
                 const level = specLine.modifiers[Items.MODIFIER_BATTLE_PET_LEVEL];
+                const battlePetType = item.battlePetType ?? 0;
 
                 let tooltip = ce('div');
                 tooltip.appendChild(ce('b', {className: 'q' + quality}, ct(item.name)));
@@ -555,24 +549,24 @@ function populateAuctions(item, itemState) {
                 flexLeft.appendChild(ct('Level ' + level));
                 flexLeft.appendChild(ce('br'));
                 flexLeft.appendChild(ce('img', {src: 'images/bpet-stamina.png'}));
-                flexLeft.appendChild(ct(finalStats.stamina));
+                flexLeft.appendChild(ct(`${finalStats.stamina}`));
                 flexLeft.appendChild(ce('br'));
                 flexLeft.appendChild(ce('img', {src: 'images/bpet-power.png'}));
-                flexLeft.appendChild(ct(finalStats.power));
+                flexLeft.appendChild(ct(`${finalStats.power}`));
                 flexLeft.appendChild(ce('br'));
                 flexLeft.appendChild(ce('img', {src: 'images/bpet-speed.png'}));
-                flexLeft.appendChild(ct(finalStats.speed));
+                flexLeft.appendChild(ct(`${finalStats.speed}`));
 
-                flexRight.appendChild(ct(Categories.getBattlePetTypeName(item.battlePetType)));
+                flexRight.appendChild(ct(Categories.getBattlePetTypeName(battlePetType) ?? ''));
                 flexRight.appendChild(ce('br'));
                 flexRight.appendChild(ce('img', {
-                    src: 'https://wow.zamimg.com/images/pets/types-circle/original/' + item.battlePetType + '.png',
+                    src: `https://wow.zamimg.com/images/pets/types-circle/original/${battlePetType}.png`,
                 }));
 
                 datasetParams.simpleTooltip = tooltip.innerHTML;
             }
         } else {
-            const wowheadParams = [];
+            const wowheadParams: string[] = [];
             wowheadParams.push('item=' + item.id);
             wowheadParams.push('domain=' + Locales.getWowheadDomain());
             if (specLine.bonuses.length) {
@@ -606,7 +600,7 @@ function populateAuctions(item, itemState) {
             datasetParams.wowhead = wowheadParams.join('&');
         }
 
-        const a = ce('a', {dataset: datasetParams});
+        const a = ce('a', {dataset: datasetParams}) as HTMLAnchorElement;
 
         const statIcons = ce('span');
         specLine.stats
@@ -626,7 +620,7 @@ function populateAuctions(item, itemState) {
             case 0:
                 break;
             case 1:
-                a.appendChild(statIcons.firstChild);
+                statIcons.firstChild && a.appendChild(statIcons.firstChild);
                 break;
             default:
                 a.appendChild(statIcons);
@@ -640,13 +634,10 @@ function populateAuctions(item, itemState) {
 
 /**
  * Populate the empty details panel for the given item.
- *
- * @param {Item} item
- * @param {ItemState} itemState
  */
-async function populateDetails(item, itemState) {
-    const parent = qs('.main .main-result .item .details');
-    const scroller = ce('div', {className: 'scroller'});
+async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
+    const parent = qs('.main .main-result .item .details') as HTMLDivElement;
+    const scroller = ce('div', {className: 'scroller'}) as HTMLDivElement;
     parent.appendChild(scroller);
     scroller.scrollTop = 0;
 
@@ -656,7 +647,7 @@ async function populateDetails(item, itemState) {
         let indicator = makeScrollIndicator();
         scroller.appendChild(indicator);
         let hideIndicator = () => {
-            indicator.dataset.hidden = 1;
+            indicator.dataset.hidden = '1';
             my.everScrolled = true;
             scroller.removeEventListener('scroll', hideIndicator);
         };
@@ -672,12 +663,12 @@ async function populateDetails(item, itemState) {
     const realmName = itemState.realm.name;
     const regionName = itemState.realm.region.toUpperCase();
 
-    const houseName = item.stack > 1 ? `${regionName} realms` : realmName;
+    const houseName = (item.stack ?? 0) > 1 ? `${regionName} realms` : realmName;
 
     // Name panel
     let itemName;
     {
-        let wowheadParams = [];
+        let wowheadParams: string[] = [];
 
         const namePanel = ce('span', {
             className: 'title q' + item.quality,
@@ -721,7 +712,7 @@ async function populateDetails(item, itemState) {
             itemName += ' (' + item.bonusLevel + ')';
             wowheadParams.push('ilvl=' + item.bonusLevel);
         }
-        const nameLink = ce('a', {}, ct(itemName));
+        const nameLink = ce('a', {}, ct(itemName)) as HTMLAnchorElement;
         namePanel.appendChild(nameLink);
 
         if (item.id === ITEM_PET_CAGE) {
@@ -751,7 +742,7 @@ async function populateDetails(item, itemState) {
         let favSpan = document.createElement('span');
         favSpan.className = 'favorite';
         if (Search.getFavorites().includes(itemKey)) {
-            favSpan.dataset.favorite = 1;
+            favSpan.dataset.favorite = '1';
         }
         favSpan.addEventListener('click', Search.toggleFavorite.bind(self, itemKey, favSpan));
         namePanel.appendChild(favSpan);
@@ -760,7 +751,8 @@ async function populateDetails(item, itemState) {
     const sectionParent = ce('div', {className: 'section-parent'});
     scroller.appendChild(sectionParent);
 
-    let regionElements = {};
+    let regionElements: Record<string, HTMLElement> = {};
+    let afterList: () => void;
 
     // Stats
     (() => {
@@ -772,7 +764,7 @@ async function populateDetails(item, itemState) {
         const table = ce('table');
         statsPanel.appendChild(table);
 
-        if (item.stack > 1) {
+        if ((item.stack ?? 0) > 1) {
             table.classList.add('hidden-region-details');
         }
 
@@ -803,12 +795,12 @@ async function populateDetails(item, itemState) {
         tr.appendChild(ce('td', {}, ct('Current')));
         tr.appendChild(ce('td', {
             dataset: {simpleTooltip: `Lowest price on ${houseName} right now.`}
-        }, itemState.price ? priceElement(itemState.price) : null));
+        }, itemState.price ? priceElement(itemState.price) : undefined));
         tr.appendChild(regionElements.current = ce('td', {
             dataset: {simpleTooltip: 'Lowest price among all ' + regionName + ' realms right now.'}
         }));
 
-        let prices = [];
+        let prices: Types.Money[] = [];
         itemState.snapshots.forEach(snapshot => {
             if (snapshot.price > 0) {
                 prices.push(snapshot.price);
@@ -816,7 +808,7 @@ async function populateDetails(item, itemState) {
         });
         prices.sort((a, b) => a - b);
 
-        let realmElements = {};
+        let realmElements: Record<string, HTMLElement> = {};
 
         table.appendChild(tr = ce('tr'));
         tr.appendChild(ce('td', {}, ct('Median')));
@@ -864,17 +856,17 @@ async function populateDetails(item, itemState) {
 
     /**
      * Renders a chart of summary lines.
-     *
-     * @param {SummaryLine[]}          snapshotList
-     * @param {Object<string, string>} strings
-     * @param {boolean}                withTimes        True if the snapshot list includes hourly data, false for daily data.
-     * @param {HTMLDivElement}         [chartContainer]
-     * @return {HTMLDivElement} chartContainer
      */
-    let showPriceChart = function (snapshotList, strings, withTimes, chartContainer) {
+    let showPriceChart = function (
+        snapshotList: Types.SummaryLine[],
+        strings: Record<string, string>,
+        // True if the snapshot list includes hourly data, false for daily data.
+        withTimes: boolean,
+        chartContainer?: HTMLDivElement,
+    ): HTMLDivElement|undefined {
         // Chart container
         if (!chartContainer) {
-            chartContainer = ce('div');
+            chartContainer = ce('div') as HTMLDivElement;
             sectionParent.appendChild(chartContainer);
         }
         chartContainer.classList.add('highcharts-container', 'framed');
@@ -895,10 +887,10 @@ async function populateDetails(item, itemState) {
         let maxQuantity = 0;
         let firstTimestamp = Date.now();
         let lastTimestamp = 0;
-        let priceData = [];
-        let quantityData = [];
+        let priceData: [snapshot: Types.Timestamp, price: Types.Money][] = [];
+        let quantityData: [snapshot: Types.Timestamp, quantity: number][] = [];
         {
-            let prices = [];
+            let prices: Types.Money[] = [];
             snapshotList.forEach(snapshot => {
                 maxPrice = Math.max(maxPrice, snapshot.price);
                 maxQuantity = Math.max(maxQuantity, snapshot.quantity);
@@ -920,7 +912,7 @@ async function populateDetails(item, itemState) {
             maxPrice = Math.min(maxPrice, p95 * 1.1);
         }
 
-        const priceFormatter = point => {
+        const priceFormatter = (point: {value: Types.Money}): string => {
             let money = point.value / COPPER_SILVER;
             let suffix = 's';
             if (money >= (COPPER_GOLD / COPPER_SILVER)) {
@@ -938,7 +930,7 @@ async function populateDetails(item, itemState) {
             if (suffix !== 's' && money < 10) {
                 return money.toPrecision(2) + suffix;
             } else {
-                return Math.round(money) + suffix;
+                return `${Math.round(money)}${suffix}`;
             }
         };
         const dateFormatter = new Intl.DateTimeFormat([], withTimes ? {
@@ -1094,7 +1086,7 @@ async function populateDetails(item, itemState) {
                 backgroundColor: '#282322',
                 borderColor: '#777',
                 borderRadius: 4,
-                formatter: function () {
+                formatter: function (this: {x: number, points: {x: number, y: number}[]}) {
                     const result = ce('div');
                     result.appendChild(ct(dateFormatter.format(new Date(this.x))));
 
@@ -1128,7 +1120,7 @@ async function populateDetails(item, itemState) {
             },
             xAxis: {
                 labels: {
-                    formatter: context => ({
+                    formatter: (context: {value: number, tickPositionInfo: {unitName: string}}) => ({
                         second: labelFormatter.minute.format(new Date(context.value)),
                         minute: labelFormatter.minute.format(new Date(context.value)),
                         hour: labelFormatter.minute.format(new Date(context.value)),
@@ -1171,7 +1163,7 @@ async function populateDetails(item, itemState) {
                 gridLineWidth: 0,
                 labels: {
                     enabled: addAxisLabels,
-                    formatter: point => point.value.toLocaleString(),
+                    formatter: (point: {value: number}) => point.value.toLocaleString(),
                     style: {
                         color: '#CCCCCC',
                         fontSize: 'inherit',
@@ -1194,12 +1186,12 @@ async function populateDetails(item, itemState) {
 
     // Price charts
     if (itemState.snapshots.length >= MIN_SNAPSHOT_COUNT) {
-        showPriceChart(itemState.snapshots, {
+        (showPriceChart(itemState.snapshots, {
             title: `Snapshots for ${houseName}`,
             caption: `This shows the lowest price and total quantity available of ${itemName} on ${houseName} every hour for the past few weeks.`,
             price: 'Lowest Price',
             quantity: 'Total Quantity',
-        }, true).dataset.sectionKey = 'snapshots';
+        }, true) ?? ce('div')).dataset.sectionKey = 'snapshots';
 
         // Heat Map
         {
@@ -1217,41 +1209,50 @@ async function populateDetails(item, itemState) {
 
             let dayFormatter = new Intl.DateTimeFormat([], {day: 'numeric', weekday: 'short'});
 
+            type DayData = {
+                name: string;
+                date: number;
+                prices: Array<Types.Money|undefined>;
+                quantities: Array<number|undefined>;
+            };
+
             let day = new Date(startFrom);
             let now = new Date();
-            let days = [];
-            let dayIndexes = {};
+            let days: DayData[] = [];
+            let dayIndexes: Record<number, number> = {};
             while (day < now) {
                 days.push({
                     name: dayFormatter.format(day),
                     date: day.getDate(),
-                    prices: [].fill(undefined, 0, 23),
-                    quantities: [].fill(undefined, 0, 23),
+                    prices: ([] as undefined[]).fill(undefined, 0, 23),
+                    quantities: ([] as undefined[]).fill(undefined, 0, 23),
                 });
                 dayIndexes[day.getDate()] = days.length - 1;
                 day.setDate(day.getDate() + 1);
             }
-            itemState.snapshots.filter(summaryLine => summaryLine.snapshot >= startFrom).forEach(summaryLine => {
-                let now = new Date(summaryLine.snapshot);
-                let dayIndex = dayIndexes[now.getDate()];
-                if (dayIndex != null) {
-                    days[dayIndex].prices[now.getHours()] = summaryLine.price;
-                    days[dayIndex].quantities[now.getHours()] = summaryLine.quantity;
-                }
-            });
+            itemState.snapshots
+                .filter(summaryLine => summaryLine.snapshot >= startFrom.valueOf())
+                .forEach(summaryLine => {
+                    let now = new Date(summaryLine.snapshot);
+                    let dayIndex = dayIndexes[now.getDate()];
+                    if (dayIndex != null) {
+                        days[dayIndex].prices[now.getHours()] = summaryLine.price;
+                        days[dayIndex].quantities[now.getHours()] = summaryLine.quantity;
+                    }
+                });
 
-            let prices = [];
-            let quantities = [];
+            let prices: Types.Money[] = [];
+            let quantities: number[] = [];
             days.forEach(day => {
-                day.prices.filter(amount => amount > 0).forEach(amount => prices.push(amount));
-                day.quantities.filter(amount => amount > 0).forEach(amount => quantities.push(amount));
+                day.prices.forEach(amount => amount && prices.push(amount));
+                day.quantities.forEach(amount => amount && quantities.push(amount));
             });
             prices.sort((a, b) => a - b);
             quantities.sort((a, b) => a - b);
-            let priceMin = prices.length ? prices[Math.floor(prices.length * 0.15)] : undefined;
-            let priceMax = prices.length ? prices[Math.floor(prices.length * 0.85)] : undefined;
-            let quantityMin = quantities.length ? quantities[Math.floor(quantities.length * 0.15)] : undefined;
-            let quantityMax = quantities.length ? quantities[Math.floor(quantities.length * 0.85)] : undefined;
+            let priceMin = prices.length ? prices[Math.floor(prices.length * 0.15)] : 0;
+            let priceMax = prices.length ? prices[Math.floor(prices.length * 0.85)] : 0;
+            let quantityMin = quantities.length ? quantities[Math.floor(quantities.length * 0.15)] : 0;
+            let quantityMax = quantities.length ? quantities[Math.floor(quantities.length * 0.85)] : 0;
 
             {
                 let tableWrapper = ce('div', {className: 'table-wrapper'});
@@ -1292,7 +1293,7 @@ async function populateDetails(item, itemState) {
                             if (suffix !== 's' && money < 10) {
                                 text = money.toPrecision(2) + suffix;
                             } else {
-                                text = Math.round(money) + suffix;
+                                text = `${Math.round(money)}${suffix}`;
                             }
                         }
                         tr.appendChild(ce('td', cellProperties, ct(text)));
@@ -1321,7 +1322,7 @@ async function populateDetails(item, itemState) {
                     for (let hour = 0; hour < 24; hour++) {
                         let text = '';
                         let amount = day.quantities[hour];
-                        if (amount !== undefined) {
+                        if (amount != null) {
                             let percentage = 1;
                             if (quantityMin !== quantityMax) {
                                 percentage = (amount - quantityMin) / (quantityMax - quantityMin);
@@ -1358,7 +1359,7 @@ async function populateDetails(item, itemState) {
             }
         }
     }
-    const showDailyChart = (data, strings, target) => {
+    const showDailyChart = (data: Types.SummaryLine[], strings: Record<string, string>, target?: HTMLDivElement) => {
         let minDays = 15;
         let minPoints = MIN_SNAPSHOT_COUNT;
 
@@ -1370,13 +1371,13 @@ async function populateDetails(item, itemState) {
 
         return ce('div');
     }
-    showDailyChart(itemState.daily, {
+    (showDailyChart(itemState.daily, {
         title: `Daily History for ${houseName}`,
         caption: `This shows the maximum observed available quantity, and the lowest price at that time, of ${itemName} on ${houseName} each day.`,
         price: 'Price at Max Quantity',
         priceTooltip: 'Price at Max Qty',
         quantity: 'Max Quantity',
-    }).dataset.sectionKey = 'daily';
+    }) ?? ce('div')).dataset.sectionKey = 'daily';
 
     // Quantity calc
     if (itemState.auctions.length) {
@@ -1388,13 +1389,14 @@ async function populateDetails(item, itemState) {
         const table = ce('table');
         quantityPanel.appendChild(table);
 
-        let tr, td;
+        let tr: HTMLElement;
+        let td: HTMLElement;
 
         table.appendChild(tr = ce('tr'));
         tr.appendChild(td = ce('td'));
         td.appendChild(ct('Quantity'));
         tr.appendChild(td = ce('td'));
-        const input = ce('input', {type: 'text', value: 1});
+        const input = ce('input', {type: 'text', value: 1}) as HTMLInputElement;
         td.appendChild(input);
 
         table.appendChild(tr = ce('tr'));
@@ -1418,20 +1420,21 @@ async function populateDetails(item, itemState) {
                 }
                 quantity = parseInt(input.value);
                 if (quantity > itemState.quantity) {
-                    input.value = quantity = itemState.quantity;
+                    quantity = itemState.quantity;
+                    input.value = `${quantity}`;
                 }
             }
 
-            const auctionsTable = qs('.main .main-result .item .auctions table');
-            auctionsTable.querySelectorAll('tr[data-selected]').forEach(tr => {
+            const auctionsTable = qs('.main .main-result .item .auctions table') as HTMLTableElement;
+            (auctionsTable.querySelectorAll('tr[data-selected]') as NodeListOf<HTMLTableRowElement>).forEach(tr => {
                 delete tr.dataset.selected;
             });
 
             let qtyRemaining = quantity;
-            const rows = auctionsTable.querySelectorAll('tr');
+            const rows = auctionsTable.querySelectorAll('tr') as NodeListOf<HTMLTableRowElement>;
             for (let row, index = 0; (qtyRemaining > 0) && (row = rows[index]); index++) {
-                let aucPrice = parseInt(row.dataset.price);
-                let aucQty = parseInt(row.dataset.quantity);
+                let aucPrice = parseInt(row.dataset.price ?? '0');
+                let aucQty = parseInt(row.dataset.quantity ?? '0');
                 if (aucQty <= qtyRemaining) {
                     price += aucPrice * aucQty;
                     qtyRemaining -= aucQty;
@@ -1459,17 +1462,17 @@ async function populateDetails(item, itemState) {
 
     updateDeltaTimestamps();
 
-    if (item.stack > 1) {
+    if ((item.stack ?? 0) > 1) {
         makeSectionControls(sectionParent);
 
         return;
     }
 
-    const regionalDailyHistoryContainer = ce('div', {dataset: {sectionKey: 'regional-daily'}});
+    const regionalDailyHistoryContainer = ce('div', {dataset: {sectionKey: 'regional-daily'}}) as HTMLDivElement;
     sectionParent.appendChild(regionalDailyHistoryContainer);
 
     // Create the "Current Regional Prices" bar chart area and data list.
-    let otherRealmsChart;
+    let otherRealmsChart: HTMLDivElement;
     (() => {
         // Both the bar chart and the list are in this topContainer.
         const topContainer = ce('div', {
@@ -1484,7 +1487,7 @@ async function populateDetails(item, itemState) {
         topContainer.appendChild(ce('div', {className: 'caption'}, ct(`This chart, and the following list, show the current price and available quantity of ${itemName} on each ${regionName} realm. The dashed line shows ${realmName}.`)));
 
         // Create the bar chart.
-        otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'});
+        otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'}) as HTMLDivElement;
         topContainer.appendChild(otherRealmsChart);
         otherRealmsChart.appendChild(ce('div', {className: 'bar-section price-bars'}));
         otherRealmsChart.appendChild(ce('div', {className: 'bar-section quantity-bars'}));
@@ -1495,7 +1498,7 @@ async function populateDetails(item, itemState) {
         topContainer.appendChild(otherRealmsContainer);
         const otherRealmsLabel = ce('label', {}, ct('Include Connected Realms'));
         otherRealmsContainer.appendChild(otherRealmsLabel);
-        const otherRealmsControl = ce('input', {type: 'checkbox'});
+        const otherRealmsControl = ce('input', {type: 'checkbox'}) as HTMLInputElement;
         otherRealmsLabel.appendChild(otherRealmsControl);
 
         // Create the list.
@@ -1510,19 +1513,21 @@ async function populateDetails(item, itemState) {
 
         /**
          * Sorts the result table by the given column.
-         *
-         * @param {HTMLTableCellElement} headerTd The header table cell for the column to sort.
-         * @param {boolean} isString True when this column has string values.
          */
-        const columnSort = function (headerTd, isString) {
+        const columnSort = function (
+            // The header table cell for the column to sort.
+            headerTd: HTMLTableCellElement,
+            // True when this column has string values.
+            isString: boolean,
+        ) {
             let dir = 'asc';
             if (headerTd.dataset.sort === 'asc') {
                 dir = 'desc';
             }
 
-            const headerTr = headerTd.parentNode;
-            const headerTds = headerTr.querySelectorAll('td');
-            const sortCol = parseInt(headerTd.dataset.sortCol);
+            const headerTr = headerTd.parentNode as HTMLTableRowElement;
+            const headerTds = headerTr.querySelectorAll('td') as NodelistOf<HTMLTableCellElement>;
+            const sortCol = parseInt(headerTd.dataset.sortCol ?? '0');
             let columnPos = 0;
             for (let x = 0; x < headerTds.length; x++) {
                 delete headerTds[x].dataset.sort;
@@ -1538,16 +1543,13 @@ async function populateDetails(item, itemState) {
             }
 
             headerTd.dataset.sort = dir;
-            let table = headerTr;
-            while (table.tagName !== 'TABLE') {
-                table = table.parentNode;
-            }
-            let rows = Array.from(table.querySelectorAll('tbody tr'));
+            let table = headerTr.closest('table') as HTMLTableElement;
+            let rows = Array.from(table.querySelectorAll('tbody tr')) as HTMLTableRowElement[];
             rows.sort(function (a, b) {
                 // **Always** sort 0-quantity rows at the end, except for realm name sort.
                 if (columnPos !== COL_POS_NAME) {
-                    const aZero = a.querySelector(`td:nth-child(${COL_POS_QUANTITY})`).dataset.sortValue === '0';
-                    const bZero = b.querySelector(`td:nth-child(${COL_POS_QUANTITY})`).dataset.sortValue === '0';
+                    const aZero = (a.querySelector(`td:nth-child(${COL_POS_QUANTITY})`) as HTMLTableCellElement).dataset.sortValue === '0';
+                    const bZero = (b.querySelector(`td:nth-child(${COL_POS_QUANTITY})`) as HTMLTableCellElement).dataset.sortValue === '0';
 
                     if (aZero && !bZero) {
                         return 1;
@@ -1558,11 +1560,11 @@ async function populateDetails(item, itemState) {
                 }
 
                 const reversed = dir === 'desc' ? -1 : 1;
-                const aTd = a.querySelector('td:nth-child(' + columnPos + ')');
-                const bTd = b.querySelector('td:nth-child(' + columnPos + ')');
+                const aTd = (a.querySelector('td:nth-child(' + columnPos + ')') as HTMLTableCellElement);
+                const bTd = (b.querySelector('td:nth-child(' + columnPos + ')') as HTMLTableCellElement);
 
-                const aVal = aTd.dataset.sortValue;
-                const bVal = bTd.dataset.sortValue;
+                const aVal = aTd.dataset.sortValue ?? ''
+                const bVal = bTd.dataset.sortValue ?? '';
 
                 if (isString) {
                     return reversed * aVal.localeCompare(bVal);
@@ -1582,8 +1584,8 @@ async function populateDetails(item, itemState) {
 
                 // Fallbacks.
                 if (columnPos !== COL_POS_PRICE) {
-                    const aPrice = a.querySelector('td:nth-child(' + COL_POS_PRICE + ')').dataset.sortValue;
-                    const bPrice = b.querySelector('td:nth-child(' + COL_POS_PRICE + ')').dataset.sortValue;
+                    const aPrice = (a.querySelector('td:nth-child(' + COL_POS_PRICE + ')') as HTMLTableCellElement).dataset.sortValue ?? '';
+                    const bPrice = (b.querySelector('td:nth-child(' + COL_POS_PRICE + ')') as HTMLTableCellElement).dataset.sortValue ?? '';
 
                     const valDiff = parseInt(aPrice) - parseInt(bPrice);
                     if (valDiff) {
@@ -1592,8 +1594,8 @@ async function populateDetails(item, itemState) {
                 }
 
                 if (columnPos !== COL_POS_NAME) {
-                    const aName = a.querySelector('td:nth-child(' + COL_POS_NAME + ')').dataset.sortValue;
-                    const bName = b.querySelector('td:nth-child(' + COL_POS_NAME + ')').dataset.sortValue;
+                    const aName = (a.querySelector('td:nth-child(' + COL_POS_NAME + ')') as HTMLTableCellElement).dataset.sortValue ?? '';
+                    const bName = (b.querySelector('td:nth-child(' + COL_POS_NAME + ')') as HTMLTableCellElement).dataset.sortValue ?? '';
 
                     const valDiff = aName.localeCompare(bName);
                     if (valDiff) {
@@ -1605,7 +1607,7 @@ async function populateDetails(item, itemState) {
             });
 
             rows.forEach(function (row) {
-                row.parentNode.appendChild(row);
+                row.parentNode?.appendChild(row);
             });
         }
 
@@ -1619,19 +1621,19 @@ async function populateDetails(item, itemState) {
         const tr = ce('tr');
         thead.appendChild(tr);
 
-        let td;
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '1'}}, ct('Realm')));
+        let td: HTMLTableCellElement;
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '1'}}, ct('Realm')) as HTMLTableCellElement);
         td.addEventListener('click', columnSort.bind(null, td, true));
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '4'}}, ct('Pop')));
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '4'}}, ct('Pop')) as HTMLTableCellElement);
         td.addEventListener('click', columnSort.bind(null, td, false));
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '2'}}, ct('Price')));
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '2'}}, ct('Price')) as HTMLTableCellElement);
         td.addEventListener('click', columnSort.bind(null, td, false));
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '3'}}, ct('Quantity')));
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '3'}}, ct('Quantity')) as HTMLTableCellElement);
         td.addEventListener('click', columnSort.bind(null, td, false));
 
         regionElements.listTable = tbody;
-        regionElements.afterList = () => {
-            let sortNum = parseInt(localStorage.getItem('other-realms-sort'));
+        afterList = () => {
+            let sortNum = parseInt(localStorage.getItem('other-realms-sort') ?? '');
             if (isNaN(sortNum)) {
                 sortNum = 1;
             }
@@ -1640,7 +1642,13 @@ async function populateDetails(item, itemState) {
                 sortNum *= -1;
             }
 
-            const col = tr.querySelector(`td[data-sort-col="${sortNum}"]`) || tr.querySelector('td');
+            const col =
+                tr.querySelector(`td[data-sort-col="${sortNum}"]`) as HTMLTableCellElement|undefined ||
+                tr.querySelector('td') as HTMLTableCellElement|undefined;
+            if (!col) {
+                return;
+            }
+
             if (desc) {
                 col.dataset.sort = 'asc';
             }
@@ -1650,7 +1658,7 @@ async function populateDetails(item, itemState) {
 
         otherRealmsControl.addEventListener('click', () => {
             if (otherRealmsControl.checked) {
-                table.dataset.withConnectedRealms = 1;
+                table.dataset.withConnectedRealms = '1';
             } else {
                 delete table.dataset.withConnectedRealms;
             }
@@ -1659,13 +1667,24 @@ async function populateDetails(item, itemState) {
 
     // Fetch other realms
     const detailRealmId = itemState.realm.id;
-    const stateRealmId = Realms.getCurrentRealm().id;
+    const stateRealmId = Realms.getCurrentRealm()?.id ?? detailRealmId;
     fetchOtherRealms(item, itemState.realm.region).then(otherRealms => {
+        type ChartDataEntry = {
+            realm: Types.Realm;
+            price: Types.Money;
+            quantity: number;
+            lastSeen: Types.Timestamp;
+        }
+        type RegionDailyHistoryEntry = {
+            quantitySum: number;
+            prices: Types.Money[];
+        }
+
         let quantitySum = 0;
-        let prices = [];
-        let lowestAvailablePrice;
-        let chartData = [];
-        let regionDailyHistory = {};
+        let prices: Types.Money[] = [];
+        let lowestAvailablePrice: Types.Money = 0;
+        let chartData: ChartDataEntry[] = [];
+        let regionDailyHistory: Record<Types.Timestamp, RegionDailyHistoryEntry> = {};
 
         otherRealms.forEach(itemState => {
             // Collect stats for the base stats summary at the top.
@@ -1677,7 +1696,6 @@ async function populateDetails(item, itemState) {
 
             // Add rows to the current regional prices table.
             const connectedRealm = Realms.getConnectedRealm(itemState.realm);
-            /** @var {Realm[]} ourRealms */
             const ourRealms = [connectedRealm.canonical].concat(connectedRealm.secondary);
             ourRealms.sort((a, b) => {
                 return ((a.id === detailRealmId ? 0 : 1) - (b.id === detailRealmId ? 0 : 1)) ||
@@ -1696,7 +1714,7 @@ async function populateDetails(item, itemState) {
                     href: 'javascript:',
                 }));
                 if (index > 0) {
-                    tr.dataset.connectedRealm = 1;
+                    tr.dataset.connectedRealm = '1';
                 }
                 a.addEventListener('click', () => Detail.show(item, realm));
                 tr.appendChild(td = ce('td', {
@@ -1742,7 +1760,7 @@ async function populateDetails(item, itemState) {
         });
 
         // The table has finished being filled, now sort it.
-        regionElements.afterList();
+        afterList();
         updateDeltaTimestamps();
 
         // Update the base stats summary.
@@ -1758,7 +1776,6 @@ async function populateDetails(item, itemState) {
         }
 
         // Fill out the Regional Daily History chart.
-        /** @type {SummaryLine[]} */
         showDailyChart(
             Object.keys(regionDailyHistory)
                 .map(key => parseInt(key))
@@ -1785,20 +1802,20 @@ async function populateDetails(item, itemState) {
                 a.realm.name.localeCompare(b.realm.name)
             );
 
-            ['price', 'quantity'].forEach(type => {
-                let container = otherRealmsChart.querySelector(`.${type}-bars`);
+            (['price', 'quantity'] as Array<'price'|'quantity'>).forEach(type => {
+                let container = otherRealmsChart.querySelector(`.${type}-bars`) as HTMLDivElement;
                 let max = chartData.reduce((prev, cur) => Math.max(cur[type], prev), 0);
                 chartData.forEach(entry => {
                     let bar = ce('div', {
                         className: 'bar',
                         style: {
-                            height: entry[type] / max * 100 + '%',
+                            height: `${entry[type] / max * 100}%`,
                         }
                     });
                     container.appendChild(bar);
                 });
             });
-            let container = otherRealmsChart.querySelector('.links');
+            let container = otherRealmsChart.querySelector('.links') as HTMLDivElement;
             chartData.forEach(entry => {
                 const result = ce('table', {className: 'shatari-tooltip'});
                 const realmTitle = ce('b', {}, ct(entry.realm.name));
@@ -1833,7 +1850,7 @@ async function populateDetails(item, itemState) {
                     }
                 }, ce('div', {className: 'hover-line'}));
                 if (entry.realm.connectedId === itemState.realm.connectedId) {
-                    link.dataset.shown = 1;
+                    link.dataset.shown = '1';
                 }
                 container.appendChild(link);
             });
@@ -1845,10 +1862,8 @@ async function populateDetails(item, itemState) {
 
 /**
  * Returns an element for the scroll indicator to appear at the bottom of the scrollable panel.
- *
- * @return {HTMLElement}
  */
-function makeScrollIndicator() {
+function makeScrollIndicator(): HTMLElement {
     let result = ce('div', {className: 'scroll-indicator'});
     result.appendChild(ce('div', {className: 'chevron'}));
     result.appendChild(ce('div', {className: 'chevron'}));
@@ -1860,19 +1875,16 @@ function makeScrollIndicator() {
 /**
  * Adds section control elements to all elements with section keys in the parent. Orders those sections to user
  * preferences.
- *
- * @param {HTMLElement} parent
  */
-function makeSectionControls(parent) {
+function makeSectionControls(parent: HTMLElement) {
     /**
      * Returns an ordered list of section keys.
-     *
-     * @returns {string[]}
      */
-    const getSectionOrder = () => {
+    const getSectionOrder = (): string[] => {
         const result = SECTION_KEYS;
         try {
-            const savedOrder = localStorage.getItem('detail-section-order').split(',');
+            const orderString = localStorage.getItem('detail-section-order');
+            const savedOrder = orderString?.split(',') || [];
             result.sort((a, b) => {
                 const aSaved = savedOrder.indexOf(a);
                 const bSaved = savedOrder.indexOf(b);
@@ -1891,18 +1903,16 @@ function makeSectionControls(parent) {
 
     /**
      * Sets the CSS order of the section elements in the DOM to match the given section order.
-     *
-     * @param {string[]} sectionOrder
      */
-    const updateSections = sectionOrder => {
-        parent.childNodes.forEach(ele => {
-            ele.style.order = sectionOrder.indexOf(ele.dataset.sectionKey) + 1;
+    const updateSections = (sectionOrder: string[]) => {
+        (parent.childNodes as NodeListOf<HTMLElement>).forEach(ele => {
+            ele.style.order = `${sectionOrder.indexOf(ele.dataset.sectionKey ?? 'null') + 1}`;
             delete ele.dataset.ordered;
         });
-        parent.childNodes.forEach(ele => {
-            if (!getAdjacentSection(sectionOrder, ele.dataset.sectionKey, -1)) {
+        (parent.childNodes as NodeListOf<HTMLElement>).forEach(ele => {
+            if (!getAdjacentSection(sectionOrder, ele.dataset.sectionKey ?? 'null', -1)) {
                 ele.dataset.ordered = 'first';
-            } else if (!getAdjacentSection(sectionOrder, ele.dataset.sectionKey, 1)) {
+            } else if (!getAdjacentSection(sectionOrder, ele.dataset.sectionKey ?? 'null', 1)) {
                 ele.dataset.ordered = 'last';
             }
         });
@@ -1910,20 +1920,15 @@ function makeSectionControls(parent) {
 
     /**
      * Returns the next node in the given direction starting at sectionKey.
-     *
-     * @param {string[]} sectionOrder
-     * @param {string}   sectionKey
-     * @param {number}   direction 1 or -1
-     * @returns {Node|undefined}
      */
-    const getAdjacentSection = (sectionOrder, sectionKey, direction) => {
+    const getAdjacentSection = (sectionOrder: string[], sectionKey: string, direction: -1|1): HTMLElement|undefined => {
         let index = sectionOrder.indexOf(sectionKey);
         let nextKey;
         do {
             index += direction;
             nextKey = sectionOrder[index];
             if (nextKey) {
-                const node = parent.querySelector(`[data-section-key="${nextKey}"]`);
+                const node = parent.querySelector(`[data-section-key="${nextKey}"]`) as HTMLElement|undefined;
                 if (node) {
                     return node;
                 }
@@ -1933,11 +1938,8 @@ function makeSectionControls(parent) {
 
     /**
      * Updates the section order to adjust sectionKey in the given direction.
-     *
-     * @param {string} sectionKey
-     * @param {number} direction 1 or -1
      */
-    const move = (sectionKey, direction) => {
+    const move = (sectionKey: string, direction: -1|1) => {
         const sectionOrder = getSectionOrder();
         const relativeNode = getAdjacentSection(sectionOrder, sectionKey, direction);
         if (!relativeNode) {
@@ -1945,7 +1947,7 @@ function makeSectionControls(parent) {
         }
         const oldIndex = sectionOrder.indexOf(sectionKey);
         sectionOrder.splice(oldIndex, 1);
-        const relativeIndex = sectionOrder.indexOf(relativeNode.dataset.sectionKey);
+        const relativeIndex = sectionOrder.indexOf(relativeNode.dataset.sectionKey ?? 'null');
         sectionOrder.splice(relativeIndex + Math.max(0, direction), 0, sectionKey);
 
         try {
@@ -1955,25 +1957,28 @@ function makeSectionControls(parent) {
         }
 
         updateSections(sectionOrder);
-        const sectionNode = parent.querySelector(`[data-section-key="${sectionKey}"]`);
-        const scroller = sectionNode.closest('.scroller');
-        scroller.scrollTop = Math.max(0, sectionNode.offsetTop - (scroller.offsetHeight / 2));
+        const sectionNode = parent.querySelector(`[data-section-key="${sectionKey}"]`) as HTMLElement;
+        const scroller = sectionNode.closest('.scroller') as HTMLElement|null;
+        if (scroller) {
+            scroller.scrollTop = Math.max(0, sectionNode.offsetTop - (scroller.offsetHeight / 2));
+        }
     };
 
-    parent.querySelectorAll(':scope > [data-section-key]:empty').forEach(
-        section => section.parentNode.removeChild(section)
+    (parent.querySelectorAll(':scope > [data-section-key]:empty') as NodeListOf<HTMLElement>).forEach(
+        section => section.parentNode?.removeChild(section)
     );
 
-    parent.querySelectorAll(':scope > [data-section-key]').forEach(section => {
+    (parent.querySelectorAll(':scope > [data-section-key]') as NodeListOf<HTMLElement>).forEach(section => {
         const controls = ce('span', {className: 'section-controls'});
         section.appendChild(controls);
 
-        [[-1, 'up'], [1, 'down']].forEach(([offset, name]) => {
+        const directions: Array<[direction: -1|1, name: string]> = [[-1, 'up'], [1, 'down']];
+        directions.forEach(([offset, name]) => {
             const control = ce('span', {className: 'move', dataset: {
                     direction: name,
                     simpleTooltip: `Move this section ${name}.`,
                 }});
-            control.addEventListener('click', () => move(section.dataset.sectionKey, offset));
+            control.addEventListener('click', () => move(section.dataset.sectionKey ?? 'null', offset));
             controls.appendChild(control);
         });
     });
@@ -1983,11 +1988,8 @@ function makeSectionControls(parent) {
 
 /**
  * Rounds a value, but halves always round towards the odd number.
- *
- * @param {number} value
- * @return {number}
  */
-function roundToOdd(value) {
+function roundToOdd(value: number): number {
     let floored = Math.floor(value);
     if (Math.floor((value - floored) * 1000000) === 500000) {
         if (floored % 2 === 0) {

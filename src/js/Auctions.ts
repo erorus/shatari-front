@@ -704,7 +704,7 @@ async function getRealmState(realm: Types.Realm): Promise<Types.RealmState> {
         }
     }
 
-    if (!isCommodityRealm) {
+    if (!isCommodityRealm && commodityRealmState) {
         mergeCommodityData(result, commodityRealmState);
     }
 
