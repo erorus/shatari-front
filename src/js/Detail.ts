@@ -498,7 +498,7 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
 
     let runningQuantity = 0;
     itemState.auctions.forEach(auction => {
-        const tr = ce('tr') as HTMLTableRowElement;
+        const tr = ce('tr');
         table.appendChild(tr);
 
         tr.dataset.price = `${auction.price}`;
@@ -512,10 +512,10 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
     });
 
     itemState.specifics.forEach(specLine => {
-        const tr = ce('tr') as HTMLTableRowElement;
+        const tr = ce('tr');
         table.appendChild(tr);
 
-        const td = ce('td') as HTMLTableCellElement;
+        const td = ce('td');
         tr.appendChild(td);
 
         const datasetParams: WowheadDataset = {};
@@ -599,7 +599,7 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
             datasetParams.wowhead = wowheadParams.join('&');
         }
 
-        const a = ce('a', {dataset: datasetParams}) as HTMLAnchorElement;
+        const a = ce('a', {dataset: datasetParams});
 
         const statIcons = ce('span');
         specLine.stats
@@ -636,7 +636,7 @@ function populateAuctions(item: Types.Item, itemState: Types.ItemState) {
  */
 async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
     const parent = qs('.main .main-result .item .details') as HTMLDivElement;
-    const scroller = ce('div', {className: 'scroller'}) as HTMLDivElement;
+    const scroller = ce('div', {className: 'scroller'});
     parent.appendChild(scroller);
     scroller.scrollTop = 0;
 
@@ -711,7 +711,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
             itemName += ' (' + item.bonusLevel + ')';
             wowheadParams.push('ilvl=' + item.bonusLevel);
         }
-        const nameLink = ce('a', {}, ct(itemName)) as HTMLAnchorElement;
+        const nameLink = ce('a', {}, ct(itemName));
         namePanel.appendChild(nameLink);
 
         if (item.id === ITEM_PET_CAGE) {
@@ -865,7 +865,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
     ): HTMLDivElement|undefined {
         // Chart container
         if (!chartContainer) {
-            chartContainer = ce('div') as HTMLDivElement;
+            chartContainer = ce('div');
             sectionParent.appendChild(chartContainer);
         }
         chartContainer.classList.add('highcharts-container', 'framed');
@@ -1395,7 +1395,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         tr.appendChild(td = ce('td'));
         td.appendChild(ct('Quantity'));
         tr.appendChild(td = ce('td'));
-        const input = ce('input', {type: 'text', value: 1}) as HTMLInputElement;
+        const input = ce('input', {type: 'text', value: 1});
         td.appendChild(input);
 
         table.appendChild(tr = ce('tr'));
@@ -1467,7 +1467,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         return;
     }
 
-    const regionalDailyHistoryContainer = ce('div', {dataset: {sectionKey: 'regional-daily'}}) as HTMLDivElement;
+    const regionalDailyHistoryContainer = ce('div', {dataset: {sectionKey: 'regional-daily'}});
     sectionParent.appendChild(regionalDailyHistoryContainer);
 
     // Create the "Current Regional Prices" bar chart area and data list.
@@ -1486,7 +1486,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         topContainer.appendChild(ce('div', {className: 'caption'}, ct(`This chart, and the following list, show the current price and available quantity of ${itemName} on each ${regionName} realm. The dashed line shows ${realmName}.`)));
 
         // Create the bar chart.
-        otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'}) as HTMLDivElement;
+        otherRealmsChart = ce('div', {className: 'other-realms-bars chart-wrapper'});
         topContainer.appendChild(otherRealmsChart);
         otherRealmsChart.appendChild(ce('div', {className: 'bar-section price-bars'}));
         otherRealmsChart.appendChild(ce('div', {className: 'bar-section quantity-bars'}));
@@ -1497,7 +1497,7 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         topContainer.appendChild(otherRealmsContainer);
         const otherRealmsLabel = ce('label', {}, ct('Include Connected Realms'));
         otherRealmsContainer.appendChild(otherRealmsLabel);
-        const otherRealmsControl = ce('input', {type: 'checkbox'}) as HTMLInputElement;
+        const otherRealmsControl = ce('input', {type: 'checkbox'});
         otherRealmsLabel.appendChild(otherRealmsControl);
 
         // Create the list.
@@ -1621,13 +1621,13 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
         thead.appendChild(tr);
 
         let td: HTMLTableCellElement;
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '1'}}, ct('Realm')) as HTMLTableCellElement);
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '1'}}, ct('Realm')));
         td.addEventListener('click', columnSort.bind(null, td, true));
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '4'}}, ct('Pop')) as HTMLTableCellElement);
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '4'}}, ct('Pop')));
         td.addEventListener('click', columnSort.bind(null, td, false));
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '2'}}, ct('Price')) as HTMLTableCellElement);
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '2'}}, ct('Price')));
         td.addEventListener('click', columnSort.bind(null, td, false));
-        tr.appendChild(td = ce('td', {dataset: {sortCol: '3'}}, ct('Quantity')) as HTMLTableCellElement);
+        tr.appendChild(td = ce('td', {dataset: {sortCol: '3'}}, ct('Quantity')));
         td.addEventListener('click', columnSort.bind(null, td, false));
 
         regionElements.listTable = tbody;

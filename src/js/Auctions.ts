@@ -72,7 +72,7 @@ const Auctions = {
     /**
      * Returns the deals state for the given realm.
      */
-    async getDeals(realm: Types.Realm|null): Promise<Types.DealsState> {
+    async getDeals(realm?: Types.Realm|null): Promise<Types.DealsState> {
         const result: Types.DealsState = {
             items: {},
         };

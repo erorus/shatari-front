@@ -11,23 +11,47 @@ import {
 import {ITEM_PET_CAGE, SIDE_ALLIANCE, SIDE_HORDE} from "./constants";
 
 import Auctions from "./Auctions";
-import Categories from "./Categories";
+import Categories, {DetailColumn} from "./Categories";
 import Detail from "./Detail";
 import Hash from "./Hash";
 import * as Items from "./Items";
 import {getWowheadDomain} from "./Locales";
 import Realms from "./Realms";
 import Suggestions from "./Suggestions";
+import * as Types from "./Types";
 
-const COL_PRICE = 1;
-const COL_NAME = 2;
-const COL_DETAIL = 3;
+type CategorySorts = Record<Types.ClassID, number>;
 
-const SEARCH_FAVORITES_BUTTON = qs('.main .search-bar .favorite');
+type SortRow = [
+    rowGenerator: HTMLTableRowElement|((favorites: Types.ItemKeyString[]) => HTMLTableRowElement),
+    price: Types.Money,
+    name: string,
+    detail?: number,
+    quantity?: number,
+    regionMedian?: number,
+];
+
+enum Column {
+    Price = 1,
+    Name = 2,
+    Detail = 3,
+}
+
+enum SortDirection {
+    Ascending = 'asc',
+    Descending = 'desc',
+}
+
+const SEARCH_FAVORITES_BUTTON = qs('.main .search-bar .favorite') as HTMLElement;
 
 const MAX_RESULTS_SHOWN = 500;
 
-const my = {
+type ModuleVars = {
+    hash: string|undefined,
+    hashRealm: Types.Realm|undefined,
+    rows: SortRow[],
+}
+const my: ModuleVars = {
     hash: undefined,
     hashRealm: undefined,
     rows: [],
@@ -39,10 +63,8 @@ const my = {
 const Search = {
     /**
      * Returns the current list of favorite item keys.
-     *
-     * @return {ItemKeyString[]}
      */
-    getFavorites() {
+    getFavorites(): Types.ItemKeyString[] {
         let favorites;
         try {
             favorites = localStorage.getItem('favorites');
@@ -71,7 +93,7 @@ const Search = {
             }
         });
 
-        qs('.main .search-bar .deals').addEventListener('click', () => Search.perform(false, true));
+        qs('.main .search-bar .deals')?.addEventListener('click', () => Search.perform(false, true));
 
         try {
             getRegionMedianControl().checked = !!localStorage.getItem('show-region-median');
@@ -84,7 +106,8 @@ const Search = {
             checkbox.addEventListener('click', () => {
                 qsa('.main .search-bar .filter .arbitrage-mode-ignored').forEach(label => {
                     label.classList.toggle('disabled', checkbox.checked);
-                    label.querySelector('input').disabled = checkbox.checked;
+                    const input = label.querySelector('input');
+                    input && (input.disabled = checkbox.checked);
                 });
             });
             checkbox.checked = false;
@@ -92,30 +115,28 @@ const Search = {
 
         /**
          * Pressing Ctrl-C while hovering over a search result row will copy that result's name to the clipboard.
-         *
-         * @param {KeyboardEvent} event
          */
-        const copyNameToClipboard = function (event) {
+        const copyNameToClipboard = function (event: KeyboardEvent) {
             if (event.isComposing || event.keyCode === 229) {
                 return;
             }
             if (event.ctrlKey && event.key.toLowerCase() === 'c') {
-                let hoveredRow = qs('.main .search-result-target tr[data-hover][data-copy-name]');
-                if (hoveredRow) {
+                const hoveredRow = qs('.main .search-result-target tr[data-hover][data-copy-name]') as HTMLTableRowElement;
+                if (hoveredRow?.dataset.copyName) {
                     navigator.clipboard.writeText(hoveredRow.dataset.copyName);
                 }
             }
         };
         document.addEventListener('keyup', copyNameToClipboard);
 
-        qs('.main .search-bar button.search').addEventListener('click', Search.perform.bind(null, false, false));
-        const searchBox = qs('.main .search-bar input[type="text"]');
+        qs('.main .search-bar button.search')?.addEventListener('click', Search.perform.bind(null, false, false));
+        const searchBox = qs('.main .search-bar input[type="text"]') as HTMLInputElement;
         searchBox.addEventListener('keyup', event => {
             if (event.key === 'Enter') {
                 Search.perform(false, false);
             }
         });
-        qs('.main .search-bar .text-reset').addEventListener('click', event => {
+        qs('.main .search-bar .text-reset')?.addEventListener('click', event => {
             searchBox.value = '';
             searchBox.focus();
             searchBox.dispatchEvent(new FocusEvent('focus'));
@@ -126,27 +147,22 @@ const Search = {
 
     /**
      * Returns whether we're in arbitrage mode.
-     *
-     * @returns {boolean}
      */
-    isArbitrageMode: () => getArbitrageModeControl().checked,
+    isArbitrageMode: (): boolean => getArbitrageModeControl().checked,
 
     /**
      * Perform a search for items, reading the parameters from the UI.
-     *
-     * @param {boolean} favoritesOnly
-     * @param {boolean} dealsOnly
      */
-    async perform(favoritesOnly, dealsOnly) {
+    async perform(favoritesOnly: boolean, dealsOnly: boolean) {
         if (Categories.getClassId() === Items.ItemClass.WowToken) {
             // Get out of WoW Token mode before performing any searches.
-            qs('.main .categories .category[data-class-id="' + Items.ItemClass.WowToken + '"]').dispatchEvent(new MouseEvent('click'));
+            qs('.main .categories .category[data-class-id="' + Items.ItemClass.WowToken + '"]')?.dispatchEvent(new MouseEvent('click'));
         }
 
         const thisRealm = Realms.getCurrentRealm();
         if (!thisRealm) {
             alert('Please select a realm in the top left corner.');
-            qs('.main .search-bar select').focus();
+            (qs('.main .search-bar select') as HTMLSelectElement|null)?.focus();
 
             return;
         }
@@ -156,7 +172,7 @@ const Search = {
         Realms.savePreferredRealm();
         try {
             if (getRegionMedianControl().checked) {
-                localStorage.setItem('show-region-median', 1);
+                localStorage.setItem('show-region-median', '1');
             } else {
                 localStorage.removeItem('show-region-median');
             }
@@ -171,7 +187,7 @@ const Search = {
         my.hashRealm = thisRealm;
         Search.setHash();
 
-        const searchBox = qs('.main .search-bar input[type="text"]');
+        const searchBox = qs('.main .search-bar input[type="text"]') as HTMLInputElement;
         const hasSearchText = /\S/.test(searchBox.value);
 
         let itemsList = await Auctions.hydrateList(
@@ -199,11 +215,8 @@ const Search = {
 
     /**
      * Toggles whether the given item key string is in the favorites list.
-     *
-     * @param {ItemKeyString} itemKeyString
-     * @param {HTMLElement} favSpan
      */
-    toggleFavorite(itemKeyString, favSpan) {
+    toggleFavorite(itemKeyString: Types.ItemKeyString, favSpan?: HTMLElement) {
         const favorites = Search.getFavorites();
         const pos = favorites.indexOf(itemKeyString);
         if (pos >= 0) {
@@ -214,7 +227,7 @@ const Search = {
         } else {
             favorites.push(itemKeyString);
             if (favSpan) {
-                favSpan.dataset.favorite = 1;
+                favSpan.dataset.favorite = '1';
             }
         }
         setFavorites(favorites);
@@ -224,53 +237,51 @@ export default Search;
 
 /**
  * Sorts the result table by the given column.
- *
- * @param {HTMLTableCellElement} headerTd The header table cell for the column to sort.
- * @param {boolean} isString True when this column has string values.
  */
-function columnSort(headerTd, isString) {
-    let dir = 'asc';
-    if (headerTd.dataset.sort === 'asc') {
-        dir = 'desc';
+function columnSort(headerTd: HTMLTableCellElement) {
+    let dir: SortDirection = SortDirection.Ascending;
+    if (headerTd.dataset.sort === SortDirection.Ascending) {
+        dir = SortDirection.Descending;
     }
 
-    const headerTr = headerTd.parentNode;
-    const tbody = headerTr.parentNode.parentNode.querySelector('tbody');
-    const columnPos = parseInt(headerTd.dataset.colPos);
+    const headerTr = headerTd.parentNode as HTMLTableRowElement;
+    const tbody = headerTr.closest('table')?.querySelector('tbody') as HTMLTableSectionElement;
+    const columnPos: Column = parseInt(headerTd.dataset.colPos ?? `${Column.Price}`);
     const hasDetail = !!headerTr.querySelector('td[data-col-name="detail"]');
 
-    headerTr.querySelectorAll('td[data-sort]').forEach(td => delete td.dataset.sort);
-    setPreferredSort(columnPos * (dir === 'asc' ? 1 : -1));
+    (headerTr.querySelectorAll('td[data-sort]') as NodeListOf<HTMLTableCellElement>)
+        .forEach(td => delete td.dataset.sort);
+    setPreferredSort(columnPos, dir);
 
     headerTd.dataset.sort = dir;
 
     my.rows.sort(function (a, b) {
-        const aVal = a[columnPos];
-        const bVal = b[columnPos];
-
-        if (isString) {
-            return aVal.localeCompare(bVal);
-        }
-
-        const valDiff = parseFloat(aVal) - parseFloat(bVal);
-        if (valDiff) {
-            return valDiff;
-        }
-
-        // Fallbacks.
-        if (columnPos !== COL_PRICE) {
-            const aPrice = a[COL_PRICE];
-            const bPrice = b[COL_PRICE];
-
-            const valDiff = parseInt(aPrice) - parseInt(bPrice);
+        {
+            let valDiff: number;
+            if (columnPos === Column.Name) {
+                valDiff = a[columnPos].localeCompare(b[columnPos]);
+            } else {
+                valDiff = (a[columnPos] ?? 0) - (b[columnPos] ?? 0);
+            }
             if (valDiff) {
                 return valDiff;
             }
         }
 
-        if (columnPos !== COL_NAME) {
-            const aName = a[COL_NAME];
-            const bName = b[COL_NAME];
+        // Fallbacks.
+        if (columnPos !== Column.Price) {
+            const aPrice = a[Column.Price];
+            const bPrice = b[Column.Price];
+
+            const valDiff = aPrice - bPrice;
+            if (valDiff) {
+                return valDiff;
+            }
+        }
+
+        if (columnPos !== Column.Name) {
+            const aName = a[Column.Name];
+            const bName = b[Column.Name];
 
             const valDiff = aName.localeCompare(bName);
             if (valDiff) {
@@ -278,11 +289,11 @@ function columnSort(headerTd, isString) {
             }
         }
 
-        if (hasDetail && columnPos !== COL_DETAIL) {
-            const aDetail = a[COL_DETAIL];
-            const bDetail = b[COL_DETAIL];
+        if (hasDetail && columnPos !== Column.Detail) {
+            const aDetail = a[Column.Detail];
+            const bDetail = b[Column.Detail];
 
-            const valDiff = parseInt(aDetail) - parseInt(bDetail);
+            const valDiff = (aDetail ?? 0) - (bDetail ?? 0);
             if (valDiff) {
                 return valDiff;
             }
@@ -291,7 +302,7 @@ function columnSort(headerTd, isString) {
         return 0;
     });
 
-    if (dir === 'desc') {
+    if (dir === SortDirection.Descending) {
         my.rows.reverse();
     }
 
@@ -304,48 +315,38 @@ function columnSort(headerTd, isString) {
             tr = tr(favorites);
             my.rows[x][0] = tr;
         }
-        tr.dataset.sortedResult = 1;
+        tr.dataset.sortedResult = '1';
         tbody.insertBefore(tr, afterNode ? afterNode.nextSibling : tbody.firstChild);
     }
     tbody.querySelectorAll('tr.result:not([data-sorted-result])').forEach(tr => tbody.removeChild(tr));
-    tbody.querySelectorAll('tr.result').forEach(tr => delete tr.dataset.sortedResult);
+    (tbody.querySelectorAll('tr.result') as NodeListOf<HTMLTableRowElement>).forEach(tr => delete tr.dataset.sortedResult);
 
     updateDeltaTimestamps();
 }
 
 /**
  * Creates a search result row.
- *
- * @param {PricedItem} item
- * @param {HTMLTableSectionElement} tbody
- * @param {DetailColumn|undefined} detailColumn
- * @param {boolean} vendorFlip
- * @param {boolean} showingDeals
- * @param {boolean} hasRegionMedian
- * @param {boolean} arbitrage
- * @param {ItemKeyString[]} favorites
- * @return {HTMLTableRowElement}
  */
 function createRow(
-    item,
-    tbody,
-    detailColumn,
-    vendorFlip,
-    showingDeals,
-    hasRegionMedian,
-    arbitrage,
-    favorites
-) {
+    item: Types.PricedItem,
+    tbody: HTMLTableSectionElement,
+    detailColumn: DetailColumn|undefined,
+    vendorFlip: boolean,
+    showingDeals: boolean,
+    hasRegionMedian :boolean,
+    arbitrage: boolean,
+    favorites: Types.ItemKeyString[],
+): HTMLTableRowElement {
     let suffix;
     if (item.bonusSuffix) {
         suffix = Items.getSuffix(item.id, item.bonusSuffix);
     }
 
-    let tr = document.createElement('tr');
+    let tr: HTMLTableRowElement = document.createElement('tr');
     tr.addEventListener('mouseenter', onRowEnter);
     tr.addEventListener('mouseleave', onRowLeave);
     tr.classList.add('result');
-    let td;
+    let td: HTMLTableCellElement;
 
     //
     // PRICE
@@ -353,7 +354,7 @@ function createRow(
     {
         tr.appendChild(td = document.createElement('td'));
         td.className = 'price';
-        const rowLink = document.createElement('a');
+        const rowLink = document.createElement('a') as WowheadAnchor;
         const price = item.price;
         if (price) {
             td.appendChild(priceElement(price));
@@ -371,14 +372,14 @@ function createRow(
         }
         if (canHover()) {
             if (item.id === ITEM_PET_CAGE) {
-                rowLink.dataset.wowhead = 'npc=' + item.npc + '&domain=' + getWowheadDomain();
+                rowLink.dataset.wowhead = `npc=${item.npc}&domain=${getWowheadDomain()}`;
             } else {
-                rowLink.dataset.wowhead = 'item=' + item.id + '&domain=' + getWowheadDomain();
+                rowLink.dataset.wowhead = `item=${item.id}&domain=${getWowheadDomain()}`;
                 if (item.bonusLevel) {
-                    rowLink.dataset.wowhead += '&ilvl=' + item.bonusLevel;
+                    rowLink.dataset.wowhead += `&ilvl=${item.bonusLevel}`;
                 }
                 if (suffix && suffix.bonus) {
-                    rowLink.dataset.wowhead += '&bonus=' + suffix.bonus;
+                    rowLink.dataset.wowhead += `&bonus=${suffix.bonus}`;
                 }
             }
         }
@@ -396,11 +397,11 @@ function createRow(
     {
         let itemName = item.name;
         if (suffix) {
-            itemName += ' ' + suffix.name;
+            itemName += ` ${suffix.name}`;
         }
         tr.dataset.copyName = itemName;
         if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
-            itemName += ' (' + item.bonusLevel + ')';
+            itemName += ` (${item.bonusLevel})`;
         }
         tr.appendChild(td = document.createElement('td'));
         td.className = 'name';
@@ -410,16 +411,16 @@ function createRow(
             img.src = Items.getIconUrl('ui_allianceicon', Items.IconSize.Large);
             img.classList.add('icon');
             td.appendChild(img);
-            td.dataset.sideIcon = 1;
-            tbody.dataset.sideIcon = 1;
+            td.dataset.sideIcon = '1';
+            tbody.dataset.sideIcon = '1';
         } else if (item.side === SIDE_HORDE) {
             let img = document.createElement('img');
             img.loading = 'lazy';
             img.src = Items.getIconUrl('ui_hordeicon', Items.IconSize.Medium);
             img.classList.add('icon');
             td.appendChild(img);
-            td.dataset.sideIcon = 1;
-            tbody.dataset.sideIcon = 1;
+            td.dataset.sideIcon = '1';
+            tbody.dataset.sideIcon = '1';
         }
         let img = document.createElement('img');
         img.loading = 'lazy';
@@ -445,7 +446,7 @@ function createRow(
     //
     if (detailColumn) {
         let value = item[detailColumn.prop];
-        if (detailColumn.prop === 'reqLevel' && value <= 1) {
+        if (detailColumn.prop === 'reqLevel' && value != null && value <= 1) {
             value = 1;
         }
         if (detailColumn.prop === 'itemLevel') {
@@ -453,7 +454,9 @@ function createRow(
         }
         tr.appendChild(td = document.createElement('td'));
         td.className = detailColumn.prop;
-        td.appendChild(ct(value.toLocaleString()));
+        if (value != null) {
+            td.appendChild(ct(value.toLocaleString()));
+        }
     }
 
     //
@@ -462,7 +465,7 @@ function createRow(
     if (showingDeals) {
         tr.appendChild(td = document.createElement('td'));
         td.className = 'price-percentage'
-        td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
+        item.regionMedian && td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
     } else {
         const quantity = item.quantity || 0;
         tr.appendChild(td = document.createElement('td'));
@@ -471,7 +474,7 @@ function createRow(
         if (quantity === 0 && item.snapshot > 0) {
             let span = document.createElement('span');
             span.className = 'delta-timestamp';
-            span.dataset.timestamp = item.snapshot;
+            span.dataset.timestamp = `${item.snapshot}`;
             td.appendChild(span);
         }
     }
@@ -480,7 +483,7 @@ function createRow(
     let favSpan = document.createElement('span');
     favSpan.className = 'favorite';
     if (favorites.includes(itemKey)) {
-        favSpan.dataset.favorite = 1;
+        favSpan.dataset.favorite = '1';
     }
     favSpan.addEventListener('click', Search.toggleFavorite.bind(self, itemKey, favSpan));
     td.appendChild(favSpan);
@@ -504,8 +507,8 @@ function createRow(
  * while we build a new long list.
  */
 function emptyItemList() {
-    qs('.main .welcome').style.display = 'none';
-    ee(qs('.main .search-result-target'));
+    (qs('.main .welcome') as HTMLElement).style.display = 'none';
+    ee(qs('.main .search-result-target') as HTMLElement);
     my.rows = [];
     my.hash = undefined;
     my.hashRealm = undefined;
@@ -514,13 +517,10 @@ function emptyItemList() {
 
 /**
  * Returns a list of items which are deals from the given list of priced items.
- *
- * @param {PricedItem[]} itemsList
- * @return {Promise<PricedItem[]>}
  */
-async function findDeals(itemsList) {
+async function findDeals(itemsList: Types.PricedItem[]): Promise<Types.PricedItem[]> {
     // Items must be in stock, and must not be commodities.
-    itemsList = itemsList.filter(pricedItem => pricedItem.quantity > 0 && !(pricedItem.stack > 1));
+    itemsList = itemsList.filter(pricedItem => pricedItem.quantity > 0 && !((pricedItem.stack ?? 1) > 1));
 
     let dealsData = await Auctions.getDeals();
 
@@ -542,55 +542,72 @@ async function findDeals(itemsList) {
 
 /**
  * Returns the checkbox for the option to use arbitrage mode.
- *
- * @return {HTMLInputElement}
  */
-const getArbitrageModeControl = () => qs('.main .search-bar .filter [name="arbitrage-mode"]');
+const getArbitrageModeControl = () => qs('.main .search-bar .filter [name="arbitrage-mode"]') as HTMLInputElement;
 
 /**
  * Returns the checkbox for the option to show the region median price.
- *
- * @return {HTMLInputElement}
  */
-const getRegionMedianControl = () => qs('.main .search-bar .filter [name="show-region-median"]');
+const getRegionMedianControl = () => qs('.main .search-bar .filter [name="show-region-median"]') as HTMLInputElement;
 
 /**
  * Returns the column we should use for the initial sort, based on the category class.
- *
- * @return {number|undefined}
  */
-function getPreferredSort() {
+function getPreferredSort(): {columnPos: Column, dir: SortDirection} {
+    const result = {columnPos: Column.Price, dir: SortDirection.Ascending};
+
     const categoryClass = Categories.getClassId();
-    if (categoryClass === undefined) {
-        return;
+    if (categoryClass == null) {
+        return result;
     }
 
-    let categorySorts = {};
+    let categorySorts: CategorySorts = {};
     try {
         categorySorts = JSON.parse(localStorage.getItem('category-sort') || '{}');
     } catch (e) {
         // Ignore
     }
 
-    return categorySorts[categoryClass];
+    const storedValue = categorySorts[categoryClass];
+    if (storedValue !== null) {
+        if (storedValue < 0) {
+            result.dir = SortDirection.Descending;
+
+            const flippedValue = storedValue * -1;
+            if (isColumn(flippedValue)) {
+                result.columnPos = flippedValue;
+            }
+        } else if (isColumn(storedValue)) {
+            result.columnPos = storedValue;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Returns whether the given number is a valid locale Column enum value.
+ */
+function isColumn(value: number): value is Column {
+    return Object.values(Column).includes(value as Column);
 }
 
 /**
  * Sets a data attribute on the event target to indicate that it's being hovered by the mouse.
- *
- * @param {MouseEvent} event
  */
-function onRowEnter(event) {
-    event.target.dataset.hover = 1;
+function onRowEnter(event: MouseEvent) {
+    if (event.target) {
+        (event.target as HTMLTableRowElement).dataset.hover = '1';
+    }
 }
 
 /**
  * Removes a data attribute on the event target indicating that it was being hovered by the mouse.
- *
- * @param {MouseEvent} event
  */
-function onRowLeave(event) {
-    delete event.target.dataset.hover;
+function onRowLeave(event: MouseEvent) {
+    if (event.target) {
+        delete (event.target as HTMLTableRowElement).dataset.hover;
+    }
 }
 
 /**
@@ -598,7 +615,7 @@ function onRowLeave(event) {
  *
  * @param {ItemKeyString[]} favorites
  */
-function setFavorites(favorites) {
+function setFavorites(favorites: Types.ItemKeyString[]) {
     try {
         if (favorites.length) {
             localStorage.setItem('favorites', favorites.join(','));
@@ -614,23 +631,21 @@ function setFavorites(favorites) {
 
 /**
  * Saves the preferred column and order for the current category class.
- *
- * @param sortValue
  */
-function setPreferredSort(sortValue) {
+function setPreferredSort(columnPos: Column, dir: SortDirection) {
     const categoryClass = Categories.getClassId();
-    if (categoryClass === undefined) {
+    if (categoryClass == null) {
         return;
     }
 
-    let categorySorts = {};
+    let categorySorts: CategorySorts = {};
     try {
         categorySorts = JSON.parse(localStorage.getItem('category-sort') || '{}');
     } catch (e) {
         // Ignore
     }
 
-    categorySorts[categoryClass] = sortValue;
+    categorySorts[categoryClass] = columnPos * (dir === SortDirection.Ascending ? 1 : -1);
 
     try {
         localStorage.setItem('category-sort', JSON.stringify(categorySorts));
@@ -641,16 +656,12 @@ function setPreferredSort(sortValue) {
 
 /**
  * Given a pricing-hydrated list of items, show it in the UI.
- *
- * @param {PricedItem[]} itemsList
- * @param {boolean}      includeNeverSeen
- * @param {boolean}      showingDeals
  */
-async function showItemList(itemsList, includeNeverSeen, showingDeals) {
+async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boolean, showingDeals: boolean) {
     const detailColumn = Categories.getDetailColumn();
     const arbitrage = Search.isArbitrageMode();
-    const showOutOfStock = !arbitrage && qs('.main .search-bar .filter [name="out-of-stock"]').checked;
-    const vendorFlip = !arbitrage && qs('.main .search-bar .filter [name="vendor-flip"]').checked;
+    const showOutOfStock = !arbitrage && (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked;
+    const vendorFlip = !arbitrage && (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked;
     const bonusStat = Categories.getBonusStat();
 
     let itemKeyAllowList;
@@ -659,9 +670,11 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
         itemKeyAllowList = realmState.bonusStatItems[bonusStat] || [];
     }
 
-    const parent = qs('.main .search-result-target');
+    const parent = qs('.main .search-result-target') as HTMLDivElement;
+    const searchResultTargetParent = parent.parentNode as HTMLDivElement;
 
-    let tr, td;
+    let tr: HTMLTableRowElement;
+    let td: HTMLTableCellElement;
 
     const table = ce('table');
     parent.appendChild(table);
@@ -674,16 +687,16 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
 
     thead.appendChild(tr = ce('tr'));
 
-    tr.appendChild(td = ce('td', {dataset: {colPos: COL_PRICE, colName: 'price'}}, ct('Price')));
+    tr.appendChild(td = ce('td', {dataset: {colPos: Column.Price, colName: 'price'}}, ct('Price')));
     colSpan++;
-    td.addEventListener('click', columnSort.bind(null, td, false));
-    tr.appendChild(td = ce('td', {dataset: {colPos: COL_NAME, colName: 'name'}}, ct('Name')));
+    td.addEventListener('click', columnSort.bind(null, td));
+    tr.appendChild(td = ce('td', {dataset: {colPos: Column.Name, colName: 'name'}}, ct('Name')));
     colSpan++;
-    td.addEventListener('click', columnSort.bind(null, td, true));
+    td.addEventListener('click', columnSort.bind(null, td));
     if (detailColumn) {
-        tr.appendChild(td = ce('td', {dataset: {colPos: COL_DETAIL, colName: 'detail'}}, ct(detailColumn.name)));
+        tr.appendChild(td = ce('td', {dataset: {colPos: Column.Detail, colName: 'detail'}}, ct(detailColumn.name)));
         colSpan++;
-        td.addEventListener('click', columnSort.bind(null, td, false));
+        td.addEventListener('click', columnSort.bind(null, td));
     }
     tr.appendChild(td = ce(
         'td',
@@ -691,18 +704,18 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
         ct(showingDeals ? '% of Region' :'Available')
     ));
     colSpan++;
-    td.addEventListener('click', columnSort.bind(null, td, false));
+    td.addEventListener('click', columnSort.bind(null, td));
 
-    delete parent.parentNode.dataset.withMedian;
+    delete searchResultTargetParent.dataset.withMedian;
     if (hasRegionMedian) {
-        parent.parentNode.dataset.withMedian = 1;
+        searchResultTargetParent.dataset.withMedian = '1';
         tr.appendChild(td = ce(
             'td',
             {dataset: {colPos: 4 + detailColumnOffset, colName: 'median'}},
             ct('Region Median'),
         ));
         colSpan++;
-        td.addEventListener('click', columnSort.bind(null, td, false));
+        td.addEventListener('click', columnSort.bind(null, td));
     }
 
     my.rows = [];
@@ -736,21 +749,23 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
             suffix = Items.getSuffix(item.id, item.bonusSuffix);
         }
 
-        const sortRow = [
-            createRow.bind(self, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian, arbitrage),
+        const sortRow: SortRow = [
+            createRow.bind(null, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian, arbitrage),
+            0, // Price
+            '', // Name
         ];
         my.rows.push(sortRow);
 
         //
         // PRICE
         //
-        sortRow.push(item.price || 0);
+        sortRow[Column.Price] = item.price || 0;
 
         //
         // NAME
         //
         {
-            let itemName = item.name;
+            let itemName: string = item.name;
             if (suffix) {
                 itemName += ' ' + suffix.name;
             }
@@ -760,7 +775,7 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
             if (item.craftingQualityTier) {
                 itemName += ' ' + item.craftingQualityTier.toString().padStart(3, '0');
             }
-            sortRow.push(itemName);
+            sortRow[Column.Name] = itemName;
         }
 
         //
@@ -768,11 +783,14 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
         //
         if (detailColumn) {
             let value = item[detailColumn.prop];
-            if (detailColumn.prop === 'reqLevel' && value <= 1) {
+            if (detailColumn.prop === 'reqLevel' && value != null && value <= 1) {
                 value = 1;
             }
             if (detailColumn.prop === 'itemLevel') {
                 value = item.bonusLevel || item.squishedItemLevel || value;
+            }
+            if (value == null) {
+                value = 0;
             }
             sortRow.push(value);
         }
@@ -781,7 +799,7 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
         // QUANTITY / PERCENTAGE
         //
         if (showingDeals) {
-            sortRow.push(item.price / item.regionMedian);
+            sortRow.push(item.price / (item.regionMedian ?? 1));
         } else {
             const quantity = item.quantity || 0;
             if (quantity === 0) {
@@ -795,7 +813,7 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
         // REGION MEDIAN
         //
         if (hasRegionMedian) {
-            sortRow.push(item.regionMedian || 0);
+            sortRow.push(item.regionMedian ?? 0);
         }
     }
 
@@ -816,14 +834,18 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
             ))));
         }
 
-        const prefSort = getPreferredSort() || COL_PRICE;
-        const sortTd = thead.querySelector(`td[data-col-pos="${Math.abs(prefSort)}"]`) ||
-            thead.querySelector(`td[data-col-pos="${COL_PRICE}"]`);
-        if (prefSort < 0) {
-            // Will flip to desc when we call the next sort.
-            sortTd.dataset.sort = 'asc';
+        {
+            const prefSort = getPreferredSort();
+            const sortTd =
+                (thead.querySelector(`td[data-col-pos="${prefSort.columnPos}"]`) ||
+                thead.querySelector(`td[data-col-pos="${Column.Price}"]`)) as HTMLTableCellElement;
+
+            // Will flip when we call the next sort.
+            sortTd.dataset.sort = prefSort.dir === SortDirection.Descending ?
+                SortDirection.Ascending :
+                SortDirection.Descending;
+            sortTd.dispatchEvent(new MouseEvent('click'));
         }
-        sortTd.dispatchEvent(new MouseEvent('click'));
     }
 
     parent.scrollTop = 0;
@@ -831,12 +853,10 @@ async function showItemList(itemsList, includeNeverSeen, showingDeals) {
 
 /**
  * Enable/disable the favorites button in the search bar.
- *
- * @param {boolean} isEnabled
  */
-function updateFavoritesButton(isEnabled) {
+function updateFavoritesButton(isEnabled: boolean) {
     if (isEnabled) {
-        SEARCH_FAVORITES_BUTTON.dataset.enabled = 1;
+        SEARCH_FAVORITES_BUTTON.dataset.enabled = '1';
         delete SEARCH_FAVORITES_BUTTON.dataset.simpleTooltip;
     } else {
         delete SEARCH_FAVORITES_BUTTON.dataset.enabled;

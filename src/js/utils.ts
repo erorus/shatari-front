@@ -11,7 +11,7 @@ export function canHover(): boolean {
 /**
  * Copy Object. Properties from source are set onto dest.
  */
-export function copyObject(dest: PlainObject, source: PlainObject) {
+function copyObject(dest: PlainObject, source: PlainObject) {
     for (let k in source) {
         if (!source.hasOwnProperty(k)) {
             continue;
@@ -34,7 +34,7 @@ export function copyObject(dest: PlainObject, source: PlainObject) {
 /**
  * Creates an element.
  */
-export function createElement(tag: string, props?: PlainObject, child?: Node): HTMLElement {
+export function createElement<K extends keyof HTMLElementTagNameMap>(tag: K, props?: PlainObject, child?: Node): HTMLElementTagNameMap[K] {
     const result = document.createElement(tag);
 
     copyObject(result, props || {});

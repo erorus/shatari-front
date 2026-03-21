@@ -155,6 +155,7 @@ export type UnnamedItem = {
     quality: number;
     reqLevel?: number;
     side?: number;
+    skill?: number;
     slots?: number;
     squishEra?: number;
     squishedItemLevel?: number;

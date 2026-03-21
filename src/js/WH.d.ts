@@ -10,3 +10,7 @@ type WowheadDataset = {
     simpleTooltip?: string;
     wowhead?: string;
 };
+
+type WowheadAnchor = HTMLAnchorElement & {
+    _fixTooltip?: (html: string, type: number, typeId: string, element: HTMLAnchorElement) => string,
+}

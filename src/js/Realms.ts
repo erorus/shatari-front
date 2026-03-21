@@ -110,7 +110,7 @@ const Realms = {
     /**
      * Saves the current/given realm to localstorage as the preferred realm.
      */
-    savePreferredRealm(realm: Types.Realm) {
+    savePreferredRealm(realm?: Types.Realm) {
         realm = realm || Realms.getCurrentRealm();
         if (!realm) {
             return;
@@ -286,7 +286,7 @@ function updateSelectNames(savedRealmId?: Types.RealmID) {
         if (option) {
             ee(option);
         } else {
-            option = ce('option', {value: realm.id}) as HTMLOptionElement;
+            option = ce('option', {value: realm.id});
         }
         if (realm.fromNative) {
             option.dataset.native = 'true';

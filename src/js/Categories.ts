@@ -18,10 +18,10 @@ type Category = {
     subcategories?: Subcategory[];
 }
 
-type DetailColumn  = {
+export type DetailColumn = {
     name: string;
     // The field in an Item with the value for this column
-    prop: string;
+    prop: 'itemLevel'|'reqLevel'|'skill'|'slots';
 }
 
 type Subcategory = {
