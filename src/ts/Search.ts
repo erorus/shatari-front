@@ -8,7 +8,7 @@ import {
     querySelectorAll as qsa,
     updateDeltaTimestamps
 } from "./utils";
-import {ITEM_PET_CAGE, SIDE_ALLIANCE, SIDE_HORDE} from "./constants";
+import {ITEM_PET_CAGE} from "./constants";
 
 import Auctions from "./Auctions";
 import Categories, {DetailColumn} from "./Categories";
@@ -40,6 +40,11 @@ type SortableColumn = 1|2|3|4|5;
 enum SortDirection {
     Ascending = 'asc',
     Descending = 'desc',
+}
+
+enum Side {
+    Alliance = 1,
+    Horde = 2,
 }
 
 const SEARCH_FAVORITES_BUTTON = qs('.main .search-bar .favorite') as HTMLElement;
@@ -406,7 +411,7 @@ function createRow(
         }
         tr.appendChild(td = document.createElement('td'));
         td.className = 'name';
-        if (item.side === SIDE_ALLIANCE) {
+        if (item.side === Side.Alliance) {
             let img = document.createElement('img');
             img.loading = 'lazy';
             img.src = Items.getIconUrl('ui_allianceicon', Items.IconSize.Large);
@@ -414,7 +419,7 @@ function createRow(
             td.appendChild(img);
             td.dataset.sideIcon = '1';
             tbody.dataset.sideIcon = '1';
-        } else if (item.side === SIDE_HORDE) {
+        } else if (item.side === Side.Horde) {
             let img = document.createElement('img');
             img.loading = 'lazy';
             img.src = Items.getIconUrl('ui_hordeicon', Items.IconSize.Medium);

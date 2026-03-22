@@ -11,6 +11,3 @@ export const MS_HOUR = 60 * MS_MINUTE;
 export const MS_DAY = 24 * MS_HOUR;
 
 export const NBSP = '\u00A0';
-
-export const SIDE_ALLIANCE = 1;
-export const SIDE_HORDE = 2;
