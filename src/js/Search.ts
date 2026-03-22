@@ -26,9 +26,7 @@ type SortRow = [
     rowGenerator: HTMLTableRowElement|((favorites: Types.ItemKeyString[]) => HTMLTableRowElement),
     price: Types.Money,
     name: string,
-    detail?: number,
-    quantity?: number,
-    regionMedian?: number,
+    ...number[]
 ];
 
 enum Column {
@@ -36,6 +34,8 @@ enum Column {
     Name = 2,
     Detail = 3,
 }
+
+type SortableColumn = 1|2|3|4|5;
 
 enum SortDirection {
     Ascending = 'asc',
@@ -246,7 +246,8 @@ function columnSort(headerTd: HTMLTableCellElement) {
 
     const headerTr = headerTd.parentNode as HTMLTableRowElement;
     const tbody = headerTr.closest('table')?.querySelector('tbody') as HTMLTableSectionElement;
-    const columnPos: Column = parseInt(headerTd.dataset.colPos ?? `${Column.Price}`);
+    const potentialColumn = parseInt(headerTd.dataset.colPos ?? `${Column.Price}`);
+    const columnPos: SortableColumn = isSortableColumn(potentialColumn) ? potentialColumn : Column.Price;
     const hasDetail = !!headerTr.querySelector('td[data-col-name="detail"]');
 
     (headerTr.querySelectorAll('td[data-sort]') as NodeListOf<HTMLTableCellElement>)
@@ -553,8 +554,8 @@ const getRegionMedianControl = () => qs('.main .search-bar .filter [name="show-r
 /**
  * Returns the column we should use for the initial sort, based on the category class.
  */
-function getPreferredSort(): {columnPos: Column, dir: SortDirection} {
-    const result = {columnPos: Column.Price, dir: SortDirection.Ascending};
+function getPreferredSort(): {columnPos: SortableColumn, dir: SortDirection} {
+    const result: {columnPos: SortableColumn, dir: SortDirection} = {columnPos: Column.Price, dir: SortDirection.Ascending};
 
     const categoryClass = Categories.getClassId();
     if (categoryClass == null) {
@@ -574,10 +575,10 @@ function getPreferredSort(): {columnPos: Column, dir: SortDirection} {
             result.dir = SortDirection.Descending;
 
             const flippedValue = storedValue * -1;
-            if (isColumn(flippedValue)) {
+            if (isSortableColumn(flippedValue)) {
                 result.columnPos = flippedValue;
             }
-        } else if (isColumn(storedValue)) {
+        } else if (isSortableColumn(storedValue)) {
             result.columnPos = storedValue;
         }
     }
@@ -588,8 +589,8 @@ function getPreferredSort(): {columnPos: Column, dir: SortDirection} {
 /**
  * Returns whether the given number is a valid locale Column enum value.
  */
-function isColumn(value: number): value is Column {
-    return Object.values(Column).includes(value as Column);
+function isSortableColumn(value: number): value is SortableColumn {
+    return [1, 2, 3, 4, 5].includes(value);
 }
 
 /**
@@ -632,7 +633,7 @@ function setFavorites(favorites: Types.ItemKeyString[]) {
 /**
  * Saves the preferred column and order for the current category class.
  */
-function setPreferredSort(columnPos: Column, dir: SortDirection) {
+function setPreferredSort(columnPos: SortableColumn, dir: SortDirection) {
     const categoryClass = Categories.getClassId();
     if (categoryClass == null) {
         return;
