@@ -145,7 +145,7 @@ export type TokenState = {
 export type UnnamedItem = {
     bop?: boolean;
     class: number;
-    craftingQualityTier?: number;
+    craftingQualityId?: number;
     display?: number;
     expansion: number;
     extraFilters?: number[];

@@ -439,11 +439,14 @@ function createRow(
         span.appendChild(ct(itemName));
         td.appendChild(span);
 
-        if (item.craftingQualityTier) {
-            td.appendChild(ce('img', {
-                className: 'quality-tier',
-                src: `images/professions-chaticon-quality-tier${item.craftingQualityTier}.webp`,
-            }));
+        if (item.craftingQualityId) {
+            const craftingQuality = Items.getCraftingQuality(item.craftingQualityId);
+            if (craftingQuality?.iconUrl) {
+                td.appendChild(ce('img', {
+                    className: 'quality-tier',
+                    src: craftingQuality?.iconUrl,
+                }));
+            }
         }
     }
 
@@ -778,8 +781,11 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
             if (item.bonusLevel && item.id !== ITEM_PET_CAGE && !(detailColumn && detailColumn.prop === 'itemLevel')) {
                 itemName += ' (' + item.bonusLevel.toString().padStart(4, '0') + ')';
             }
-            if (item.craftingQualityTier) {
-                itemName += ' ' + item.craftingQualityTier.toString().padStart(3, '0');
+            if (item.craftingQualityId) {
+                const craftingQuality = Items.getCraftingQuality(item.craftingQualityId);
+                if (craftingQuality) {
+                    itemName += ' ' + craftingQuality.tier.toString().padStart(3, '0');
+                }
             }
             sortRow[Column.Name] = itemName;
         }

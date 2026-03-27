@@ -14,6 +14,12 @@ import * as Types from "./Types";
 
 // Types
 
+type CraftingQuality = {
+    tier: number;
+    icon: string|null;
+    iconUrl?: string;
+}
+
 type Suffix = {
     bonus: number|null;
     name: string;
@@ -108,6 +114,7 @@ type ModuleVars = {
     names: Record<Types.ItemID, string>;
     searchNames: Record<Types.ItemID, string>;
     suffixes: Record<Types.SuffixID, Suffix>;
+    craftingQualities: Record<number, CraftingQuality>;
     battlePets: Record<Types.BattlePetSpeciesID, Types.BattlePetSpecies>;
     battlePetNames: Record<Types.BattlePetSpeciesID, string>;
     searchBattlePetNames: Record<Types.BattlePetSpeciesID, string>;
@@ -120,6 +127,7 @@ const my: ModuleVars = {
     searchNames: {},
 
     suffixes: {},
+    craftingQualities: {},
 
     battlePets: {},
     battlePetNames: {},
@@ -133,6 +141,13 @@ const my: ModuleVars = {
 };
 
 // Functions
+
+/**
+ * Returns the crafting quality data for the given crafting quality ID.
+ */
+export function getCraftingQuality(id: number): CraftingQuality|undefined {
+    return my.craftingQualities[id];
+}
 
 /**
  * Returns the full URL to an icon image.
@@ -235,6 +250,7 @@ export async function init() {
         fetchItemSuffixes(getCurrentLocale()),
         fetchBattlePets(),
         fetchBattlePetNames(getCurrentLocale()),
+        fetchCraftingQualities(),
         fetchVendor(),
     ]);
 
@@ -645,6 +661,23 @@ async function fetchBattlePets() {
             my.battlePets[id].icon = 'inv_misc_questionmark';
         }
     }
+}
+
+/**
+ * Fetches the list of crafting quality data and stores it locally.
+ */
+async function fetchCraftingQualities() {
+    const response = await Progress.fetch('json/craftingQualities.json', {mode: 'same-origin'});
+    if (!response.ok) {
+        throw 'Cannot get list of crafting qualities!';
+    }
+
+    my.craftingQualities = await response.json();
+    Object.values(my.craftingQualities).forEach(craftingQuality => {
+        if (craftingQuality.icon) {
+            craftingQuality.iconUrl = `https://wow.zamimg.com/images/wow/TextureAtlas/live/${craftingQuality.icon.toLowerCase()}.webp`;
+        }
+    });
 }
 
 /**

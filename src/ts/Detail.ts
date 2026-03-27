@@ -729,11 +729,14 @@ async function populateDetails(item: Types.Item, itemState: Types.ItemState) {
             nameLink.dataset.wowhead = wowheadParams.join('&');
         }
 
-        if (item.craftingQualityTier) {
-            nameLink.appendChild(ce('img', {
-                className: 'quality-tier',
-                src: `images/professions-chaticon-quality-tier${item.craftingQualityTier}.webp`,
-            }));
+        if (item.craftingQualityId) {
+            const craftingQuality = Items.getCraftingQuality(item.craftingQualityId);
+            if (craftingQuality?.iconUrl) {
+                nameLink.appendChild(ce('img', {
+                    className: 'quality-tier',
+                    src: craftingQuality?.iconUrl,
+                }));
+            }
         }
 
         // Favstar
