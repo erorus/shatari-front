@@ -120,10 +120,13 @@ const Hash = {
     /**
      * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes
      * are silently ignored. Sets up listener so that future hash changes are also read.
+     *
+     * Returns true when the hash was read successfully.
      */
-    init() {
+    async init() {
         window.addEventListener('hashchange', () => read());
-        read();
+
+        return await read();
     },
 
     /**
@@ -280,19 +283,21 @@ async function performSearch(
 /**
  * Reads the hash currently in the browser's location bar and applies it to the current state. Invalid hashes
  * are silently ignored.
+ *
+ * Returns true when we performed some action due to a valid hash.
  */
-const read = async function () {
+const read = async function (): Promise<boolean> {
     let hash = getHash();
     let hashParts = hash.split('/');
     if (hashParts.length < 2) {
         // Didn't recognize hash format.
-        return;
+        return false;
     }
 
     let realm = Realms.getRealmByHash(hashParts[0]);
     if (!realm) {
         // Didn't recognize realm.
-        return;
+        return false;
     }
     Realms.setCurrentRealm(realm);
 
@@ -308,7 +313,7 @@ const read = async function () {
             }
         }
 
-        return;
+        return true;
     }
 
     switch (hashParts[1]) {
@@ -316,6 +321,9 @@ const read = async function () {
         case 'favorites':
         case 'deals':
             await performSearch(hashParts[1], hashParts.slice(2));
-            break;
+
+            return true;
     }
+
+    return false;
 };

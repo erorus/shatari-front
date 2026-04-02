@@ -1,6 +1,7 @@
 import {createElement as ce, querySelector as qs, updateDeltaTimestamps} from "./utils";
 import {MS_MINUTE} from "./constants";
 
+import Auctions from "./Auctions";
 import Categories from "./Categories";
 import Detail from "./Detail";
 import Hash from "./Hash";
@@ -140,7 +141,11 @@ async function init() {
     setInterval(updateDeltaTimestamps, MS_MINUTE);
 
     Search.init();
-    Hash.init();
+    if (!(await Hash.init()) && Realms.getCurrentRealm()) {
+        // Preload realm and region state if we can.
+        Auctions.getRealmState();
+        Auctions.getRegionState();
+    }
 }
 
 init().catch(alert);
