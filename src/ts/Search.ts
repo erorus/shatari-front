@@ -10,6 +10,7 @@ import {
 } from "./utils";
 import {ITEM_PET_CAGE} from "./constants";
 
+import {isPaid} from "./Account";
 import Auctions from "./Auctions";
 import Categories, {DetailColumn} from "./Categories";
 import Detail from "./Detail";
@@ -153,7 +154,7 @@ const Search = {
     /**
      * Returns whether we're in arbitrage mode.
      */
-    isArbitrageMode: (): boolean => getArbitrageModeControl().checked,
+    isArbitrageMode: (): boolean => isPaid() && getArbitrageModeControl().checked,
 
     /**
      * Perform a search for items, reading the parameters from the UI.
@@ -197,7 +198,7 @@ const Search = {
 
         let itemsList = await Auctions.hydrateList(
             await Items.search(favoritesOnly ? Items.SearchMode.Favorites : Items.SearchMode.Normal),
-            {arbitrage: Search.isArbitrageMode(), regionMedian: getRegionMedianControl().checked},
+            {arbitrage: Search.isArbitrageMode(), regionMedian: isPaid() && getRegionMedianControl().checked},
         );
 
         if (dealsOnly) {
@@ -669,8 +670,8 @@ function setPreferredSort(columnPos: SortableColumn, dir: SortDirection) {
 async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boolean, showingDeals: boolean) {
     const detailColumn = Categories.getDetailColumn();
     const arbitrage = Search.isArbitrageMode();
-    const showOutOfStock = !arbitrage && (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked;
-    const vendorFlip = !arbitrage && (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked;
+    const showOutOfStock = isPaid() && !arbitrage && (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked;
+    const vendorFlip = isPaid() && !arbitrage && (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked;
     const bonusStat = Categories.getBonusStat();
 
     let itemKeyAllowList;

@@ -15,7 +15,7 @@ export function isEnabled(): boolean {
     return localStorage.getItem('account') != null;
 }
 
-export const isPaid = (): boolean => !!user?.paid;
+export const isPaid = (): boolean => !isEnabled() || !!user?.paid;
 
 export async function init(): Promise<void> {
     if (!isEnabled()) {

@@ -5,12 +5,14 @@
 import {querySelector as qs} from "./utils";
 import {ITEM_PET_CAGE} from "./constants";
 
+import {isPaid} from "./Account";
 import Auctions from "./Auctions";
 import Categories from "./Categories";
 import {registerCallback as registerLocaleCallback, getCurrent as getCurrentLocale, Locale} from "./Locales";
 import Progress from "./Progress";
 import Search from "./Search";
 import * as Types from "./Types";
+import {ItemKeyString} from "./Types";
 
 // Types
 
@@ -288,6 +290,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
     const subClassIds = Categories.getSubClassIds();
     const invTypes = Categories.getInvTypes();
     const extraFilters = Categories.getExtraFilters();
+    const paid = isPaid();
 
     let itemVariants: Record<number, Types.ItemKeyString[]> = {};
     let speciesVariants: Record<number, Types.ItemKeyString[]> = {};
@@ -300,7 +303,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
         itemVariants = realmState.variants;
         speciesVariants = realmState.speciesVariants;
     }
-    const useVariants = !(qs('.main .search-bar .filter [name="transmog-mode"]') as HTMLInputElement).checked;
+    const useVariants = !paid || !(qs('.main .search-bar .filter [name="transmog-mode"]') as HTMLInputElement).checked;
 
     const idList: Types.ItemID[] = [];
     const wordExpressions: RegExp[] = [];
@@ -342,7 +345,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
         .forEach(word => wordExpressions.push(new RegExp('(?:^|\\s)\\W*' + escapeRegExp(word), 'iu')));
 
     const validRarity = [];
-    {
+    if (paid) {
         const rarityFrom = qs('.main .search-bar .filter select.rarity[name="rarity-from"]') as HTMLSelectElement;
         const rarityTo = qs('.main .search-bar .filter select.rarity[name="rarity-to"]') as HTMLSelectElement;
         const minRarity = parseInt(rarityFrom.options[rarityFrom.selectedIndex].value);
@@ -350,11 +353,13 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
         for (let rarity = minRarity; rarity <= maxRarity; rarity++) {
             validRarity.push(rarity);
         }
+    } else {
+        validRarity.push(0, 1, 2, 3, 4, 5);
     }
 
     let minLevel: number|undefined;
     let maxLevel: number|undefined;
-    {
+    if (paid) {
         const minLevelString = (/^\d+$/.exec((qs('.main .search-bar input[name="level-min"]') as HTMLInputElement).value) || [])[0];
         const maxLevelString = (/^\d+$/.exec((qs('.main .search-bar input[name="level-max"]') as HTMLInputElement).value) || [])[0];
         if (minLevelString !== undefined) {
@@ -366,7 +371,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
     }
 
     let expansion: number|undefined;
-    {
+    if (paid) {
         const expansionSelect = qs('.main .filter select.expansion') as HTMLSelectElement;
         const selected = expansionSelect.options[expansionSelect.selectedIndex].value;
         if (selected !== '') {
@@ -457,6 +462,12 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
                     ),
                 ];
             }
+            if (!paid && !forSuggestions) {
+                const base = stringifyKeyParts(id, 0, 0);
+                if (!variants.includes(base)) {
+                    variants.push(base);
+                }
+            }
 
             if (forSuggestions && variants.length > 1) {
                 // Strip out item levels. We won't be looking up these key strings anyway.
@@ -540,13 +551,19 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
                 continue;
             }
 
-            let variants;
+            let variants: ItemKeyString[];
             if (!useVariants || forSuggestions) {
                 // Not selecting by breed, just species.
                 variants = [stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
             } else {
                 if (speciesVariants[speciesId]) {
                     variants = speciesVariants[speciesId].slice(0);
+                    if (!paid) {
+                        if (variants.length === 1) {
+                            variants = [];
+                        }
+                        variants.push(stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0));
+                    }
                 } else {
                     variants = [stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
                 }
