@@ -1,6 +1,7 @@
 import {createElement as ce, querySelector as qs, updateDeltaTimestamps} from "./utils";
 import {MS_MINUTE} from "./constants";
 
+import * as Account from "./Account";
 import Auctions from "./Auctions";
 import Categories from "./Categories";
 import Detail from "./Detail";
@@ -77,6 +78,7 @@ async function init() {
         Categories.init(),
         ItemsInit(),
         Realms.init(),
+        Account.init(),
     ]);
 
     const filterButton = qs('.main .search-bar .filter');

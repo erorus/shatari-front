@@ -32,6 +32,11 @@ export default defineConfig({
             '/data': {
                 target: 'https://undermine.exchange',
                 changeOrigin: true
+            },
+            '/account': {
+                target: 'http://localhost:8011',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/account/, ''),
             }
         }
     },

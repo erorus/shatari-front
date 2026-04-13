@@ -1403,6 +1403,7 @@ body {
   }
 
   .bottom-bar {
+    align-items: center;
     display: flex;
     font-size: 75%;
     justify-content: space-between;
@@ -1422,6 +1423,14 @@ body {
       color: $text10;
       font: $fontSizeFriz * 0.8 $fontFriz;
       padding: 0 math.div($marginStep, 2);
+    }
+
+    .account {
+      margin-left: 1em;
+
+      button {
+        @include button()
+      }
     }
 
     .progress {
@@ -1455,11 +1464,25 @@ body {
       &:not([data-shown]) > * {display: none}
     }
 
-    .last-updated {
+    .last-updated:not(:empty) {
       margin-left: 2em;
       text-align: right;
     }
   }
+}
+
+.main[data-account] {
+  .bottom-bar .account {
+    display: inline-block !important;
+  }
+
+  &[data-account="none"] .logged-in-only {display: none}
+  &:not([data-account="none"]) .logged-out-only {display: none}
+  &:not([data-account="free"]) .free-only {display: none}
+  &:not([data-account="paid"]) .paid-only {display: none}
+}
+.main:not([data-account]) {
+  .logged-in-only, .logged-out-only, .free-only, .paid-only {display: none}
 }
 
 .scroll-indicator {

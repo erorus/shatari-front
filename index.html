@@ -125,6 +125,16 @@
             </div>
         </div>
         <div class="last-updated"></div>
+        <div class="account" style="display: none">
+            <form method="POST" action="/account/login" class="login logged-out-only">
+                <button type="submit">Sign In with Patreon</button>
+            </form>
+            <form method="POST" action="/account/logout" class="logout logged-in-only">
+                <a href="https://www.patreon.com/erorus" class="free-only" data-simple-tooltip="Become a paid member at the Goblin tier or above to unlock all site features!">Become a Patron</a>
+                <span class="paid-only" data-simple-tooltip="You're signed in to your paid membership, and all features are unlocked. Thank you!">Patron</span>
+                <button type="submit">Sign Out</button>
+            </form>
+        </div>
     </div>
 </div>
 </body>
