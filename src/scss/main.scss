@@ -806,6 +806,10 @@ body {
           }
         }
       }
+
+      .restricted {
+        filter: blur(4px);
+      }
     }
 
     .item {

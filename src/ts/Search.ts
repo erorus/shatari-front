@@ -276,6 +276,16 @@ function columnSort(headerTd: HTMLTableCellElement) {
         }
 
         // Fallbacks.
+        if (hasDetail && columnPos === Column.Name) {
+            const aDetail = a[Column.Detail];
+            const bDetail = b[Column.Detail];
+
+            const valDiff = (aDetail ?? 0) - (bDetail ?? 0);
+            if (valDiff) {
+                return valDiff;
+            }
+        }
+
         if (columnPos !== Column.Price) {
             const aPrice = a[Column.Price];
             const bPrice = b[Column.Price];
@@ -331,6 +341,10 @@ function columnSort(headerTd: HTMLTableCellElement) {
     updateDeltaTimestamps();
 }
 
+function createRestricted(contents: Node): HTMLSpanElement {
+    return ce('span', {className: 'restricted'}, contents);
+}
+
 /**
  * Creates a search result row.
  */
@@ -342,6 +356,7 @@ function createRow(
     showingDeals: boolean,
     hasRegionMedian :boolean,
     arbitrage: boolean,
+    restricted: boolean,
     favorites: Types.ItemKeyString[],
 ): HTMLTableRowElement {
     let suffix;
@@ -364,10 +379,11 @@ function createRow(
         const rowLink = document.createElement('a') as WowheadAnchor;
         const price = item.price;
         if (price) {
-            td.appendChild(priceElement(price));
+            td.appendChild(restricted ? createRestricted(priceElement(123456)) : priceElement(price));
 
             let vsp;
             if (
+                !restricted &&
                 !vendorFlip &&
                 item.quantity &&
                 (vsp = Items.getVendorSellPrice(item)) > price &&
@@ -378,7 +394,9 @@ function createRow(
             }
         }
         if (canHover()) {
-            if (item.id === ITEM_PET_CAGE) {
+            if (restricted) {
+                rowLink.dataset.simpleTooltip = 'Become a patron to view pricing stats for this version of the item!'
+            } else if (item.id === ITEM_PET_CAGE) {
                 rowLink.dataset.wowhead = `npc=${item.npc}&domain=${getWowheadDomain()}`;
             } else {
                 rowLink.dataset.wowhead = `item=${item.id}&domain=${getWowheadDomain()}`;
@@ -460,7 +478,11 @@ function createRow(
             value = 1;
         }
         if (detailColumn.prop === 'itemLevel') {
-            value = item.bonusLevel || item.squishedItemLevel || value;
+            if (!restricted && !isPaid()) {
+                value = undefined;
+            } else {
+                value = item.bonusLevel || item.squishedItemLevel || value;
+            }
         }
         tr.appendChild(td = document.createElement('td'));
         td.className = detailColumn.prop;
@@ -475,7 +497,13 @@ function createRow(
     if (showingDeals) {
         tr.appendChild(td = document.createElement('td'));
         td.className = 'price-percentage'
-        item.regionMedian && td.appendChild(ct(Math.round(item.price / item.regionMedian * 100) + '%'));
+        item.regionMedian && td.appendChild(
+            restricted ? createRestricted(ct('67%')) : ct(Math.round(item.price / item.regionMedian * 100) + '%')
+        );
+    } else if (restricted) {
+        tr.appendChild(td = document.createElement('td'));
+        td.className = 'quantity';
+        td.appendChild(createRestricted(ct('67')));
     } else {
         const quantity = item.quantity || 0;
         tr.appendChild(td = document.createElement('td'));
@@ -505,7 +533,7 @@ function createRow(
         tr.appendChild(td = document.createElement('td'));
         td.className = 'price median';
         if (item.regionMedian) {
-            td.appendChild(priceElement(item.regionMedian));
+            td.appendChild(restricted ? createRestricted(priceElement(123456)) : priceElement(item.regionMedian));
         }
     }
 
@@ -668,10 +696,11 @@ function setPreferredSort(columnPos: SortableColumn, dir: SortDirection) {
  * Given a pricing-hydrated list of items, show it in the UI.
  */
 async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boolean, showingDeals: boolean) {
+    const paid = isPaid();
     const detailColumn = Categories.getDetailColumn();
     const arbitrage = Search.isArbitrageMode();
-    const showOutOfStock = isPaid() && !arbitrage && (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked;
-    const vendorFlip = isPaid() && !arbitrage && (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked;
+    const showOutOfStock = !paid || !arbitrage && (qs('.main .search-bar .filter [name="out-of-stock"]') as HTMLInputElement).checked;
+    const vendorFlip = paid && !arbitrage && (qs('.main .search-bar .filter [name="vendor-flip"]') as HTMLInputElement).checked;
     const bonusStat = Categories.getBonusStat();
 
     let itemKeyAllowList;
@@ -739,6 +768,8 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
                 continue;
             }
         }
+        const restricted = !paid && !!(item.bonusSuffix || (item.bonusLevel && item.id !== ITEM_PET_CAGE));
+
         if ((item.quantity || 0) === 0) {
             if (!showOutOfStock) {
                 continue;
@@ -760,7 +791,7 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
         }
 
         const sortRow: SortRow = [
-            createRow.bind(null, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian, arbitrage),
+            createRow.bind(null, item, tbody, detailColumn, vendorFlip, showingDeals, hasRegionMedian, arbitrage, restricted),
             0, // Price
             '', // Name
         ];
@@ -769,7 +800,7 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
         //
         // PRICE
         //
-        sortRow[Column.Price] = item.price || 0;
+        sortRow[Column.Price] = restricted ? 0 : (item.price || 0);
 
         //
         // NAME
@@ -800,7 +831,11 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
                 value = 1;
             }
             if (detailColumn.prop === 'itemLevel') {
-                value = item.bonusLevel || item.squishedItemLevel || value;
+                if (!paid && !restricted) {
+                    value = 0;
+                } else {
+                    value = item.bonusLevel || item.squishedItemLevel || value;
+                }
             }
             if (value == null) {
                 value = 0;
@@ -811,7 +846,9 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
         //
         // QUANTITY / PERCENTAGE
         //
-        if (showingDeals) {
+        if (restricted) {
+            sortRow.push(0);
+        } else if (showingDeals) {
             sortRow.push(item.price / (item.regionMedian ?? 1));
         } else {
             const quantity = item.quantity || 0;
@@ -826,7 +863,7 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
         // REGION MEDIAN
         //
         if (hasRegionMedian) {
-            sortRow.push(item.regionMedian ?? 0);
+            sortRow.push(restricted ? 0 : (item.regionMedian ?? 0));
         }
     }
 
