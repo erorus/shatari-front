@@ -561,7 +561,7 @@ body {
       font: $fontSizeFriz $fontFriz;
       gap: 2em;
       left: math.div($marginStep, 2);
-      line-height: 1.33;
+      line-height: 1.66;
       overflow-y: auto;
       position: absolute;
       right: math.div($marginStep, 2);
@@ -576,7 +576,16 @@ body {
         padding: $marginStep;
       }
 
-      > div:last-child {margin-bottom: $marginStep; margin-top: auto}
+      .info {
+        box-sizing: border-box;
+        max-width: 50em;
+        padding: 0 1em;
+        text-align: left;
+        width: 100%;
+      }
+
+      > .welcome-bottom {margin-top: auto}
+      > :last-child {margin-bottom: 1em}
 
       &[data-maintenance] div {display: none}
       &[data-maintenance] div.maintenance {display: block !important}

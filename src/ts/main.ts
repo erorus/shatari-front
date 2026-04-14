@@ -32,9 +32,6 @@ async function init() {
             df.appendChild(ce('a', {href: `mailto:${address}`}, document.createTextNode(address)));
             df.appendChild(document.createTextNode('.'));
             df.appendChild(ce('br'));
-            df.appendChild(document.createTextNode('All messages are read, but replies are uncommon.'));
-            df.appendChild(ce('br'));
-            df.appendChild(ce('br'));
             toReplace.parentNode?.replaceChild(df, toReplace);
         }
     }

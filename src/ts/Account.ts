@@ -11,7 +11,7 @@ type User = {
 
 let user: User|null;
 
-export function isEnabled(): boolean {
+function isEnabled(): boolean {
     return localStorage.getItem('account') != null;
 }
 
@@ -21,6 +21,9 @@ export async function init(): Promise<void> {
     if (!isEnabled()) {
         return;
     }
+
+    const welcomeElement = qs('.welcome .account') as HTMLDivElement;
+    welcomeElement && (welcomeElement.style.display = '');
 
     await updateUser();
 }
