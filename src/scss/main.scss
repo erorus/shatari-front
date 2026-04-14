@@ -554,8 +554,12 @@ body {
     }
 
     .welcome {
+      align-items: center;
       bottom: math.div($marginStep, 2);
+      display: flex;
+      flex-flow: column nowrap;
       font: $fontSizeFriz $fontFriz;
+      gap: 2em;
       left: math.div($marginStep, 2);
       line-height: 1.33;
       overflow-y: auto;
@@ -565,20 +569,17 @@ body {
       top: math.div($marginStep, 2);
       z-index: 3;
 
-      h1:first-child {margin-top: 0}
-
-      div {margin: 2em 0}
-      div:last-child {margin-top: 5em}
+      h1 {margin: 0}
 
       .full-screen button {
         @include button();
-        margin: 0 2em;
         padding: $marginStep;
       }
 
-      .maintenance {display: none}
+      > div:last-child {margin-bottom: $marginStep; margin-top: auto}
+
       &[data-maintenance] div {display: none}
-      &[data-maintenance] div.maintenance {display: block}
+      &[data-maintenance] div.maintenance {display: block !important}
     }
 
     .search-result, .item {

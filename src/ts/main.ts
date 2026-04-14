@@ -59,7 +59,8 @@ async function init() {
 
     const fsDiv = qs('.main .welcome .full-screen') as HTMLElement;
     const doc = document as Document & {webkitFullscreenEnabled?: boolean};
-    if (document.fullscreenEnabled || doc.webkitFullscreenEnabled) {
+    if ((document.fullscreenEnabled || doc.webkitFullscreenEnabled) && (window.innerWidth === window.screen.availWidth)) {
+        fsDiv.style.display = '';
         fsDiv.querySelector('button')?.addEventListener('click', () => {
             if (document.fullscreenEnabled) {
                 qs('.main')?.requestFullscreen();
@@ -68,8 +69,6 @@ async function init() {
                 qs('.main')?.webkitRequestFullscreen();
             }
         });
-    } else {
-        fsDiv.style.visibility = 'hidden';
     }
 
     LocalesInit();
