@@ -19,6 +19,7 @@ import {getWowheadDomain, getWowheadPathPrefix} from "./Locales";
 import Realms from "./Realms";
 import Search from "./Search";
 import * as Types from "./Types";
+import {isPaid} from "./Account";
 
 declare const Highcharts: any;
 
@@ -1879,6 +1880,10 @@ function makeScrollIndicator(): HTMLElement {
  * preferences.
  */
 function makeSectionControls(parent: HTMLElement) {
+    if (!isPaid()) {
+        return;
+    }
+
     /**
      * Returns an ordered list of section keys.
      */
