@@ -99,22 +99,22 @@
                 <div class="info">
                     <h2>How To Use</h2>
                     <ol>
-                        <li>Select your realm in the top left corner.</li>
-                        <li>Select a category (and subcategory) from the sidebar. (Optional.)</li>
-                        <li>Enter some of an item's name in the search box at the top. (Optional.)</li>
-                        <li>Press the red Search button in the top right corner.</li>
-                        <li>Scroll through the result list to find an item of interest.
+                        <li><b>Select your realm</b> in the top left corner.</li>
+                        <li><b>Select a category</b> (and subcategory) from the sidebar. <i>Optional.</i></li>
+                        <li>Enter an <b>item name in the search text box</b> at the top. <i>Optional.</i></li>
+                        <li>Press the <b>red Search button</b> in the top right corner.</li>
+                        <li><b>Scroll through the result list</b> to find an item of interest.
                             <ul>
                                 <li>Click a column header to sort by that column.</li>
                                 <li>Notice that unavailable items show when they were last seen.</li>
                                 <li>Hover over a line for the item's tooltip.</li>
                             </ul>
                         </li>
-                        <li>Click a line to see detailed pricing information.
+                        <li><b>Click a line</b> to see detailed pricing information.
                             <ul>
                                 <li>Observe current auction prices in the list on the right.</li>
                                 <li>Find pricing statistics and charts in the center pane.</li>
-                                <li>Scroll down in the center pane to see more charts, heat maps, and lists.</li>
+                                <li><b>Scroll down in the center pane</b> to see more charts, heat maps, and lists.</li>
                                 <li>Tap/Hover on charts to see tooltips with more information.</li>
                             </ul>
                         </li>
@@ -124,30 +124,48 @@
                 <div class="info account" style="display: none">
                     <h2>Patron Access</h2>
                     <div>
-                        Paying members at Patreon get additional features:
+                        Paying members on Patreon enjoy additional features:
                         <ul>
-                            <li>Weapons, armor, and profession equipment have separate prices by item level.</li>
-                            <li>Battle pets have separate prices by breed.</li>
-                            <li>Unlock all the options under the Filter button:
+                            <li>See <b>prices by item level</b> for weapons, armor, and profession equipment.</li>
+                            <li>Check <b>prices by breed</b> for battle pets.</li>
+                            <li>Unlock all the options under the <b>Filter</b> button:
                                 <ul>
-                                    <li>Search for items in a specific level or rarity range.</li>
-                                    <li>Find items introduced in a particular expansion.</li>
-                                    <li>Split apart, or group together, the different varieties of each item.</li>
-                                    <li>Hide out-of-stock items.</li>
-                                    <li>Include Region Median prices in search results.</li>
-                                    <li>Use Arbitrage Mode to search an entire region at once.</li>
+                                    <li>Search for items in a specific <b>level</b> or <b>rarity</b> range.</li>
+                                    <li>Find items introduced in a particular <b>expansion</b>.</li>
+                                    <li>Split apart, or group together, the different <b>varieties</b> of each item.</li>
+                                    <li>Hide <b>out-of-stock</b> items.</li>
+                                    <li>Include <b>region median prices</b> in search results.</li>
+                                    <li>Use Arbitrage Mode to <b>search an entire region at once</b>.</li>
                                 </ul>
                             </li>
-                            <li>Search for weapons or armor with specific tertiary stats, via the category sidebar.</li>
-                            <li>Rearrange the sections on the pricing detail page to your preferences.</li>
+                            <li>Search for weapons or armor with specific <b>tertiary stats</b>, via the category sidebar.</li>
+                            <li><b>Rearrange the sections</b> on the pricing detail page to your preferences.</li>
                         </ul>
-                        To get access to these features, please become a paid member on Patreon:
-                        <ol>
-                            <li>Click "Sign In with Patreon" in the bottom right corner.</li>
-                            <li>Sign in at Patreon's website, then allow access to Undermine Exchange.</li>
-                            <li>If you see "Become a Patron" in the bottom right corner, click it, and select a tier.</li>
-                            <li>Once you're a paid member, you should see "Patron" in the bottom corner instead.</li>
-                        </ol>
+                        <div class="logged-out-only">
+                            To gain access to these features, please become a paid member on Patreon:
+                            <ol>
+                                <li>Click "<b>Sign In with Patreon</b>" in the bottom right corner of this page.</li>
+                                <li>Sign in on Patreon's website, then <b>allow access</b> to Undermine Exchange.</li>
+                                <li>Returning here, you'll click "<b>Become a Patron</b>" below, and select a tier.</li>
+                                <li>Paid members will see "Patron", and get complete access to all features.</li>
+                            </ol>
+                        </div>
+                        <div class="free-only">
+                            To gain access to these features, please become a paid member on Patreon:
+                            <ul>
+                                <li>Please click the link to <a href="https://www.patreon.com/erorus">become a patron</a>, at the Goblin tier or above.</li>
+                                <li>If you just became a paid member and still see this message:
+                                    <ol>
+                                        <li>Click the <b>Sign Out</b> button in the bottom right corner.</li>
+                                        <li>Then click our <b>Sign In with Patreon</b> button again to refresh our records.</li>
+                                    </ol>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="paid-only">
+                            You are signed in with your paid membership. <b>All features are enabled.</b><br><br>
+                            Thank you for your support!
+                        </div>
                     </div>
                 </div>
 
@@ -180,11 +198,11 @@
         <div class="last-updated"></div>
         <div class="account" style="display: none">
             <form method="POST" action="/account/login" class="login logged-out-only">
-                <button type="submit" data-simple-tooltip="Patrons, please sign in to unlock all site features.">Sign In with Patreon</button>
+                <button type="submit" data-simple-tooltip="Patrons, please sign in to enable all site features.">Sign In with Patreon</button>
             </form>
             <form method="POST" action="/account/logout" class="logout logged-in-only">
-                <a href="https://www.patreon.com/erorus" class="free-only" data-simple-tooltip="Become a paid member at the Goblin tier or above to unlock all site features!">Become a Patron</a>
-                <span class="paid-only" data-simple-tooltip="You're signed in to your paid membership, and all features are unlocked. Thank you!">Patron</span>
+                <a href="https://www.patreon.com/erorus" class="free-only" data-simple-tooltip="Become a paid member at the Goblin tier or above to gain complete access!">Become a Patron</a>
+                <span class="paid-only" data-simple-tooltip="You're signed in with your paid membership, and all features are enabled.">Patron</span>
                 <button type="submit">Sign Out</button>
             </form>
         </div>

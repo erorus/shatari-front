@@ -556,6 +556,7 @@ body {
     .welcome {
       align-items: center;
       bottom: math.div($marginStep, 2);
+      color: $text30;
       display: flex;
       flex-flow: column nowrap;
       font: $fontSizeFriz $fontFriz;
@@ -569,6 +570,7 @@ body {
       top: math.div($marginStep, 2);
       z-index: 3;
 
+      h1, h2, b {color: $text10}
       h1 {margin: 0}
 
       .full-screen button {
@@ -578,10 +580,16 @@ body {
 
       .info {
         box-sizing: border-box;
+        font: 14px sans-serif;
+        line-height: 1.5;
         max-width: 50em;
         padding: 0 1em;
         text-align: left;
         width: 100%;
+
+        h2 {
+          font: $fontSizeFriz * 1.5 $fontFriz;
+        }
       }
 
       > .welcome-bottom {margin-top: auto}
