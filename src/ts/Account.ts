@@ -12,6 +12,7 @@ type User = {
 }
 
 let user: User|null;
+let filterButton: HTMLAnchorElement;
 let welcomeElement: HTMLDivElement|null;
 
 function isEnabled(): boolean {
@@ -38,6 +39,12 @@ export async function init(): Promise<void> {
 
     welcomeElement = qs('.welcome .account') as HTMLDivElement;
     welcomeElement && (welcomeElement.style.display = '');
+    filterButton = qs('.main .search-bar .filter') as HTMLAnchorElement;
+    (filterButton.querySelector(':scope > div') as HTMLDivElement).addEventListener('click', () => {
+        if (!isPaid()) {
+            showBenefitsText();
+        }
+    });
 
     await updateUser();
 }
@@ -49,6 +56,17 @@ async function updateUser(): Promise<void> {
         mainElement.dataset.account = user.paid ? 'paid' : 'free';
     } else {
         mainElement.dataset.account = 'none';
+    }
+
+    const paid = isPaid();
+
+    filterButton.querySelectorAll(':scope > div input, :scope > div select').forEach(ele => {
+        (ele as HTMLInputElement|HTMLSelectElement).disabled = !paid;
+    });
+    if (paid) {
+        delete filterButton.dataset.simpleTooltip;
+    } else {
+        filterButton.dataset.simpleTooltip = 'Become a patron for access to these features!';
     }
 
     setTimeout(updateUser, 4 * MS_HOUR);

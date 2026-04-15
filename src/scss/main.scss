@@ -1502,6 +1502,14 @@ body {
   &:not([data-account="none"]) .logged-out-only {display: none}
   &:not([data-account="free"]) .free-only {display: none}
   &:not([data-account="paid"]) .paid-only {display: none}
+  &:not([data-account="paid"]) .search-bar .filter > div:after {
+    background-color: #000;
+    content: '';
+    inset: 0;
+    opacity: 0.33;
+    pointer-events: none;
+    position: absolute;
+  }
 }
 .main:not([data-account]) {
   .logged-in-only, .logged-out-only, .free-only, .paid-only {display: none}

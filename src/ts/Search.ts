@@ -397,7 +397,7 @@ function createRow(
         }
         if (canHover()) {
             if (restricted) {
-                rowLink.dataset.simpleTooltip = 'Become a patron to view pricing stats for this version of the item!'
+                rowLink.dataset.simpleTooltip = 'Become a patron to view pricing stats for this version of the item!';
             } else if (item.id === ITEM_PET_CAGE) {
                 rowLink.dataset.wowhead = `npc=${item.npc}&domain=${getWowheadDomain()}`;
             } else {
