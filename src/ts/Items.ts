@@ -12,7 +12,6 @@ import {registerCallback as registerLocaleCallback, getCurrent as getCurrentLoca
 import Progress from "./Progress";
 import Search from "./Search";
 import * as Types from "./Types";
-import {ItemKeyString} from "./Types";
 
 // Types
 
@@ -261,9 +260,6 @@ export async function init() {
 
 /**
  * Turns an item key string into an item key object.
- *
- * @param {ItemKeyString} itemKeyString
- * @return {ItemKey}
  */
 export function parseKey(itemKeyString: Types.ItemKeyString): Types.ItemKey {
     const parts = itemKeyString.split('-');
@@ -551,7 +547,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
                 continue;
             }
 
-            let variants: ItemKeyString[];
+            let variants: Types.ItemKeyString[];
             if (!useVariants || forSuggestions) {
                 // Not selecting by breed, just species.
                 variants = [stringifyKeyParts(ITEM_PET_CAGE, speciesId, 0)];
