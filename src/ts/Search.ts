@@ -10,7 +10,7 @@ import {
 } from "./utils";
 import {ITEM_PET_CAGE} from "./constants";
 
-import {isPaid} from "./Account";
+import {isPaid, showBenefitsText} from "./Account";
 import Auctions from "./Auctions";
 import Categories, {DetailColumn} from "./Categories";
 import Detail from "./Detail";
@@ -410,7 +410,9 @@ function createRow(
                 }
             }
         }
-        if (!restricted) {
+        if (restricted) {
+            rowLink.addEventListener('click', showBenefitsText);
+        } else {
             rowLink.href = '#' + Hash.getItemDetailHash(item);
             rowLink.addEventListener('click', event => {
                 event.preventDefault();

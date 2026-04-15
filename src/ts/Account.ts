@@ -1,5 +1,7 @@
 import {MS_HOUR} from "./constants";
+import Detail from "./Detail";
 import Progress from "./Progress";
+import Search from "./Search";
 import {querySelector as qs} from "./utils";
 
 type User = {
@@ -10,10 +12,22 @@ type User = {
 }
 
 let user: User|null;
+let welcomeElement: HTMLDivElement|null;
 
 function isEnabled(): boolean {
     return localStorage.getItem('account') != null;
 }
+
+export const showBenefitsText = (event?: MouseEvent) => {
+    event && event.preventDefault();
+
+    Detail.hide();
+    Search.hide();
+    WH.Tooltips.hide();
+    (qs('.main .welcome') as HTMLElement).style.display = '';
+
+    welcomeElement && welcomeElement.scrollIntoView();
+};
 
 export const isPaid = (): boolean => !isEnabled() || !!user?.paid;
 
@@ -22,7 +36,7 @@ export async function init(): Promise<void> {
         return;
     }
 
-    const welcomeElement = qs('.welcome .account') as HTMLDivElement;
+    welcomeElement = qs('.welcome .account') as HTMLDivElement;
     welcomeElement && (welcomeElement.style.display = '');
 
     await updateUser();

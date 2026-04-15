@@ -19,7 +19,7 @@ import {getWowheadDomain, getWowheadPathPrefix} from "./Locales";
 import Realms from "./Realms";
 import Search from "./Search";
 import * as Types from "./Types";
-import {isPaid} from "./Account";
+import {isPaid, showBenefitsText} from "./Account";
 
 declare const Highcharts: any;
 
@@ -1880,15 +1880,17 @@ function makeScrollIndicator(): HTMLElement {
  * preferences.
  */
 function makeSectionControls(parent: HTMLElement) {
-    if (!isPaid()) {
-        return;
-    }
+    const paid = isPaid();
 
     /**
      * Returns an ordered list of section keys.
      */
     const getSectionOrder = (): string[] => {
         const result = SECTION_KEYS;
+        if (!paid) {
+            return result;
+        }
+
         try {
             const orderString = localStorage.getItem('detail-section-order');
             const savedOrder = orderString?.split(',') || [];
@@ -1983,9 +1985,12 @@ function makeSectionControls(parent: HTMLElement) {
         directions.forEach(([offset, name]) => {
             const control = ce('span', {className: 'move', dataset: {
                     direction: name,
-                    simpleTooltip: `Move this section ${name}.`,
+                    simpleTooltip: paid ? `Move this section ${name}.` : `Patrons can move this section ${name}.`,
                 }});
-            control.addEventListener('click', () => move(section.dataset.sectionKey ?? 'null', offset));
+            control.addEventListener('click', paid ?
+                () => move(section.dataset.sectionKey ?? 'null', offset) :
+                showBenefitsText
+            );
             controls.appendChild(control);
         });
     });
