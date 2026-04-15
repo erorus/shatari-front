@@ -364,6 +364,8 @@ function createRow(
         suffix = Items.getSuffix(item.id, item.bonusSuffix);
     }
 
+    const restrictedName = restricted && (Categories.getBonusStat() != null);
+
     let tr: HTMLTableRowElement = document.createElement('tr');
     tr.addEventListener('mouseenter', onRowEnter);
     tr.addEventListener('mouseleave', onRowLeave);
@@ -408,11 +410,13 @@ function createRow(
                 }
             }
         }
-        rowLink.href = '#' + Hash.getItemDetailHash(item);
-        rowLink.addEventListener('click', event => {
-            event.preventDefault();
-            Detail.show(Auctions.strip(item), null);
-        });
+        if (!restricted) {
+            rowLink.href = '#' + Hash.getItemDetailHash(item);
+            rowLink.addEventListener('click', event => {
+                event.preventDefault();
+                Detail.show(Auctions.strip(item), null);
+            });
+        }
         td.appendChild(rowLink);
     }
 
@@ -449,13 +453,13 @@ function createRow(
         }
         let img = document.createElement('img');
         img.loading = 'lazy';
-        img.src = Items.getIconUrl(item.icon, Items.IconSize.Medium);
+        img.src = Items.getIconUrl(restrictedName ? 'inv_misc_questionmark' : item.icon, Items.IconSize.Medium);
         img.classList.add('icon');
-        td.appendChild(img);
+        td.appendChild(restrictedName ? createRestricted(img) : img);
 
         let span = document.createElement('span');
         span.className = 'q' + item.quality;
-        span.appendChild(ct(itemName));
+        span.appendChild(restrictedName ? createRestricted(ct('Blessed Blade of the Windseeker')) : ct(itemName));
         td.appendChild(span);
 
         if (item.craftingQualityId) {
@@ -517,14 +521,16 @@ function createRow(
         }
     }
 
-    let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
-    let favSpan = document.createElement('span');
-    favSpan.className = 'favorite';
-    if (favorites.includes(itemKey)) {
-        favSpan.dataset.favorite = '1';
+    if (!restrictedName) {
+        let itemKey = Items.stringifyKeyParts(item.id, item.bonusLevel, item.bonusSuffix);
+        let favSpan = document.createElement('span');
+        favSpan.className = 'favorite';
+        if (favorites.includes(itemKey)) {
+            favSpan.dataset.favorite = '1';
+        }
+        favSpan.addEventListener('click', Search.toggleFavorite.bind(self, itemKey, favSpan));
+        td.appendChild(favSpan);
     }
-    favSpan.addEventListener('click', Search.toggleFavorite.bind(self, itemKey, favSpan));
-    td.appendChild(favSpan);
 
     //
     // REGION MEDIAN
@@ -877,7 +883,14 @@ async function showItemList(itemsList: Types.PricedItem[], includeNeverSeen: boo
         td.appendChild(ce('img', {src: 'images/line-chart-line.svg'}));
 
         tbody.appendChild(ce('tr', {className: 'message'}, td));
-        if (my.rows.length > MAX_RESULTS_SHOWN) {
+        if (!paid && bonusStat != null) {
+            // Note: this second message will always be at the bottom of the list.
+            tbody.appendChild(
+                ce('tr', {className: 'message'},
+                    ce('td', {colSpan: colSpan},
+                        ct(my.rows.length.toLocaleString() + ' results found. Become a patron to unlock their info!')
+                    )));
+        } else if (my.rows.length > MAX_RESULTS_SHOWN) {
             // Note: this second message will always be at the bottom of the list.
             tbody.appendChild(ce('tr', {className: 'message'}, ce('td', {colSpan: colSpan}, ct(
                 my.rows.length.toLocaleString() + ' results found. Showing the first ' + MAX_RESULTS_SHOWN.toLocaleString() + '.',
