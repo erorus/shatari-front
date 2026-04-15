@@ -84,6 +84,21 @@ const Detail = {
         const itemDiv = qs('.main .main-result .item') as HTMLDivElement;
         ee(itemDiv);
 
+        if (!isPaid() && (item.bonusSuffix || (item.bonusLevel && item.id !== ITEM_PET_CAGE))) {
+            const replacementItem: Types.Item|null = Items.getItemByKey({
+                itemId: item.id,
+                itemLevel: item.id === ITEM_PET_CAGE ? item.bonusLevel : 0,
+                itemSuffix: 0,
+            });
+            if (replacementItem) {
+                item = replacementItem;
+            } else {
+                // This shouldn't ever really happen, we should always have the base item available.
+                showBenefitsText();
+                return;
+            }
+        }
+
         {
             let thisRealm = realm || Realms.getCurrentRealm();
             thisRealm && Hash.set(
