@@ -1,8 +1,9 @@
 import {MS_HOUR} from "./constants";
 import Detail from "./Detail";
+import Hash from "./Hash";
 import Progress from "./Progress";
 import Search from "./Search";
-import {querySelector as qs} from "./utils";
+import {querySelector as qs, querySelectorAll as qsa} from "./utils";
 
 type User = {
     id: string,
@@ -45,6 +46,10 @@ export async function init(): Promise<void> {
             showBenefitsText();
         }
     });
+
+    qsa('.main .bottom-bar .account form').forEach(ele =>
+        (ele as HTMLFormElement).addEventListener('submit', () => Hash.storeInSession())
+    );
 
     await updateUser();
 }

@@ -159,6 +159,17 @@ const Hash = {
             // Ignore errors.
         }
     },
+
+    storeInSession(): void {
+        const hash = location.hash.replace(/^#+/, '');
+        if (hash.length) {
+            try {
+                sessionStorage.setItem('returnToHash', hash);
+            } catch (e) {
+                // Oh well.
+            }
+        }
+    },
 };
 export default Hash;
 
@@ -166,7 +177,15 @@ export default Hash;
  * Returns the current location hash, without leading #.
  */
 function getHash(): string {
-    return decodeURIComponent(location.hash.replace(/^#+/, ''));
+    let sessionHash: string = '';
+    try {
+        sessionHash = sessionStorage.getItem('returnToHash') ?? '';
+        sessionStorage.removeItem('returnToHash');
+    } catch (e) {
+        // No session storage.
+    }
+
+    return decodeURIComponent(location.hash.replace(/^#+/, '') || sessionHash);
 }
 
 /**
