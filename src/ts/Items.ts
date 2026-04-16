@@ -367,8 +367,12 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
     }
 
     let expansion: number|undefined;
+    const expansionSelect = qs('.main .filter select.expansion') as HTMLSelectElement;
+    const maxExpansion = Array.from(expansionSelect.options)
+        .map((option: HTMLOptionElement): number => parseInt(option.value))
+        .filter((value: number): boolean => !isNaN(value))
+        .reduce((prev: number, cur: number): number => Math.max(prev, cur));
     if (paid) {
-        const expansionSelect = qs('.main .filter select.expansion') as HTMLSelectElement;
         const selected = expansionSelect.options[expansionSelect.selectedIndex].value;
         if (selected !== '') {
             expansion = parseInt(selected);
@@ -460,6 +464,9 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
             }
             if (!paid && !forSuggestions) {
                 const base = stringifyKeyParts(id, 0, 0);
+                if (item.expansion !== maxExpansion || item.quality < 2) {
+                    variants = [];
+                }
                 if (!variants.includes(base)) {
                     variants.push(base);
                 }
