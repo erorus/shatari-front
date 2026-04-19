@@ -416,6 +416,8 @@ body {
       button {max-width: unset}
     }
 
+    .patron-text {font-size: 125%; position: relative; text-align: center; z-index: 5}
+
     @media screen and (max-width:700px) {
       flex-flow: row wrap;
 

@@ -68,11 +68,6 @@ async function updateUser(): Promise<void> {
     filterButton.querySelectorAll(':scope > div input, :scope > div select').forEach(ele => {
         (ele as HTMLInputElement|HTMLSelectElement).disabled = !paid;
     });
-    if (paid) {
-        delete filterButton.dataset.simpleTooltip;
-    } else {
-        filterButton.dataset.simpleTooltip = 'Become a patron for access to these features!';
-    }
 
     setTimeout(updateUser, 4 * MS_HOUR);
 }
