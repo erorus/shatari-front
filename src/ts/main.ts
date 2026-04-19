@@ -56,7 +56,10 @@ async function init() {
 
     const fsDiv = qs('.main .welcome .full-screen') as HTMLElement;
     const doc = document as Document & {webkitFullscreenEnabled?: boolean};
-    if ((document.fullscreenEnabled || doc.webkitFullscreenEnabled) && (window.innerWidth === window.screen.availWidth)) {
+    if (
+        (document.fullscreenEnabled || doc.webkitFullscreenEnabled) &&
+        (window.innerWidth === window.screen.availWidth || window.innerHeight === window.screen.availHeight)
+    ) {
         fsDiv.style.display = '';
         fsDiv.querySelector('button')?.addEventListener('click', () => {
             if (document.fullscreenEnabled) {
