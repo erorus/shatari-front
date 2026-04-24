@@ -17,7 +17,7 @@ let filterButton: HTMLAnchorElement;
 let welcomeElement: HTMLDivElement|null;
 
 function isEnabled(): boolean {
-    return localStorage.getItem('account') != null;
+    return location.hostname === 'undermine.exchange' || localStorage.getItem('account') != null;
 }
 
 export const showBenefitsText = (event?: MouseEvent) => {
