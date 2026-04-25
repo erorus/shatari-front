@@ -1452,9 +1452,8 @@ body {
     .account {
       margin-left: 1em;
 
-      button {
-        @include button()
-      }
+      .red-button {@include button-red(); font-size: $fontSizeFriz * 0.8}
+      button:not(.red-button) {@include button()}
     }
 
     .progress {

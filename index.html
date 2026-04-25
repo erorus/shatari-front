@@ -144,18 +144,20 @@
                             <li><b>Rearrange the sections</b> on the pricing detail page to your preferences.</li>
                         </ul>
                         <div class="logged-out-only">
+                            <h2>How to Sign Up</h2>
                             To gain access to these features, please become a paid member on Patreon:
                             <ol>
-                                <li>Click "<b>Sign In with Patreon</b>" in the bottom right corner of this page.</li>
+                                <li>Click the red "<b>Sign In with Patreon</b>" in the bottom right corner of this page.</li>
                                 <li>Sign in on Patreon's website, then <b>allow access</b> to Undermine Exchange.</li>
                                 <li>Returning here, you'll click "<b>Become a Patron</b>" below, and select a tier.</li>
                                 <li>Paid members will see "Patron", and get complete access to all features.</li>
                             </ol>
                         </div>
                         <div class="free-only">
+                            <h2>Become a Member</h2>
                             To gain access to these features, please become a paid member on Patreon:
                             <ul>
-                                <li>Please click the link to <a href="https://www.patreon.com/erorus">become a patron</a>, at the Goblin tier or above.</li>
+                                <li>Please click the link to <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">become a patron</a>, at the Goblin tier or above.</li>
                                 <li>If you just became a paid member and still see this message:
                                     <ol>
                                         <li>Click the <b>Sign Out</b> button in the bottom right corner.</li>
@@ -165,6 +167,7 @@
                             </ul>
                         </div>
                         <div class="paid-only">
+                            <h2>Full Access Granted</h2>
                             You are signed in with your paid membership. <b>All features are enabled.</b><br><br>
                             Thank you for your support!
                         </div>
@@ -200,12 +203,12 @@
         <div class="last-updated"></div>
         <div class="account" style="display: none">
             <form method="POST" action="/account/login" class="login logged-out-only">
-                <button type="submit" data-simple-tooltip="Patrons, please sign in to enable all site features.">Sign In with Patreon</button>
+                <button type="submit" class="red-button" data-simple-tooltip="Patrons, please sign in to enable all site features.">Sign In with Patreon</button>
             </form>
             <form method="POST" action="/account/logout" class="logout logged-in-only">
-                <a href="https://www.patreon.com/erorus" class="free-only" data-simple-tooltip="Become a paid member at the Goblin tier or above to gain complete access!">Become a Patron</a>
                 <span class="paid-only" data-simple-tooltip="You're signed in with your paid membership, and all features are enabled.">Patron</span>
                 <button type="submit">Sign Out</button>
+                <button type="button" class="free-only red-button" onclick="location.href='https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true'" data-simple-tooltip="Become a paid member at the Goblin tier or above to gain complete access!">Become a Patron</button>
             </form>
         </div>
     </div>
