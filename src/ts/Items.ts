@@ -287,6 +287,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
     const invTypes = Categories.getInvTypes();
     const extraFilters = Categories.getExtraFilters();
     const paid = isPaid();
+    const searchingBonusStat = Categories.getBonusStat() != null;
 
     let itemVariants: Record<number, Types.ItemKeyString[]> = {};
     let speciesVariants: Record<number, Types.ItemKeyString[]> = {};
@@ -464,7 +465,7 @@ export async function search(searchMode: SearchMode): Promise<Types.Item[]> {
             }
             if (!paid && !forSuggestions) {
                 const base = stringifyKeyParts(id, 0, 0);
-                if (item.expansion !== maxExpansion || item.quality < 2) {
+                if (!searchingBonusStat && (item.expansion !== maxExpansion || item.quality < 2)) {
                     variants = [];
                 }
                 if (!variants.includes(base)) {
