@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Undermine Exchange API</title>
+    <meta name="viewport" content="width=device-width">
+    <style>
+        body {
+            background-color: #222;
+            color: #eee;
+            font: 16px sans-serif;
+            line-height: 1.5;
+        }
+
+        a {color: #99e}
+
+        .layout {display: flex; gap: 2em; justify-content: center}
+
+        .sidebar {min-width: 15em; max-width: 20em}
+        .sidebar .toc {position: sticky; top: 1em; max-height: calc(100vh - 2em); overflow-y: auto; padding-right: 1em}
+        .main {max-width: 60em}
+
+        .toc a {text-decoration: none; margin-top: 0.25em}
+
+        @media screen and (max-width:600px) {
+            .layout {flex-flow: column nowrap}
+            .sidebar {max-width: 60em}
+            .sidebar .toc {position: static; max-height: none; padding-right: 0}
+        }
+
+        body:not([data-account]) {
+            .logged-in-only, .logged-out-only, .free-only, .paid-only {display: none}
+        }
+
+        body[data-account] {
+            &[data-account="none"] .logged-in-only {display: none}
+            &:not([data-account="none"]) .logged-out-only {display: none}
+            &:not([data-account="free"]) .free-only {display: none}
+            &:not([data-account="paid"]) .paid-only {display: none}
+        }
+
+        .api-key, .code {background-color: #000; font-family: monospace; font-size: 90%; padding: 2px}
+        .api-key {user-select: all; margin: 0 1em}
+        .code {white-space: pre-wrap}
+
+        table {border-spacing: 0; margin: 1em 0}
+        td, th {border: 1px solid #666; padding: 0.5em}
+        th {text-align: left}
+
+        h2 {margin-top: 3em}
+    </style>
+    <script>
+        (() => {
+            async function getApiKey() {
+                const body = document.body;
+                const response = await fetch('/account/api-key', {
+                    credentials: 'same-origin',
+                    mode: 'same-origin',
+                });
+
+                if (!response.ok) {
+                    console.error('Unable to get API key data.');
+                    body.dataset.account = 'none';
+                    return;
+                }
+
+                const keyJson = await response.json();
+
+                if (!keyJson.generated) {
+                    body.dataset.account = 'none';
+                    return;
+                }
+
+                body.dataset.account = keyJson.paid ? 'paid' : 'free';
+
+                const button = document.querySelector('#button-api-key');
+                button.addEventListener('click', () => {
+                    const key = keyJson.current ?? keyJson.generated;
+
+                    const df = document.createDocumentFragment();
+                    df.appendChild(document.createTextNode('Your API key is:'))
+                    const keySpan = document.createElement('span');
+                    df.appendChild(keySpan);
+                    keySpan.classList.add('api-key');
+                    keySpan.appendChild(document.createTextNode(key));
+
+                    if (keyJson.current) {
+                        const replaceButton = document.createElement('button');
+                        replaceButton.appendChild(document.createTextNode('Reset API Key'));
+                        replaceButton.addEventListener('click', () => {
+                            if (confirm('When you first use this new API key, it will invalidate the previous key.')) {
+                                while (keySpan.hasChildNodes()) {
+                                    keySpan.removeChild(keySpan.firstChild);
+                                }
+                                keySpan.appendChild(document.createTextNode(keyJson.generated));
+                                replaceButton.parentNode.removeChild(replaceButton);
+                            }
+                        });
+                        df.appendChild(replaceButton);
+                    }
+
+                    button.parentNode.replaceChild(df, button);
+                });
+            }
+
+            function makeToc() {
+                const toc = document.querySelector('.toc');
+                document.querySelectorAll('.main h2, .main h3, .main h4').forEach(heading => {
+                    const line = document.createElement('a');
+                    line.style.display = 'block';
+                    const slug = heading.textContent.toLowerCase().replace(/ /g, '-');
+                    heading.id = slug;
+                    line.href = `#${slug}`;
+                    if (heading.tagName === 'H3') {
+                        line.style.marginLeft = '1em';
+                    }
+                    if (heading.tagName === 'H4') {
+                        line.style.marginLeft = '2em';
+                    }
+                    line.appendChild(document.createTextNode(heading.textContent));
+                    toc.appendChild(line);
+                });
+            }
+
+            function main() {
+                makeToc();
+                getApiKey();
+            }
+
+            document.addEventListener('DOMContentLoaded', main);
+        })();
+    </script>
+</head>
+<body>
+<h1 style="text-align: center">Undermine Exchange API</h1>
+<div class="layout">
+    <div class="sidebar">
+        <div class="toc">
+            <b>Table of Contents</b>
+        </div>
+    </div>
+    <div class="main">
+        <h2 style="margin-top: 0">Welcome</h2>
+        <a href="/">Undermine Exchange</a> provides an auction house data API, supplying historical pricing data covering all items on all realms for the latest version of World of Warcraft (Retail, not Classic). This API allows software developers to get pricing data via a standard, stable method.
+
+        <h3>What's in the API?</h3>
+        Our API provides all the pricing data you can view on the Undermine Exchange website:
+        <ul>
+            <li>Current region-wide prices and quantities for all items and battle pets</li>
+            <li>Current region-wide prices and quantities for individual items and battle pets across all realms</li>
+            <li>14-day hourly resolution price/quantity history for individual items/pets on each realm</li>
+            <li>Daily resolution price/quantity history for individual items/pets on each realm</li>
+            <li>Item-level- and pet-breed-specific pricing data</li>
+        </ul>
+
+        <h3>Additional Resources</h3>
+        <p>
+            Before we get started, please check out <a href="https://community.developer.battle.net/documentation/world-of-warcraft">Blizzard's Community API</a>. It's available to everyone, and is the source of the auction house snapshot data that powers Undermine Exchange. Use those resources first where you can.
+        </p>
+        <p>
+            Also check out the <a href="https://support.tradeskillmaster.com/en_US/api-documentation/tsm-public-web-api">TSM Public Web API</a>, which is another excellent pricing API resource.
+        </p>
+
+        <h2>Limitations</h2>
+
+        <h3>Rate Limits</h3>
+        <p>
+            To manage our resource usage, the API enforces a rate limit for each API consumer. Each request costs a number of points, and you're provided a sliding window of <b>3000</b> points per hour. If you exceed that points budget, your request will not be serviced, and you'll need to wait for enough points to replenish.
+        </p>
+        <p>
+            Each API endpoint described below will include points cost information. Many endpoints will include 2 costs: a lower cost for gzip-compressed responses (preferred), and a higher cost for uncompressed responses.
+        </p>
+        <p>
+            Some endpoints will include a "Last-Modified" or "ETag" response header. If you use those in a later request and get a "304 Not Modified" response, the request will cost only 1 point, regardless of its listed cost.
+        </p>
+
+        <h3>Patron Access Limits</h3>
+        <p>
+            Most endpoints are available to the public without any Patreon membership requirements. However, some endpoints do require paid membership to our Patreon campaign, specifically those which mirror functionality where the Undermine Exchange website also requires paid access. All endpoints listed below will state whether they require <b>Free</b> or <b>Paid</b> access.
+        </p>
+        <p>
+            There are no differences in rate limits between free and paid accounts at this time.
+        </p>
+        <p>
+            Basically, if it requires a paid account to view on the site, it requires that same paid account to access it via the API. There are no additional costs for API access versus website access: the same tier of support provides access to both.
+        </p>
+
+        <h3>Item and Pet Metadata</h3>
+        We do not provide any APIs for item or pet metadata (names, qualities, icons, levels, etc). Blizzard and other providers can supply that information. Most notably, it's up to you to know whether an item is a commodity (stackable) or not, so you know which item endpoint to use.
+
+        <h2>Gaining Access</h2>
+        <p>
+            Send HTTP GET requests to <span class="code">https://api.undermine.exchange/</span> at the paths listed below.
+        </p>
+        <p>
+            All requests to the API must include your API key. This key is tied to your Patreon account, since Patreon is our user account provider.
+        </p>
+        <p>
+            <b>Note:</b> Most API calls are <b>free to the public</b>, where you do not need a paid Patreon membership. You don't even need to be a member of our Patreon campaign at all, you just need to log in to our site via Patreon.
+        </p>
+
+        <h3>Your API Key</h3>
+        <div style="min-height: 2.5em">
+            <div class="logged-out-only">
+                <form method="POST" action="/account/login">
+                    You are not logged in. <button type="submit">Sign In with Patreon</button>
+                </form>
+            </div>
+            <div class="logged-in-only">
+                You are logged in. <button id="button-api-key">Click to reveal your key.</button>
+            </div>
+        </div>
+
+        <h3>Using Your Key</h3>
+        You must include an Authorization header in your request:
+        <blockquote class="code">Authorization: ApiKey AQwerTYUIop12ASdfhJKLFakeKeyLOLuseYOURown</blockquote>
+
+        <h3>GZip Compression and Quota</h3>
+        You should always include the request header <span class="code">Accept-Encoding: gzip</span> so we can compress the data we send to you, for better performance and reduced bandwidth usage. Requests without gzip compression may use additional request quota.
+
+        <h2>API Paths and URLs</h2>
+        The host is <span class="code">https://api.undermine.exchange/</span>. Paths listed below will have placeholders for values you're expected to provide:
+        <ul>
+            <li><span class="code">:region</span> - One of <span class="code">us</span>, <span class="code">eu</span>, <span class="code">tw</span>, <span class="code">kr</span></li>
+            <li><span class="code">:realm</span> - A realm slug, such as <span class="code">medivh</span></li>
+            <li><span class="code">:itemId</span> - An item ID, such as <span class="code">118852</span></li>
+            <li><span class="code">:itemLevel</span> - An item level, such as <span class="code">266</span></li>
+            <li><span class="code">:itemSuffix</span> - An item suffix ID, such as <span class="code">13157</span></li>
+            <li><span class="code">:petSpecies</span> - A pet species ID, such as <span class="code">145</span></li>
+            <li><span class="code">:petBreed</span> - A pet breed ID, such as <span class="code">6</span></li>
+        </ul>
+
+        Here are some examples:
+        <ul>
+            <li><span class="code">/v1/region/:region/items.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/region/us/items.json</span></li>
+            <li><span class="code">/v1/region/:region/commodities/:itemId/now.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/region/us/commodities/21877/now.json</span></li>
+            <li><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/daily.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/realm/us/medivh/items/260376/266/daily.json</span></li>
+            <li><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/hourly.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/realm/us/aerie-peak/pets/145/hourly.json</span></li>
+        </ul>
+
+        <div>
+            <h2>Static Data</h2>
+            These endpoints provide supplemental information for using our API, and change very infrequently.
+
+            <div>
+                <h3>Realm List</h3>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/static/realms.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                Almost all of our APIs accept a lowercase region and lowercase realm slug, so this provides a list of all the regions and realms we support. The slugs should match what Blizzard uses in their APIs. Realm names are always in English, but if a realm has a localized name when shown in the English client, that's included as a "nativeName" property.
+                <blockquote class="code">{
+  "request": {
+    "list": "realms",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "realms": [
+      {"region": "us", "slug": "aegwynn", "name": "Aegwynn"},
+      {"region": "us", "slug": "aerie-peak", "name": "Aerie Peak"},
+      ...
+      {"region": "eu", "slug": "grom", "name": "Grom", "nativeName": "Гром"},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h3>Suffix List</h3>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/static/suffixes.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                Some weapons/armor are priced by item level <i>and</i> have by item name suffixes, and our API requires those suffix IDs. Since they're pretty obscure, we provide a list of them here. Note: these are only used by endpoints which require paid access anyway.
+                <blockquote class="code">{
+  "request": {
+    "list": "suffixes",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "suffixes": [
+      {
+        "id": 13150,
+        "name": {
+          "enus": "of the Fireflash",
+          "dede": "des Feuersturms",
+          ...
+        }
+      },
+      {
+        "id": 13151,
+        "name": {
+          "enus": "of the Peerless",
+          "dede": "der Unvergleichlichkeit",
+          ...
+        }
+      },
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+        </div>
+
+        <div>
+            <h2>Region Data</h2>
+            These endpoints cover an entire region, instead of specific realms.
+
+            <h3>Items</h3>
+
+            <div>
+                <h4>Base Item Summary</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    A list of every (non-commodity) item for sale in that region, with the median and minimum price (in copper), and how many unique realms are selling it. By "unique realms" we essentially mean connected realms, so if one auction house covers 4 in-game realms, we consider that one "realm" in this count.
+                </p>
+                <p>
+                    The item must be on sale on at least 1 realm to appear in this list. If it's not for sale anywhere, it's not here.
+                </p>
+                <p>
+                    This endpoint does not include separate item level or item suffix pricing, it's only by item ID.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "list": "items",
+    "detail": "base",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "items": {
+      "25": {"item": 25, "median": 928288300, "min": 7980000, "realms": 12},
+      "209": {"item": 209, "median": 3969000, "min": 4100, "realms": 35},
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Full Item Summary</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    This includes all the same data as the Base Item Summary, but adds item level pricing as well. Same caveat applies for availability: an item must currently be on sale somewhere in the region to appear in this list, otherwise it's not included.
+                </p>
+                <p>
+                    Also, the "min" and "realms" data is only included for level/suffix variations when that item is from the current expansion.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "list": "items",
+    "detail": "full",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "items": {
+      "25": {
+        "item": 25,
+        "median": 928288300,
+        "min": 7980000,
+        "realms": 12,
+        "level": {
+          "level": 1,
+          "1": {"median": 928288300},
+        }
+      },
+      ...
+      "118852": {
+        "item": 118852,
+        "median": 445500000,
+        "min": 33431700,
+        "realms": 27,
+        "level": {
+          "16": {"level": 16, "median": 800002800},
+          "40": {"level": 40, "median": 742925800},
+          "41": {"level": 41, "median": 436315900},
+          "80": {"level": 80, "median": 619999900},
+        }
+      },
+      ...
+      "224636": {
+        "item": 224636,
+        "median": 23926800,
+        "min": 60000,
+        "realms": 54,
+        "level": {
+          "73": {
+            "level": 73,
+            "median": 150530500,
+            "suffix": {
+              "13150": {"suffix": 13150, "median": 150530500},
+              "13152": {"suffix": 13152, "median": 27581700},
+              "13161": {"suffix": 13161, "median": 27625300}
+            }
+          },
+          "74": {
+            "level": 74,
+            "median": 9999900,
+            "suffix": {
+              "13150": {"suffix": 13150, "median": 360762800},
+              "13151": {"suffix": 13151, "median": 29293700},
+              "13152": {"suffix": 13152, "median": 9999900},
+              "13156": {"suffix": 13156, "median": 45556800},
+              "13157": {"suffix": 13157, "median": 38676800}
+            }
+          }
+        }
+      },
+      ...
+      "260377": {
+        "item": 260377,
+        "median": 500000000,
+        "min": 200000000,
+        "realms": 81,
+        "level": {
+          "240": {
+            "level": 240,
+            "median": 500000000,
+            "min": 200000000,
+            "realms": 60,
+          },
+          "243": {
+            "level": 243,
+            "median": 400006700,
+            "min": 240000000,
+            "realms": 11,
+          },
+          ...
+        }
+      },
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Item Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                This returns the current price and availability for a specific non-commodity item on every realm in the region.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 114821,
+    "period": "now",
+  },
+  "result": [
+    {
+      "lastUpdated": "2026-05-01T00:05:00Z",
+      "snapshot": "2026-05-01T00:00:00Z",
+      "price": 2350000,
+      "quantity": 18,
+      "realms": ["alleria", "exodar", "khadgar", "medivh"]
+    },
+    {
+      "lastUpdated": "2026-05-01T00:05:30Z",
+      "snapshot": "2026-05-01T00:01:25Z",
+      "price": 1990000,
+      "quantity": 25,
+      "realms": ["runetotem", "uther"]
+    },
+    ...
+  ]
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Item Level Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                Same as Now Item Detail, but for a specific item+level. If the item also always comes with suffixes, there likely won't be a result for it on this endpoint.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 260376,
+    "itemLevel": 266,
+    "period": "now",
+  },
+  "result": [
+    ...
+  ]
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Item Suffix Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                Same as Now Item Detail, but for a specific item+level+suffix.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 224608,
+    "itemLevel": 86,
+    "itemSuffix": 13157,
+    "period": "now",
+  },
+  "result": [
+    ...
+  ]
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Item Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>For each item on each realm, once per day, we find the snapshot in that day with the highest total quantity, and store that quantity and the price at that time.</p>
+                <p>This endpoint then looks at all the data for that item, summing up the total quantity per day, and averaging (mean) the daily prices, across all the realms in the region. This gives you "total quantity" and "average price" values for that item for each day across the region.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 114821,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 2300000, "quantity": 1112},
+      {"day": "2022-09-05", "price": 2009900, "quantity": 965},
+      {"day": "2022-09-06", "price": 1949900, "quantity": 766},
+      {"day": "2022-09-07", "price": 2472500, "quantity": 869},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Item Level Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                Same as Daily Item Detail, but for a specific item+level.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 260376,
+    "itemLevel": 266,
+    "period": "daily",
+  },
+  "result": {
+    ...
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Item Suffix Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                Same as Daily Item Detail, but for a specific item+level+suffix.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 224608,
+    "itemLevel": 86,
+    "itemSuffix": 13157,
+    "period": "daily",
+  },
+  "result": {
+    ...
+  }
+}</blockquote>
+            </div>
+
+            <h3>Commodities</h3>
+
+            <div>
+                <h4>Base Commodity Summary</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    This is the latest snapshot of the commodities pricing for that region. The result includes two timestamps:
+                    <ul>
+                        <li>"snapshot" is Blizzard's timestamp when they assembled the data.</li>
+                        <li>"lastUpdated" is when Undermine Exchange generated this file. It will typically be a few minutes after "snapshot."</li>
+                    </ul>
+                </p>
+                <p>
+                    The item list includes items which aren't currently for sale (showing quantity=0), and adds a "seen" timestamp to those records, indicating when that item was last seen for sale.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "list": "commodities",
+    "detail": "base",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "commodities": {
+      "117": {"item": 117, "price": 100, "quantity": 1691},
+      ...
+      "729": {"item": 729, "price": 5000000, "quantity": 0, "seen": "2026-04-21T18:35:02Z"},
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Full Commodity Summary</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>1 point (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                This contains the same data as Base Commodity Summary, but includes item level details for commodities which are equippable. They are very rare, and you really don't need level-based pricing for commodities, but it's here if you want it.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "list": "commodities",
+    "detail": "full",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "commodities": {
+      "117": {"item": 117, "price": 100, "quantity": 1691},
+      ...
+      "128017": {
+        "item": 128017,
+        "price": 1665035900,
+        "quantity": 2,
+        "level": {
+          "16": {
+            "level": 16,
+            "price": 1665035900,
+            "quantity": 2
+          },
+          "44": {
+            "level": 44,
+            "price": 2255685700,
+            "quantity": 0,
+            "seen": "2026-02-08T23:14:24Z"
+          }
+        }
+      },
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Commodity Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/now.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                This returns the current price, availability, and auctions for a specific commodity item in the region. The result includes two timestamps:
+                <ul>
+                    <li>"lastSeen" is Blizzard's snapshot timestamp when we last had a nonzero quantity.</li>
+                    <li>"lastUpdated" is when Undermine Exchange generated this file. It will typically be a few minutes after "lastSeen" (quantity &gt; 0) or an hour after "lastSeen" (quantity = 0). It may also be a date significantly in the past when quantity = 0, this is normal.</li>
+                </ul>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 21877,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 1200,
+    "quantity": 83738,
+    "auctions": [
+      {"price": 1200, "quantity": 1153},
+      {"price": 1500, "quantity": 1516},
+      {"price": 1900, "quantity": 27},
+      {"price": 2000, "quantity": 6163},
+      {"price": 3500, "quantity": 25280},
+      ...
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Commodity Level Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/now.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Now Commodity Detail, but for a specific commodity item+level. As mentioned in the Full Commodity Summary, this is very rarely useful, but is here for the sake of completion.</p>
+                <p>The individual auction rows only have "price", since they're always quantity=1, being treated like non-stackable items. If they had bonuses or modifiers, they would also appear there. Best just to pretend this endpoint doesn't exist, bonuses make no sense on stackable items...</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 69863,
+    "itemLevel": 1,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 357000,
+    "quantity": 2,
+    "auctions": [
+      {"price": 357000},
+      {"price": 377000},
+      ...
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Commodity Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>The price and quantity of this commodity item in this region at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 21877,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 1500, "quantity": 62136},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 1100, "quantity": 102353},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 1000, "quantity": 103537},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 1500, "quantity": 100219},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Commodity Level Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as the Hourly Commodity Detail, but for a specific commodity item+level. Which we've already described as very unusual and best ignored.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 69863,
+    "itemLevel": 1,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 0, "quantity": 0},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 0, "quantity": 0},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 201800, "quantity": 1},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 201800, "quantity": 1},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Commodity Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    The maximum quantity, and the price at that time, of the commodity item in that region for each day we've seen it. Ever.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 21877,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 1800, "quantity": 644421},
+      {"day": "2022-09-05", "price": 1100, "quantity": 727189},
+      {"day": "2022-09-06", "price": 1000, "quantity": 708004},
+      {"day": "2022-09-07", "price": 900, "quantity": 523286},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Commodity Level Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    Same as Daily Commodity Detail, but for a specific commodity item+level. What are we even doing here.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "itemId": 69863,
+    "itemLevel": 1,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 888800, "quantity": 19},
+      {"day": "2022-09-05", "price": 1957800, "quantity": 19},
+      {"day": "2022-09-06", "price": 1957800, "quantity": 18},
+      {"day": "2022-09-07", "price": 999900, "quantity": 19},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+
+            <h3>Battle Pets</h3>
+
+            <div>
+                <h4>Base Pet Summary</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point (3 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    A list of every battle pet for sale in that region, with the median and minimum price (in copper), and how many unique realms are selling it. By "unique realms" we essentially mean connected realms, so if one auction house covers 4 in-game realms, we consider that one "realm" in this count.
+                </p>
+                <p>
+                    The pet must be on sale on at least 1 realm to appear in this list. If it's not for sale anywhere, it's not here.
+                </p>
+                <p>
+                    This endpoint does not include separate breed pricing, it's only by species ID.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "list": "pets",
+    "detail": "base",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "pets": {
+      "39": {"species": 39, "median": 28879200, "min": 980000, "realms": 80},
+      "40": {"species": 40, "median": 39990500, "min": 550000, "realms": 74},
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Full Pet Summary</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>1 point (3 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    This includes all the same data as the Base Pet Summary, but adds breed pricing as well. Same caveat applies for availability: a pet must currently be on sale somewhere in the region to appear in this list, otherwise it's not included.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "list": "pets",
+    "detail": "full",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "pets": {
+      "39": {
+        "species": 39,
+        "median": 28879200,
+        "min": 980000,
+        "realms": 80,
+        "breed": {
+          "11": {"breed": 11, "median": 28879200, "min": 980000, "realms": 80}
+        }
+      },
+      ...
+      "55": {
+        "species": 40,
+        "median": 39990500,
+        "min": 550000,
+        "realms": 74,
+        "breed": {
+          "3": {"breed": 3, "median": 3150000, "min": 120100, "realms": 46},
+          "5": {"breed": 5, "median": 23478900, "min": 51200, "realms": 46},
+          "6": {"breed": 6, "median": 19980000, "min": 234500, "realms": 42},
+          "9": {"breed": 9, "median": 25479900, "min": 234500, "realms": 42}
+        }
+      },
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Pet Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                This returns the current price and availability for a specific battle pet on every realm in the region.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "petSpecies": 145,
+    "period": "now",
+  },
+  "result": [
+    {
+      "lastUpdated": "2026-05-01T00:05:00Z",
+      "snapshot": "2026-05-01T00:00:00Z",
+      "price": 2350000,
+      "quantity": 5,
+      "realms": ["alleria", "exodar", "khadgar", "medivh"]
+    },
+    {
+      "lastUpdated": "2026-05-01T00:05:30Z",
+      "snapshot": "2026-05-01T00:01:25Z",
+      "price": 1990000,
+      "quantity": 6,
+      "realms": ["runetotem", "uther"]
+    },
+    ...
+  ]
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Pet Breed Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                Same as Now Pet Detail, but for a specific species + breed.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "petSpecies": 145,
+    "petBreed": 6,
+    "period": "now",
+  },
+  "result": [
+    ...
+  ]
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Pet Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>For each pet on each realm, once per day, we find the snapshot in that day with the highest total quantity, and store that quantity and the price at that time.</p>
+                <p>This endpoint then looks at all the data for that pet, summing up the total quantity per day, and averaging (mean) the daily prices, across all the realms in the region. This gives you "total quantity" and "average price" values for that pet for each day across the region.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "petSpecies": 145,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 2300000, "quantity": 75},
+      {"day": "2022-09-05", "price": 2009900, "quantity": 82},
+      {"day": "2022-09-06", "price": 1949900, "quantity": 117},
+      {"day": "2022-09-07", "price": 2472500, "quantity": 99},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Pet Breed Detail</h4>
+                <table>
+                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                Same as Daily Pet Detail, but for a specific species+breed.
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "petSpecies": 145,
+    "petBreed": 6,
+    "period": "daily",
+  },
+  "result": {
+    ...
+  }
+}</blockquote>
+            </div>
+
+        </div>
+
+        <h2>Support</h2>
+        <p>
+            This service is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. If something is broken, or wrong, or slow, or late, you can let us know, but there are no guarantees things will get fixed, nor are there any assurances of correct and timely data.
+        </p>
+        <p>
+            If you have any questions about the API, please reach us at the feedback email listed <a href="/">on our website</a>.
+        </p>
+    </div>
+</div>
+</body>
+</html>
