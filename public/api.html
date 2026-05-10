@@ -38,9 +38,10 @@
             &:not([data-account="paid"]) .paid-only {display: none}
         }
 
-        .api-key, .code {background-color: #000; font-family: monospace; font-size: 90%; padding: 2px}
+        .api-key, .code {background-color: #000; font-family: monospace; font-size: 75%; padding: 2px}
         .api-key {user-select: all; margin: 0 1em}
         .code {white-space: pre-wrap}
+        blockquote {max-height: 70vh; overflow-y: auto}
 
         table {border-spacing: 0; margin: 1em 0}
         td, th {border: 1px solid #666; padding: 0.5em}
@@ -104,18 +105,31 @@
 
             function makeToc() {
                 const toc = document.querySelector('.toc');
+                let lastH2;
+                let lastH3;
                 document.querySelectorAll('.main h2, .main h3, .main h4').forEach(heading => {
+                    let slug = heading.textContent.toLowerCase().replace(/ /g, '-');
+
                     const line = document.createElement('a');
                     line.style.display = 'block';
-                    const slug = heading.textContent.toLowerCase().replace(/ /g, '-');
+
+                    switch (heading.tagName) {
+                        case 'H2':
+                            lastH2 = slug;
+                            break;
+                        case 'H3':
+                            slug = `${lastH2}-${slug}`;
+                            lastH3 = slug;
+                            line.style.marginLeft = '1em';
+                            break;
+                        case 'H4':
+                            slug = `${lastH3}-${slug}`;
+                            line.style.marginLeft = '2em';
+                            break;
+                    }
+
                     heading.id = slug;
                     line.href = `#${slug}`;
-                    if (heading.tagName === 'H3') {
-                        line.style.marginLeft = '1em';
-                    }
-                    if (heading.tagName === 'H4') {
-                        line.style.marginLeft = '2em';
-                    }
                     line.appendChild(document.createTextNode(heading.textContent));
                     toc.appendChild(line);
                 });
@@ -164,13 +178,10 @@
 
         <h3>Rate Limits</h3>
         <p>
-            To manage our resource usage, the API enforces a rate limit for each API consumer. Each request costs a number of points, and you're provided a sliding window of <b>3000</b> points per hour. If you exceed that points budget, your request will not be serviced, and you'll need to wait for enough points to replenish.
+            To manage our resource usage, the API enforces a rate limit for each API consumer. Each request costs a number of points, and you're provided a sliding window of <b>3000</b> points per hour. If you exceed that points budget, your request will not be serviced, and you'll need to wait for enough points to replenish before your request will return a result.
         </p>
         <p>
             Each API endpoint described below will include points cost information. Many endpoints will include 2 costs: a lower cost for gzip-compressed responses (preferred), and a higher cost for uncompressed responses.
-        </p>
-        <p>
-            Some endpoints will include a "Last-Modified" or "ETag" response header. If you use those in a later request and get a "304 Not Modified" response, the request will cost only 1 point, regardless of its listed cost.
         </p>
 
         <h3>Patron Access Limits</h3>
@@ -244,7 +255,7 @@
             <div>
                 <h3>Realm List</h3>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/static/realms.json</span></td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/static/realms.json</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
@@ -269,7 +280,7 @@
             <div>
                 <h3>Suffix List</h3>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/static/suffixes.json</span></td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/static/suffixes.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
@@ -313,8 +324,8 @@
             <div>
                 <h4>Base Item Summary</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>
@@ -346,8 +357,8 @@
             <div>
                 <h4>Full Item Summary</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items.json?detail=full</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
                 <p>
@@ -371,8 +382,7 @@
         "min": 7980000,
         "realms": 12,
         "level": {
-          "level": 1,
-          "1": {"median": 928288300},
+          "1": {"level": 1, "median": 928288300},
         }
       },
       ...
@@ -448,8 +458,8 @@
             <div>
                 <h4>Now Item Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/now.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 This returns the current price and availability for a specific non-commodity item on every realm in the region.
@@ -482,11 +492,11 @@
             <div>
                 <h4>Now Item Level Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/now.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                Same as Now Item Detail, but for a specific item+level. If the item also always comes with suffixes, there likely won't be a result for it on this endpoint.
+                Same as Now Item Detail, but for a specific item + level. If the item also always comes with suffixes, there likely won't be a result for it on this endpoint.
                 <blockquote class="code">{
   "request": {
     "region": "us",
@@ -503,11 +513,11 @@
             <div>
                 <h4>Now Item Suffix Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/now.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                Same as Now Item Detail, but for a specific item+level+suffix.
+                Same as Now Item Detail, but for a specific item + level + suffix.
                 <blockquote class="code">{
   "request": {
     "region": "us",
@@ -525,8 +535,8 @@
             <div>
                 <h4>Daily Item Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>For each item on each realm, once per day, we find the snapshot in that day with the highest total quantity, and store that quantity and the price at that time.</p>
@@ -553,11 +563,11 @@
             <div>
                 <h4>Daily Item Level Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                Same as Daily Item Detail, but for a specific item+level.
+                Same as Daily Item Detail, but for a specific item + level.
                 <blockquote class="code">{
   "request": {
     "region": "us",
@@ -574,11 +584,11 @@
             <div>
                 <h4>Daily Item Suffix Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                Same as Daily Item Detail, but for a specific item+level+suffix.
+                Same as Daily Item Detail, but for a specific item + level + suffix.
                 <blockquote class="code">{
   "request": {
     "region": "us",
@@ -598,8 +608,8 @@
             <div>
                 <h4>Base Commodity Summary</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities.json</span></td></tr>
-                    <tr><th>Points</th><td>1 point (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>
@@ -634,8 +644,8 @@
             <div>
                 <h4>Full Commodity Summary</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities.json?detail=full</span></td></tr>
-                    <tr><th>Points</th><td>1 point (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>1 point <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
                 This contains the same data as Base Commodity Summary, but includes item level details for commodities which are equippable. They are very rare, and you really don't need level-based pricing for commodities, but it's here if you want it.
@@ -678,7 +688,7 @@
             <div>
                 <h4>Now Commodity Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/now.json</span></td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
@@ -713,11 +723,11 @@
             <div>
                 <h4>Now Commodity Level Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/now.json</span></td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                <p>Same as Now Commodity Detail, but for a specific commodity item+level. As mentioned in the Full Commodity Summary, this is very rarely useful, but is here for the sake of completion.</p>
+                <p>Same as Now Commodity Detail, but for a specific commodity item + level. As mentioned in the Full Commodity Summary, this is very rarely useful, but is here for the sake of completion.</p>
                 <p>The individual auction rows only have "price", since they're always quantity=1, being treated like non-stackable items. If they had bonuses or modifiers, they would also appear there. Best just to pretend this endpoint doesn't exist, bonuses make no sense on stackable items...</p>
                 <blockquote class="code">{
   "request": {
@@ -743,8 +753,8 @@
             <div>
                 <h4>Hourly Commodity Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/hourly.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>The price and quantity of this commodity item in this region at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
@@ -770,11 +780,11 @@
             <div>
                 <h4>Hourly Commodity Level Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/hourly.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                <p>Same as the Hourly Commodity Detail, but for a specific commodity item+level. Which we've already described as very unusual and best ignored.</p>
+                <p>Same as the Hourly Commodity Detail, but for a specific commodity item + level. Which we've already described as very unusual and best ignored.</p>
                 <blockquote class="code">{
   "request": {
     "region": "us",
@@ -798,8 +808,8 @@
             <div>
                 <h4>Daily Commodity Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>
@@ -827,12 +837,12 @@
             <div>
                 <h4>Daily Commodity Level Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
                 <p>
-                    Same as Daily Commodity Detail, but for a specific commodity item+level. What are we even doing here.
+                    Same as Daily Commodity Detail, but for a specific commodity item + level. What are we even doing here.
                 </p>
                 <blockquote class="code">{
   "request": {
@@ -854,14 +864,13 @@
 }</blockquote>
             </div>
 
-
             <h3>Battle Pets</h3>
 
             <div>
                 <h4>Base Pet Summary</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets.json</span></td></tr>
-                    <tr><th>Points</th><td>1 point (3 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/pets.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>
@@ -893,8 +902,8 @@
             <div>
                 <h4>Full Pet Summary</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets.json?detail=full</span></td></tr>
-                    <tr><th>Points</th><td>1 point (3 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/pets.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
                 <p>
@@ -940,8 +949,8 @@
             <div>
                 <h4>Now Pet Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/now.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 This returns the current price and availability for a specific battle pet on every realm in the region.
@@ -974,8 +983,8 @@
             <div>
                 <h4>Now Pet Breed Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/now.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points (5 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/now.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
                 Same as Now Pet Detail, but for a specific species + breed.
@@ -995,8 +1004,8 @@
             <div>
                 <h4>Daily Pet Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free</td></tr>
                 </table>
                 <p>For each pet on each realm, once per day, we find the snapshot in that day with the highest total quantity, and store that quantity and the price at that time.</p>
@@ -1023,11 +1032,11 @@
             <div>
                 <h4>Daily Pet Breed Detail</h4>
                 <table>
-                    <tr><th>URL</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/daily.json</span></td></tr>
-                    <tr><th>Points</th><td>5 points (9 uncompressed)</td></tr>
+                    <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid</td></tr>
                 </table>
-                Same as Daily Pet Detail, but for a specific species+breed.
+                Same as Daily Pet Detail, but for a specific species + breed.
                 <blockquote class="code">{
   "request": {
     "region": "us",
@@ -1037,6 +1046,971 @@
   },
   "result": {
     ...
+  }
+}</blockquote>
+            </div>
+        </div>
+
+        <div>
+            <h2>Realm Data</h2>
+            <p>These endpoints cover a specific realm, instead of the entire region.</p>
+            <p>Connected realms share an auction house, but you can use any realm in that set to obtain the information. You don't need to know which realms are connected to which other realms. However, in responses, you may see a list of realms together, and that list helps you identify the realms that are connected to each-other.</p>
+
+            <h3>Items</h3>
+
+            <div>
+                <h4>Base Item Summary</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    This is the latest snapshot of the non-commodity item pricing for that realm. The result includes two timestamps:
+                <ul>
+                    <li>"snapshot" is Blizzard's timestamp when they assembled the latest data.</li>
+                    <li>"lastUpdated" is when Undermine Exchange generated this file. It will typically be a few minutes after "snapshot."</li>
+                </ul>
+                </p>
+                <p>
+                    The item list includes items which aren't currently for sale (showing quantity=0), and adds a "seen" timestamp to those records, indicating when that item was last seen for sale.
+                </p>
+                <p>
+                    This endpoint does not include separate item level or item suffix pricing, it's only by item ID.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "list": "items",
+    "detail": "base",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "items": {
+      "25": {"item": 25, "price": 99990100, "quantity": 1},
+      "35": {"item": 35, "price": 230422000, "quantity": 0, "seen": "2026-04-27T04:20:23Z"},
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Full Item Summary</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(7 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    This contains all the same data as the Base Item Summary, but also includes item level and suffix details for equippable items.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "list": "items",
+    "detail": "full",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "items": {
+      "25": {
+        "item": 25,
+        "price": 99990100,
+        "quantity": 1,
+        "level": {
+          "1": {"level": 1, "price": 99990100, "quantity": 1},
+        }
+      },
+      ...
+      "32678": {"item": 32678, "price": 750100, "quantity": 0, "seen": "2026-04-30T17:31:11Z"},
+      ...
+      "32753": {"item": 32753, "price": 2000000, "quantity": 10},
+      ...
+      "118852": {
+        "item": 118852,
+        "price": 334316600,
+        "quantity": 1,
+        "level": {
+          "16": {"level": 16, "price": 746781000, "quantity": 0, "seen": "2026-03-18T04:07:12Z"},
+          "41": {"level": 41, "price": 334316600, "quantity": 1},
+          "44": {"level": 44, "price": 652150700, "quantity": 0, "seen": "2026-02-08T21:13:03Z"},
+          "47": {"level": 47, "price": 431110000, "quantity": 0, "seen": "2022-11-30T14:28:02Z"},
+          "68": {"level": 68, "price": 500000000, "quantity": 0, "seen": "2026-04-04T10:43:05Z"},
+          "123": {"level": 123, "price": 1438904500, "quantity": 0, "seen": "2024-07-08T23:30:42Z"},
+          "196": {"level": 196, "price": 10000000, "quantity": 0, "seen": "2026-01-20T23:22:23Z"},
+          "367": {"level": 367, "price": 200000000, "quantity": 0, "seen": "2025-07-28T05:23:46Z"},
+        }
+      },
+      ...
+      "224636": {
+        "item": 224636,
+        "price": 8001200,
+        "quantity": 4,
+        "level": {
+          "75": {
+            "level": 75,
+            "suffix": {
+              "13161": {"suffix": 13161, "price": 5750000, "quantity": 0, "seen": "2026-04-01T23:43:09Z"}
+            }
+          },
+          "76": {
+            "level": 76,
+            "suffix": {
+              "13156": {"suffix": 13156, "price": 1990000, "quantity": 0, "seen": "2026-04-02T23:43:07Z"}
+            }
+          },
+          "77": {
+            "level": 77,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 990000, "quantity": 0, "seen": "2026-04-02T23:43:07Z"}
+            }
+          },
+          "78": {
+            "level": 78,
+            "suffix": {
+              "13152": {"suffix": 13152, "price": 349600, "quantity": 0, "seen": "2026-04-22T22:20:18Z"}
+            }
+          },
+          "79": {
+            "level": 79,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 39176400, "quantity": 0, "seen": "2026-05-01T01:31:11Z"},
+              "13151": {"suffix": 13151, "price": 801000, "quantity": 0, "seen": "2026-02-14T22:49:19Z"},
+              "13156": {"suffix": 13156, "price": 3750000, "quantity": 0, "seen": "2026-03-25T03:37:33Z"},
+              "13157": {"suffix": 13157, "price": 427723200, "quantity": 0, "seen": "2026-02-21T15:25:54Z"},
+              "13161": {"suffix": 13161, "price": 8888100, "quantity": 0, "seen": "2026-04-29T02:31:14Z"}
+            }
+          },
+          "80": {
+            "level": 80,
+            "suffix": {
+              "13151": {"suffix": 13151, "price": 1408500, "quantity": 0, "seen": "2026-03-17T03:28:37Z"},
+              "13152": {"suffix": 13152, "price": 27460900, "quantity": 0, "seen": "2026-05-01T01:31:11Z"},
+              "13156": {"suffix": 13156, "price": 9750000, "quantity": 0, "seen": "2026-04-07T17:29:52Z"},
+              "13157": {"suffix": 13157, "price": 10008100, "quantity": 0, "seen": "2026-04-28T01:21:30Z"}
+            }
+          },
+          "86": {
+            "level": 86,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 8888100, "quantity": 0, "seen": "2026-04-26T14:20:17Z"},
+              "13151": {"suffix": 13151, "price": 8001200, "quantity": 1},
+              "13152": {"suffix": 13152, "price": 3008100, "quantity": 0, "seen": "2026-05-01T04:31:12Z"},
+              "13156": {"suffix": 13156, "price": 580000, "quantity": 0, "seen": "2026-02-27T04:34:36Z"},
+              "13157": {"suffix": 13157, "price": 3000000, "quantity": 0, "seen": "2026-04-07T18:29:53Z"},
+              "13161": {"suffix": 13161, "price": 9991200, "quantity": 3}
+            }
+          },
+          "382": {
+            "level": 382,
+            "suffix": {
+              "13157": {"suffix": 13157, "price": 27487200, "quantity": 0, "seen": "2025-07-31T20:36:33Z"}
+            }
+          },
+          "408": {
+            "level": 408,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 28480000, "quantity": 0, "seen": "2025-10-02T03:37:55Z"},
+              "13151": {"suffix": 13151, "price": 150000000, "quantity": 0, "seen": "2025-03-23T23:33:06Z"},
+              "13152": {"suffix": 13152, "price": 28480000, "quantity": 0, "seen": "2025-10-18T23:39:00Z"},
+              "13157": {"suffix": 13157, "price": 44444400, "quantity": 0, "seen": "2025-12-06T20:55:50Z"},
+              "13161": {"suffix": 13161, "price": 28480000, "quantity": 0, "seen": "2025-10-18T23:39:00Z"}
+            }
+          },
+          "434": {
+            "level": 434,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 28480000, "quantity": 0, "seen": "2025-09-27T04:35:08Z"},
+              "13151": {"suffix": 13151, "price": 48480000, "quantity": 0, "seen": "2025-03-19T19:33:03Z"},
+              "13152": {"suffix": 13152, "price": 38480000, "quantity": 0, "seen": "2025-05-31T08:31:10Z"},
+              "13156": {"suffix": 13156, "price": 759900, "quantity": 0, "seen": "2025-06-24T04:31:23Z"},
+              "13157": {"suffix": 13157, "price": 299999900, "quantity": 0, "seen": "2025-08-16T03:36:53Z"},
+              "13161": {"suffix": 13161, "price": 100000000, "quantity": 0, "seen": "2024-12-18T20:25:31Z"}
+            }
+          },
+          "460": {
+            "level": 460,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 48480000, "quantity": 0, "seen": "2025-03-21T09:33:03Z"},
+              "13151": {"suffix": 13151, "price": 66666600, "quantity": 0, "seen": "2025-11-23T10:45:15Z"},
+              "13152": {"suffix": 13152, "price": 162620200, "quantity": 0, "seen": "2025-06-20T10:31:22Z"},
+              "13156": {"suffix": 13156, "price": 48480000, "quantity": 0, "seen": "2025-10-02T03:37:55Z"},
+              "13157": {"suffix": 13157, "price": 100000000, "quantity": 0, "seen": "2024-11-06T10:42:35Z"},
+              "13161": {"suffix": 13161, "price": 2390000, "quantity": 0, "seen": "2026-01-16T08:19:23Z"}
+            }
+          },
+          "483": {
+            "level": 483,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 150000000, "quantity": 0, "seen": "2025-01-09T18:32:41Z"},
+              "13151": {"suffix": 13151, "price": 120024300, "quantity": 0, "seen": "2025-12-31T00:17:42Z"},
+              "13152": {"suffix": 13152, "price": 32497700, "quantity": 0, "seen": "2024-11-06T08:42:35Z"},
+              "13156": {"suffix": 13156, "price": 80000000, "quantity": 0, "seen": "2025-10-04T21:37:59Z"},
+              "13157": {"suffix": 13157, "price": 1000000, "quantity": 0, "seen": "2025-11-30T00:17:48Z"},
+              "13161": {"suffix": 13161, "price": 90000000, "quantity": 0, "seen": "2025-04-18T18:41:57Z"}
+            }
+          },
+          "506": {
+            "level": 506,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 80000000, "quantity": 0, "seen": "2025-10-02T03:37:55Z"},
+              "13151": {"suffix": 13151, "price": 140000000, "quantity": 0, "seen": "2025-11-22T17:45:14Z"},
+              "13152": {"suffix": 13152, "price": 150000000, "quantity": 0, "seen": "2025-02-17T15:30:34Z"},
+              "13156": {"suffix": 13156, "price": 10705700, "quantity": 0, "seen": "2025-05-18T03:08:26Z"},
+              "13157": {"suffix": 13157, "price": 1096862300, "quantity": 0, "seen": "2026-01-20T14:19:30Z"},
+              "13161": {"suffix": 13161, "price": 140000000, "quantity": 0, "seen": "2025-06-01T03:31:13Z"}
+            }
+          },
+          "515": {
+            "level": 515,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 55990600, "quantity": 0, "seen": "2025-06-10T21:45:58Z"},
+              "13151": {"suffix": 13151, "price": 150000000, "quantity": 0, "seen": "2025-05-31T08:31:10Z"},
+              "13152": {"suffix": 13152, "price": 797697400, "quantity": 0, "seen": "2026-01-21T05:26:50Z"},
+              "13156": {"suffix": 13156, "price": 194104800, "quantity": 0, "seen": "2024-12-13T04:54:13Z"},
+              "13157": {"suffix": 13157, "price": 797797400, "quantity": 0, "seen": "2026-01-21T05:26:50Z"},
+              "13161": {"suffix": 13161, "price": 797697400, "quantity": 0, "seen": "2026-01-21T05:26:50Z"}
+            }
+          },
+          "525": {
+            "level": 525,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 28489900, "quantity": 0, "seen": "2026-01-07T10:17:10Z"},
+              "13151": {"suffix": 13151, "price": 28480000, "quantity": 0, "seen": "2025-05-30T18:31:08Z"},
+              "13152": {"suffix": 13152, "price": 28489900, "quantity": 0, "seen": "2026-01-07T10:17:10Z"},
+              "13156": {"suffix": 13156, "price": 60000000, "quantity": 0, "seen": "2026-01-21T05:26:50Z"},
+              "13157": {"suffix": 13157, "price": 28479600, "quantity": 0, "seen": "2025-09-28T21:35:11Z"},
+              "13161": {"suffix": 13161, "price": 28489900, "quantity": 0, "seen": "2025-12-17T09:15:52Z"}
+            }
+          },
+          "532": {
+            "level": 532,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 28489900, "quantity": 0, "seen": "2025-12-14T09:23:12Z"},
+              "13151": {"suffix": 13151, "price": 70000000, "quantity": 0, "seen": "2026-01-21T05:26:50Z"},
+              "13152": {"suffix": 13152, "price": 28480000, "quantity": 0, "seen": "2025-10-06T07:38:00Z"},
+              "13156": {"suffix": 13156, "price": 28480000, "quantity": 0, "seen": "2025-10-06T07:38:00Z"},
+              "13157": {"suffix": 13157, "price": 28489900, "quantity": 0, "seen": "2026-01-07T10:17:10Z"},
+              "13161": {"suffix": 13161, "price": 44999900, "quantity": 0, "seen": "2025-12-06T20:55:50Z"}
+            }
+          },
+          "538": {
+            "level": 538,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 38489900, "quantity": 0, "seen": "2026-01-07T10:17:10Z"},
+              "13151": {"suffix": 13151, "price": 38480000, "quantity": 0, "seen": "2025-10-18T19:38:58Z"},
+              "13152": {"suffix": 13152, "price": 80000000, "quantity": 0, "seen": "2025-12-31T04:17:42Z"},
+              "13156": {"suffix": 13156, "price": 38480000, "quantity": 0, "seen": "2025-10-10T20:24:40Z"},
+              "13157": {"suffix": 13157, "price": 38489900, "quantity": 0, "seen": "2026-01-07T10:17:10Z"},
+              "13161": {"suffix": 13161, "price": 54999900, "quantity": 0, "seen": "2025-11-18T14:29:35Z"}
+            }
+          },
+          "545": {
+            "level": 545,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 2813000, "quantity": 0, "seen": "2026-02-07T01:12:57Z"},
+              "13151": {"suffix": 13151, "price": 70000000, "quantity": 0, "seen": "2026-01-21T18:26:46Z"},
+              "13152": {"suffix": 13152, "price": 5283800, "quantity": 0, "seen": "2026-02-08T02:16:14Z"},
+              "13156": {"suffix": 13156, "price": 60000000, "quantity": 0, "seen": "2026-01-21T18:26:46Z"},
+              "13157": {"suffix": 13157, "price": 546080700, "quantity": 0, "seen": "2026-02-08T23:13:03Z"},
+              "13161": {"suffix": 13161, "price": 546080700, "quantity": 0, "seen": "2026-02-08T23:13:03Z"}
+            }
+          },
+          "558": {
+            "level": 558,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 5000000, "quantity": 0, "seen": "2025-08-29T20:12:41Z"},
+              "13151": {"suffix": 13151, "price": 21178500, "quantity": 0, "seen": "2025-07-24T00:23:41Z"},
+              "13152": {"suffix": 13152, "price": 1200000, "quantity": 0, "seen": "2025-03-23T13:33:02Z"},
+              "13156": {"suffix": 13156, "price": 10000800, "quantity": 0, "seen": "2025-11-01T05:04:05Z"},
+              "13157": {"suffix": 13157, "price": 21178500, "quantity": 0, "seen": "2025-07-24T00:23:41Z"},
+              "13161": {"suffix": 13161, "price": 546080700, "quantity": 0, "seen": "2026-02-08T23:13:03Z"}
+            }
+          },
+          "561": {
+            "level": 561,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 2390000, "quantity": 0, "seen": "2026-01-18T05:19:27Z"},
+              "13151": {"suffix": 13151, "price": 1739700, "quantity": 0, "seen": "2025-09-05T19:19:33Z"},
+              "13152": {"suffix": 13152, "price": 997388400, "quantity": 0, "seen": "2026-02-08T23:13:03Z"},
+              "13156": {"suffix": 13156, "price": 63937300, "quantity": 0, "seen": "2025-07-24T00:23:41Z"},
+              "13157": {"suffix": 13157, "price": 1000000, "quantity": 0, "seen": "2025-11-29T03:17:49Z"},
+              "13161": {"suffix": 13161, "price": 1490000, "quantity": 0, "seen": "2026-01-21T00:22:21Z"}
+            }
+          },
+          "564": {
+            "level": 564,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 120000000, "quantity": 0, "seen": "2025-03-07T16:43:11Z"},
+              "13151": {"suffix": 13151, "price": 3330000, "quantity": 0, "seen": "2025-05-24T17:48:46Z"},
+              "13152": {"suffix": 13152, "price": 186361900, "quantity": 0, "seen": "2025-07-20T17:36:03Z"},
+              "13156": {"suffix": 13156, "price": 950000, "quantity": 0, "seen": "2026-02-08T23:13:03Z"},
+              "13157": {"suffix": 13157, "price": 186361900, "quantity": 0, "seen": "2025-07-20T17:36:03Z"},
+              "13161": {"suffix": 13161, "price": 50202500, "quantity": 0, "seen": "2025-07-16T15:36:00Z"}
+            }
+          },
+          "597": {
+            "level": 597,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 6423400, "quantity": 0, "seen": "2026-02-08T05:13:02Z"},
+              "13151": {"suffix": 13151, "price": 6629900, "quantity": 0, "seen": "2026-02-08T23:13:03Z"},
+              "13152": {"suffix": 13152, "price": 900000, "quantity": 0, "seen": "2026-02-08T23:13:03Z"},
+              "13156": {"suffix": 13156, "price": 950000, "quantity": 0, "seen": "2026-02-08T23:13:03Z"},
+              "13157": {"suffix": 13157, "price": 2500000, "quantity": 0, "seen": "2026-02-07T17:12:58Z"},
+              "13161": {"suffix": 13161, "price": 1750000, "quantity": 0, "seen": "2026-02-02T00:18:14Z"}
+            }
+          },
+          "600": {
+            "level": 600,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 2500000, "quantity": 0, "seen": "2026-02-07T17:12:58Z"},
+              "13151": {"suffix": 13151, "price": 1750000, "quantity": 0, "seen": "2026-02-01T01:18:10Z"},
+              "13152": {"suffix": 13152, "price": 2390000, "quantity": 0, "seen": "2026-01-17T19:19:26Z"},
+              "13156": {"suffix": 13156, "price": 980000, "quantity": 0, "seen": "2025-12-04T00:55:48Z"},
+              "13157": {"suffix": 13157, "price": 2500000, "quantity": 0, "seen": "2026-02-07T17:12:58Z"},
+              "13161": {"suffix": 13161, "price": 1300000, "quantity": 0, "seen": "2026-02-08T03:13:01Z"}
+            }
+          },
+          "603": {
+            "level": 603,
+            "suffix": {
+              "13150": {"suffix": 13150, "price": 2750000, "quantity": 0, "seen": "2026-01-20T01:19:33Z"},
+              "13151": {"suffix": 13151, "price": 7202100, "quantity": 0, "seen": "2026-02-05T09:32:28Z"},
+              "13152": {"suffix": 13152, "price": 1750000, "quantity": 0, "seen": "2026-02-05T04:32:30Z"},
+              "13156": {"suffix": 13156, "price": 13500000, "quantity": 0, "seen": "2026-01-10T06:17:10Z"},
+              "13157": {"suffix": 13157, "price": 2750000, "quantity": 0, "seen": "2026-01-21T12:26:48Z"},
+              "13161": {"suffix": 13161, "price": 1750000, "quantity": 0, "seen": "2026-02-04T00:32:29Z"}
+            }
+          }
+        }
+      },
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Tertiary Stats</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/stats.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>This provides item keys where certain tertiary stats are currently for sale. For example, under the "speed" list, you might find item 169406, level 45, suffix 13152. In that case, there is some auction currently posted for that item + level + suffix combo which has the speed tertiary stat bonus. You can then look that item up via the Now Item Suffix Detail realm endpoint to get pricing and auction data.</p>
+
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "list": "stats",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "stats": {
+      "speed": [
+        {"item": 169406, "level": 45, "suffix": 13152},
+        {"item": 169419, "level": 45, "suffix": 13161},
+        {"item": 188036, "level": 50},
+        ...
+      ],
+      "leech": [
+        {"item": 159173, "level": 74, "suffix": 13157},
+        {"item": 113632, "level": 16},
+        {"item": 159799, "level": 74, "suffix": 13150},
+        ...
+      ],
+      "avoidance": [ ... ],
+      "indestructible": [ ... ]
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Item Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/now.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                This returns the current price, availability, and auctions for a specific non-commodity item on this realm. The result includes two timestamps:
+                <ul>
+                    <li>"lastSeen" is Blizzard's snapshot timestamp when we last had a nonzero quantity.</li>
+                    <li>"lastUpdated" is when Undermine Exchange generated this file. It will typically be a few minutes after "lastSeen" (quantity &gt; 0) or an hour after "lastSeen" (quantity = 0). It may also be a date significantly in the past when quantity = 0, this is normal.</li>
+                </ul>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 114821,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 235000,
+    "quantity": 18,
+    "auctions": [
+      {"price": 235000, "quantity": 4},
+      {"price": 240000, "quantity": 7},
+      ...
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Item Level Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/now.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Now Item Detail, but for a specific non-commodity item + level.</p>
+                <p>The auction list has a separate entry for each individual item (instead of grouping by price), and also includes item modifiers, bonuses, and tertiary stats, when present.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 260372,
+    "itemLevel": 266,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 1500000000,
+    "quantity": 7,
+    "auctions": [
+      {
+        "price": 1500000000,
+        "modifiers": {"28": 3606, "29": 49, "30": 40},
+        "bonuses": [6652, 10844, 12795, 13334, 13577]
+      },
+      {
+        "price": 1500000000,
+        "modifiers": {"28": 3606, "29": 32, "30": 40},
+        "bonuses": [41, 10844, 12795, 13334, 13577],
+        "stats": ["leech"]
+      },
+      {
+        "price": 1690000000,
+        "modifiers": {"28": 3606, "29": 32, "30": 49},
+        "bonuses": [42, 10844, 12795, 13334, 13577],
+        "stats": ["speed"]
+      },
+      ...
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Item Suffix Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/:itemSuffix/now.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Now Item Level Detail, but for a specific non-commodity item + level + suffix.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 224608,
+    "itemLevel": 86,
+    "itemSuffix": 13157,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 11658800,
+    "quantity": 2,
+    "auctions": [
+      {
+        "price": 11658800,
+        "modifiers": {"28": 2462},
+        "bonuses": [41, 1527, 1707, 10844, 11943],
+        "stats": ["leech"]
+      },
+      {
+        "price": 11658800,
+        "modifiers": {"28": 2462},
+        "bonuses": [1530, 1710, 6652, 10254, 10844, 11944],
+      }
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Item Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>The price and quantity of this non-commodity item on this realm at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 114821,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 25000000, "quantity": 0},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 4000000, "quantity": 3},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 4000000, "quantity": 3},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 4000000, "quantity": 7},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Item Level Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Hourly Item Detail, but for a specific non-commodity item + level.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 260376,
+    "itemLevel": 266,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 1450000000, "quantity": 5},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 1450000000, "quantity": 4},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 1450000000, "quantity": 4},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 1450000000, "quantity": 4},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Item Suffix Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/:itemSuffix/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Hourly Item Detail, but for a specific non-commodity item + level + suffix.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 224608,
+    "itemLevel": 86,
+    "itemSuffix": 13157,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 6162200, "quantity": 1},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 6162200, "quantity": 1},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 6162200, "quantity": 1},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 6162200, "quantity": 1},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Item Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    The maximum quantity, and the price at that time, of the non-commodity item on that realm for each day we've seen it. Ever.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 114821,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 2300000, "quantity": 112},
+      {"day": "2022-09-05", "price": 2009900, "quantity": 65},
+      {"day": "2022-09-06", "price": 1949900, "quantity": 66},
+      {"day": "2022-09-07", "price": 2472500, "quantity": 69},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Item Level Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    Same as Daily Item Detail, but for a specific non-commodity item + level.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 260376,
+    "itemLevel": 266,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2026-03-20", "price": 38000000000, "quantity": 1},
+      {"day": "2026-03-21", "price": 25000000000, "quantity": 1},
+      {"day": "2026-03-22", "price": 25000000000, "quantity": 0},
+      {"day": "2026-03-23", "price": 10000000000, "quantity": 1},
+      {"day": "2026-03-24", "price": 8900000000, "quantity": 2},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Item Suffix Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/:itemSuffix/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    Same as Daily Item Detail, but for a specific non-commodity item + level + suffix.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "itemId": 224608,
+    "itemLevel": 86,
+    "itemSuffix": 13157,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2026-02-09", "price": 4880000, "quantity": 1},
+      {"day": "2026-02-10", "price": 4880000, "quantity": 0},
+      {"day": "2026-02-11", "price": 5070500, "quantity": 1},
+      {"day": "2026-02-12", "price": 5070500, "quantity": 2},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <h3>Battle Pets</h3>
+
+            <div>
+                <h4>Base Pet Summary</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets.json</span></td></tr>
+                    <tr><th>Points</th><td>1 points <small>(3 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    This is the latest snapshot of the battle pet pricing for that realm. The result includes two timestamps:
+                <ul>
+                    <li>"snapshot" is Blizzard's timestamp when they assembled the latest data.</li>
+                    <li>"lastUpdated" is when Undermine Exchange generated this file. It will typically be a few minutes after "snapshot."</li>
+                </ul>
+                </p>
+                <p>
+                    The pet list includes pets which aren't currently for sale (showing quantity=0), and adds a "seen" timestamp to those records, indicating when that pet was last seen for sale.
+                </p>
+                <p>
+                    This endpoint does not include separate breed pricing, it's only by species ID.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "list": "pets",
+    "detail": "base",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "pets": {
+      "39": {"species": 39, "price": 19880000, "quantity": 4},
+      "40": {"species": 40, "price": 5709700, "quantity": 3},
+      "41": {"species": 41, "price": 19980000, "quantity": 3},
+      "42": {"species": 42, "price": 769990000, "quantity": 0, "seen": "2026-04-23T02:20:20Z"},
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Full Pet Summary</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets.json?detail=full</span></td></tr>
+                    <tr><th>Points</th><td>1 points <small>(3 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    This contains all the same data as the Base Pet Summary, but also includes breed pricing details.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "list": "pets",
+    "detail": "full",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "snapshot": "2026-05-01T00:00:00Z",
+    "pets": {
+      "39": {
+        "species": 39,
+        "price": 19880000,
+        "quantity": 4,
+        "breed": {
+          "11": {"breed": 11, "price": 19880000, "quantity": 4}
+        }
+      },
+      ...
+      "42": {
+        "species": 42,
+        "price": 769990000,
+        "quantity": 0,
+        "seen": "2026-04-23T02:20:20Z",
+        "breed": {
+          "7": {"breed": 7, "price": 769990000, "quantity": 0, "seen": "2026-04-23T02:20:20Z"}
+        }
+      },
+      ...
+      "70": {
+        "species": 70,
+        "price": 5000000,
+        "quantity": 3,
+        "breed": {
+          "3": {"breed": 3, "price": 67690000, "quantity": 1},
+          "5": {"breed": 5, "price": 67690000, "quantity": 0, "seen": "2026-03-29T10:37:26Z"},
+          "12": {"breed": 12, "price": 5000000, "quantity": 2}
+        }
+      },
+      ...
+    }
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Pet Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/petBreed.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                This returns the current price, availability, and auctions for a specific pet on this realm. The result includes two timestamps:
+                <ul>
+                    <li>"lastSeen" is Blizzard's snapshot timestamp when we last had a nonzero quantity.</li>
+                    <li>"lastUpdated" is when Undermine Exchange generated this file. It will typically be a few minutes after "lastSeen" (quantity &gt; 0) or an hour after "lastSeen" (quantity = 0). It may also be a date significantly in the past when quantity = 0, this is normal.</li>
+                </ul>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "petSpecies": 145,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 8999900,
+    "quantity": 4,
+    "auctions": [
+      {"price": 8999900, "quantity": 1},
+      {"price": 9989900, "quantity": 2},
+      ...
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Now Pet Breed Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/:petBreed/now.json</span></td></tr>
+                    <tr><th>Points</th><td>1 point</td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Now Pet Detail, but for a specific species + breed.</p>
+                <p>The auction list has a separate entry for each individual pet (instead of grouping by price), and also includes item modifiers, when present.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "petSpecies": 145,
+    "petBreed": 6,
+    "period": "now",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:05:00Z",
+    "lastSeen": "2026-05-01T00:00:00Z",
+    "price": 8999900,
+    "quantity": 1,
+    "auctions": [
+      {
+        "price": 8999900,
+        "modifiers": {"2": 2, "3": 145, "4": 6, "5": 1, "6": 20029}
+      }
+    ],
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Pet Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>The price and quantity of this pet on this realm at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "petSpecies": 145,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 14998400, "quantity": 2},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 14998400, "quantity": 2},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 14998400, "quantity": 2},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 12998400, "quantity": 3},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Hourly Pet Breed Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/:petBreed/hourly.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>Same as Hourly Pet Detail, but for a specific pet species + breed.</p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "petSpecies": 145,
+    "petBreed": 6,
+    "period": "hourly",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "hourly": [
+      {"snapshot": "2026-04-22T03:14:41Z", "price": 14998900, "quantity": 0},
+      {"snapshot": "2026-04-22T04:14:45Z", "price": 14998900, "quantity": 0},
+      {"snapshot": "2026-04-22T05:14:50Z", "price": 14998900, "quantity": 0},
+      {"snapshot": "2026-04-22T06:14:48Z", "price": 12998400, "quantity": 1},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Pet Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Free</td></tr>
+                </table>
+                <p>
+                    The maximum quantity, and the price at that time, of the pet on that realm for each day we've seen it. Ever.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "petSpecies": 145,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 420000, "quantity": 15},
+      {"day": "2022-09-05", "price": 420000, "quantity": 7},
+      {"day": "2022-09-06", "price": 420000, "quantity": 7},
+      {"day": "2022-09-07", "price": 420000, "quantity": 7},
+      ...
+    ]
+  }
+}</blockquote>
+            </div>
+
+            <div>
+                <h4>Daily Pet Breed Detail</h4>
+                <table>
+                    <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/:petBreed/daily.json</span></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Access</th><td>Paid</td></tr>
+                </table>
+                <p>
+                    Same as Daily Pet Detail, but for a specific pet species + breed.
+                </p>
+                <blockquote class="code">{
+  "request": {
+    "region": "us",
+    "realms": ["alleria", "exodar", "khadgar", "medivh"],
+    "petSpecies": 145,
+    "petBreed": 6,
+    "period": "daily",
+  },
+  "result": {
+    "lastUpdated": "2026-05-01T00:00:00Z",
+    "daily": [
+      {"day": "2022-09-04", "price": 439300, "quantity": 0},
+      {"day": "2022-09-05", "price": 439300, "quantity": 0},
+      {"day": "2022-09-06", "price": 439300, "quantity": 0},
+      {"day": "2022-09-07", "price": 439300, "quantity": 0},
+      {"day": "2022-09-08", "price": 1250000, "quantity": 1},
+      ...
+    ]
   }
 }</blockquote>
             </div>
