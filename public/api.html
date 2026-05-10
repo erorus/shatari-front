@@ -257,7 +257,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/static/realms.json</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 Almost all of our APIs accept a lowercase region and lowercase realm slug, so this provides a list of all the regions and realms we support. The slugs should match what Blizzard uses in their APIs. Realm names are always in English, but if a realm has a localized name when shown in the English client, that's included as a "nativeName" property.
                 <blockquote class="code">{
@@ -282,7 +282,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/static/suffixes.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 Some weapons/armor are priced by item level <i>and</i> have by item name suffixes, and our API requires those suffix IDs. Since they're pretty obscure, we provide a list of them here. Note: these are only used by endpoints which require paid access anyway.
                 <blockquote class="code">{
@@ -326,7 +326,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     A list of every (non-commodity) item for sale in that region, with the median and minimum price (in copper), and how many unique realms are selling it. By "unique realms" we essentially mean connected realms, so if one auction house covers 4 in-game realms, we consider that one "realm" in this count.
@@ -359,7 +359,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items.json?detail=full</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     This includes all the same data as the Base Item Summary, but adds item level pricing as well. Same caveat applies for availability: an item must currently be on sale somewhere in the region to appear in this list, otherwise it's not included.
@@ -460,7 +460,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/now.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 This returns the current price and availability for a specific non-commodity item on every realm in the region.
                 <blockquote class="code">{
@@ -494,7 +494,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/now.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 Same as Now Item Detail, but for a specific item + level. If the item also always comes with suffixes, there likely won't be a result for it on this endpoint.
                 <blockquote class="code">{
@@ -515,7 +515,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/now.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 Same as Now Item Detail, but for a specific item + level + suffix.
                 <blockquote class="code">{
@@ -537,7 +537,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/daily.json</span></td></tr>
                     <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>For each item on each realm, once per day, we find the snapshot in that day with the highest total quantity, and store that quantity and the price at that time.</p>
                 <p>This endpoint then looks at all the data for that item, summing up the total quantity per day, and averaging (mean) the daily prices, across all the realms in the region. This gives you "total quantity" and "average price" values for that item for each day across the region.</p>
@@ -565,7 +565,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/daily.json</span></td></tr>
                     <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 Same as Daily Item Detail, but for a specific item + level.
                 <blockquote class="code">{
@@ -586,7 +586,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/items/:itemId/:itemLevel/:itemSuffix/daily.json</span></td></tr>
                     <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 Same as Daily Item Detail, but for a specific item + level + suffix.
                 <blockquote class="code">{
@@ -610,7 +610,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities.json</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     This is the latest snapshot of the commodities pricing for that region. The result includes two timestamps:
@@ -646,7 +646,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities.json?detail=full</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 This contains the same data as Base Commodity Summary, but includes item level details for commodities which are equippable. They are very rare, and you really don't need level-based pricing for commodities, but it's here if you want it.
                 <blockquote class="code">{
@@ -690,7 +690,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 This returns the current price, availability, and auctions for a specific commodity item in the region. The result includes two timestamps:
                 <ul>
@@ -725,7 +725,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Now Commodity Detail, but for a specific commodity item + level. As mentioned in the Full Commodity Summary, this is very rarely useful, but is here for the sake of completion.</p>
                 <p>The individual auction rows only have "price", since they're always quantity=1, being treated like non-stackable items. If they had bonuses or modifiers, they would also appear there. Best just to pretend this endpoint doesn't exist, bonuses make no sense on stackable items...</p>
@@ -755,7 +755,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>The price and quantity of this commodity item in this region at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
                 <blockquote class="code">{
@@ -782,7 +782,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as the Hourly Commodity Detail, but for a specific commodity item + level. Which we've already described as very unusual and best ignored.</p>
                 <blockquote class="code">{
@@ -810,7 +810,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     The maximum quantity, and the price at that time, of the commodity item in that region for each day we've seen it. Ever.
@@ -839,7 +839,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities/:itemId/:itemLevel/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     Same as Daily Commodity Detail, but for a specific commodity item + level. What are we even doing here.
@@ -871,7 +871,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/pets.json</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     A list of every battle pet for sale in that region, with the median and minimum price (in copper), and how many unique realms are selling it. By "unique realms" we essentially mean connected realms, so if one auction house covers 4 in-game realms, we consider that one "realm" in this count.
@@ -904,7 +904,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/pets.json?detail=full</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     This includes all the same data as the Base Pet Summary, but adds breed pricing as well. Same caveat applies for availability: a pet must currently be on sale somewhere in the region to appear in this list, otherwise it's not included.
@@ -951,7 +951,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/now.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 This returns the current price and availability for a specific battle pet on every realm in the region.
                 <blockquote class="code">{
@@ -985,7 +985,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/now.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 Same as Now Pet Detail, but for a specific species + breed.
                 <blockquote class="code">{
@@ -1006,7 +1006,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/daily.json</span></td></tr>
                     <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>For each pet on each realm, once per day, we find the snapshot in that day with the highest total quantity, and store that quantity and the price at that time.</p>
                 <p>This endpoint then looks at all the data for that pet, summing up the total quantity per day, and averaging (mean) the daily prices, across all the realms in the region. This gives you "total quantity" and "average price" values for that pet for each day across the region.</p>
@@ -1034,7 +1034,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/pets/:petSpecies/:petBreed/daily.json</span></td></tr>
                     <tr><th>Points</th><td>5 points <small>(9 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 Same as Daily Pet Detail, but for a specific species + breed.
                 <blockquote class="code">{
@@ -1063,7 +1063,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     This is the latest snapshot of the non-commodity item pricing for that realm. The result includes two timestamps:
@@ -1102,7 +1102,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items.json?detail=full</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(7 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     This contains all the same data as the Base Item Summary, but also includes item level and suffix details for equippable items.
@@ -1400,7 +1400,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/stats.json</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>This provides item keys where certain tertiary stats are currently for sale. For example, under the "speed" list, you might find item 169406, level 45, suffix 13152. In that case, there is some auction currently posted for that item + level + suffix combo which has the speed tertiary stat bonus. You can then look that item up via the Now Item Suffix Detail realm endpoint to get pricing and auction data.</p>
 
@@ -1438,7 +1438,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 This returns the current price, availability, and auctions for a specific non-commodity item on this realm. The result includes two timestamps:
                 <ul>
@@ -1471,7 +1471,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Now Item Detail, but for a specific non-commodity item + level.</p>
                 <p>The auction list has a separate entry for each individual item (instead of grouping by price), and also includes item modifiers, bonuses, and tertiary stats, when present.</p>
@@ -1517,7 +1517,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/:itemSuffix/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Now Item Level Detail, but for a specific non-commodity item + level + suffix.</p>
                 <blockquote class="code">{
@@ -1556,7 +1556,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>The price and quantity of this non-commodity item on this realm at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
                 <blockquote class="code">{
@@ -1584,7 +1584,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Hourly Item Detail, but for a specific non-commodity item + level.</p>
                 <blockquote class="code">{
@@ -1613,7 +1613,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/:itemSuffix/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Hourly Item Detail, but for a specific non-commodity item + level + suffix.</p>
                 <blockquote class="code">{
@@ -1643,7 +1643,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     The maximum quantity, and the price at that time, of the non-commodity item on that realm for each day we've seen it. Ever.
@@ -1673,7 +1673,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     Same as Daily Item Detail, but for a specific non-commodity item + level.
@@ -1705,7 +1705,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/:itemSuffix/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     Same as Daily Item Detail, but for a specific non-commodity item + level + suffix.
@@ -1739,7 +1739,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets.json</span></td></tr>
                     <tr><th>Points</th><td>1 points <small>(3 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     This is the latest snapshot of the battle pet pricing for that realm. The result includes two timestamps:
@@ -1780,7 +1780,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets.json?detail=full</span></td></tr>
                     <tr><th>Points</th><td>1 points <small>(3 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     This contains all the same data as the Base Pet Summary, but also includes breed pricing details.
@@ -1836,7 +1836,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/petBreed.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 This returns the current price, availability, and auctions for a specific pet on this realm. The result includes two timestamps:
                 <ul>
@@ -1869,7 +1869,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/:petBreed/now.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Now Pet Detail, but for a specific species + breed.</p>
                 <p>The auction list has a separate entry for each individual pet (instead of grouping by price), and also includes item modifiers, when present.</p>
@@ -1901,7 +1901,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>The price and quantity of this pet on this realm at each Blizzard snapshot, for the past 14 days or so. The snapshot timestamps come straight from Blizzard. When quantity becomes zero, we carry the price from the previous snapshot. Snapshots are roughly hourly, but it's not guaranteed (especially during Blizzard's weekly scheduled downtime).</p>
                 <blockquote class="code">{
@@ -1929,7 +1929,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/:petBreed/hourly.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>Same as Hourly Pet Detail, but for a specific pet species + breed.</p>
                 <blockquote class="code">{
@@ -1958,7 +1958,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Free</td></tr>
+                    <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
                     The maximum quantity, and the price at that time, of the pet on that realm for each day we've seen it. Ever.
@@ -1988,7 +1988,7 @@
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/:petBreed/daily.json</span></td></tr>
                     <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
-                    <tr><th>Access</th><td>Paid</td></tr>
+                    <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 <p>
                     Same as Daily Pet Detail, but for a specific pet species + breed.
