@@ -178,7 +178,7 @@
 
         <h3>Rate Limits</h3>
         <p>
-            To manage our resource usage, the API enforces a rate limit for each API consumer. Each request costs a number of points, and you're provided a sliding window of <b>3000</b> points per hour. If you exceed that points budget, your request will not be serviced, and you'll need to wait for enough points to replenish before your request will return a result.
+            To manage our resource usage, the API enforces a rate limit for each API consumer. Each request costs a number of points, and you're provided a sliding window of <b>3,000</b> points per hour. If you exceed that points budget, your request will not be serviced, and you'll need to wait for enough points to replenish before your request will return a result.
         </p>
         <p>
             Each API endpoint described below will include points cost information. Many endpoints will include 2 costs: a lower cost for gzip-compressed responses (preferred), and a higher cost for uncompressed responses.
@@ -186,7 +186,7 @@
 
         <h3>Patron Access Limits</h3>
         <p>
-            Most endpoints are available to the public without any Patreon membership requirements. However, some endpoints do require paid membership to our Patreon campaign, specifically those which mirror functionality where the Undermine Exchange website also requires paid access. All endpoints listed below will state whether they require <b>Free</b> or <b>Paid</b> access.
+            Many endpoints are available to the public without any Patreon membership requirements. However, some endpoints do require paid membership to our Patreon campaign, specifically those which mirror functionality where the Undermine Exchange website also requires paid access. All endpoints listed below will state whether they require <b>Free</b> or <b>Paid</b> access.
         </p>
         <p>
             There are no differences in rate limits between free and paid accounts at this time.
@@ -609,7 +609,7 @@
                 <h4>Base Commodity Summary</h4>
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities.json</span></td></tr>
-                    <tr><th>Points</th><td>1 point <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Points</th><td>3 point <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
@@ -645,7 +645,7 @@
                 <h4>Full Commodity Summary</h4>
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/region/:region/commodities.json?detail=full</span></td></tr>
-                    <tr><th>Points</th><td>1 point <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Points</th><td>3 point <small>(5 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Paid <span class="paid-only">✅️</span><span class="free-only">⛔ <a href="https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true">Become a patron!</a></span><span class="logged-out-only">⚠️</span></td></tr>
                 </table>
                 This contains the same data as Base Commodity Summary, but includes item level details for commodities which are equippable. They are very rare, and you really don't need level-based pricing for commodities, but it's here if you want it.
@@ -1062,7 +1062,7 @@
                 <h4>Base Item Summary</h4>
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/realm/:region/:realm/items.json</span></td></tr>
-                    <tr><th>Points</th><td>3 points <small>(5 uncompressed)</small></td></tr>
+                    <tr><th>Points</th><td>3 points <small>(7 uncompressed)</small></td></tr>
                     <tr><th>Access</th><td>Free ✅️</td></tr>
                 </table>
                 <p>
