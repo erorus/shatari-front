@@ -53,7 +53,7 @@ export async function init(): Promise<void> {
 
     (qs('.main .bottom-bar .account form.logout .red-button') as HTMLButtonElement)
         ?.addEventListener('click', () => {
-            location.href = 'https://www.patreon.com/checkout/erorus?rid=6189924&is_free_trial=true';
+            location.href = 'https://www.patreon.com/erorus/membership';
         });
 
     await updateUser();
