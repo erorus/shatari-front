@@ -4,14 +4,16 @@
     <title>Undermine Exchange API</title>
     <meta name="viewport" content="width=device-width">
     <style>
+        .api-key, .code {background-color: rgba(13%, 13%, 13%, 75%)}
+        .collapse-wrapper, h4.opener {background-color: #424769}
         body {
-            background-color: #222;
-            color: #eee;
-            font: 16px sans-serif;
-            line-height: 1.5;
+            background-color: #2D3250;
+            color: #ddd;
         }
+        a {color: #F6B17A}
 
-        a {color: #99e}
+        body {font: 16px sans-serif; line-height: 1.5}
+        button {font-size: 100%}
 
         .layout {display: flex; gap: 2em; justify-content: center}
 
@@ -38,16 +40,33 @@
             &:not([data-account="paid"]) .paid-only {display: none}
         }
 
-        .api-key, .code {background-color: #000; font-family: monospace; font-size: 75%; padding: 2px}
+        .api-key, .code {font-family: monospace; font-size: 75%; padding: 2px}
         .api-key {user-select: all; margin: 0 1em}
         .code {white-space: pre-wrap}
-        blockquote {max-height: 70vh; overflow-y: auto}
+        blockquote {max-height: 70vh; overflow-y: auto; border: 1px solid #999; border-radius: 5px}
 
-        table {border-spacing: 0; margin: 1em 0}
-        td, th {border: 1px solid #666; padding: 0.5em}
+        table {border-spacing: 0; margin-bottom: 1em; border: 1px solid #999; border-radius: 5px}
+        td, th {padding: 0.25em 0.5em}
         th {text-align: left}
 
-        h2 {margin-top: 3em}
+        h2, h3 {margin-top: 3em}
+
+        h4.opener {cursor: pointer; margin-bottom: 0; padding: 0.5em; border-radius: 5px}
+        h4.opener.open {border-radius: 5px 5px 0 0}
+        h4.opener:before {content: '🔽 '}
+        h4.opener.open:before {content: '🔼 '}
+        h4.opener span {font-weight: normal; font-family: monospace; font-size: 75%; display: block; padding-left: 2em}
+        h4.opener.open span {visibility: hidden}
+
+        .collapse-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease;
+            border-radius: 0 0 5px 5px;
+        }
+        .collapse-wrapper.open {grid-template-rows: 1fr}
+        .collapse-wrapper > * {overflow: hidden; margin: 0 1em 1em 1em}
+
     </style>
     <script>
         (() => {
@@ -101,13 +120,19 @@
 
                     button.parentNode.replaceChild(df, button);
                 });
+
+                makeTryIt(keyJson.current ?? keyJson.generated);
+            }
+
+            function makeTryIt(apiKey) {
+
             }
 
             function makeToc() {
                 const toc = document.querySelector('.toc');
                 let lastH2;
                 let lastH3;
-                document.querySelectorAll('.main h2, .main h3, .main h4').forEach(heading => {
+                document.querySelectorAll('.main h2, .main h3').forEach(heading => {
                     let slug = heading.textContent.toLowerCase().replace(/ /g, '-');
 
                     const line = document.createElement('a');
@@ -135,8 +160,34 @@
                 });
             }
 
+            function collapseBlocks() {
+                document.querySelectorAll('h4').forEach(h4 => {
+                    h4.classList.add('opener');
+
+                    const sectionDiv = h4.closest('div');
+                    sectionDiv.parentNode.insertBefore(h4, sectionDiv);
+
+                    const collapseWrapper = document.createElement('div');
+                    collapseWrapper.classList.add('collapse-wrapper');
+                    sectionDiv.parentNode.insertBefore(collapseWrapper, sectionDiv);
+                    collapseWrapper.appendChild(sectionDiv);
+
+                    h4.addEventListener('click', () => {
+                        h4.classList.toggle('open', collapseWrapper.classList.toggle('open'));
+                    });
+
+                    const pathSpan = sectionDiv.querySelector('table span');
+                    if (pathSpan) {
+                        const newSpan = pathSpan.cloneNode(true);
+                        newSpan.classList.remove('code');
+                        h4.appendChild(newSpan);
+                    }
+                });
+            }
+
             function main() {
                 makeToc();
+                collapseBlocks();
                 getApiKey();
             }
 
@@ -240,20 +291,12 @@
             <li><span class="code">:petBreed</span> - A pet breed ID, such as <span class="code">6</span></li>
         </ul>
 
-        Here are some examples:
-        <ul>
-            <li><span class="code">/v1/region/:region/items.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/region/us/items.json</span></li>
-            <li><span class="code">/v1/region/:region/commodities/:itemId/now.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/region/us/commodities/21877/now.json</span></li>
-            <li><span class="code">/v1/realm/:region/:realm/items/:itemId/:itemLevel/daily.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/realm/us/medivh/items/260376/266/daily.json</span></li>
-            <li><span class="code">/v1/realm/:region/:realm/pets/:petSpecies/hourly.json</span> -&gt;<br><span class="code">https://api.undermine.exchange/v1/realm/us/aerie-peak/pets/145/hourly.json</span></li>
-        </ul>
-
         <div>
             <h2>Static Data</h2>
             These endpoints provide supplemental information for using our API, and change very infrequently.
 
             <div>
-                <h3>Realm List</h3>
+                <h4>Realm List</h4>
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/static/realms.json</span></td></tr>
                     <tr><th>Points</th><td>1 point <small>(3 uncompressed)</small></td></tr>
@@ -278,7 +321,7 @@
             </div>
 
             <div>
-                <h3>Suffix List</h3>
+                <h4>Suffix List</h4>
                 <table>
                     <tr><th>Path</th><td><span class="code">/v1/static/suffixes.json</span></td></tr>
                     <tr><th>Points</th><td>1 point</td></tr>
